@@ -1,0 +1,404 @@
+<style>
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .overlay-content {
+        background: white;
+        padding: 25px;
+        border-radius: 8px;
+        width: 350px;
+        text-align: center;
+    }
+</style>
+<h1>Inventory</h1>
+
+            <div class="branch-tabs" style="margin-bottom: 15px;">
+                <button class="branch-btn active" data-branch="all">All Branches</button>
+                <button class="branch-btn" data-branch="1">Branch 1</button>
+                <button class="branch-btn" data-branch="2">Branch 2</button>
+            </div>
+
+
+            <div class="category-navbar" style="margin-bottom: 20px;">
+                <button class="category-btn" data-category="all">All</button>
+                {% for cat in categories %}
+                    <button class="category-btn" data-category="{{ cat.prod_cat_name }}">{{ cat.prod_cat_name }}</button>
+                {% endfor %}
+            </div>
+
+            <table border="1" cellpadding="10" cellspacing="0" style="width: 100%; border-collapse: collapse;">
+                <thead style="background: #222; color: white;">
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Unit of Measure</th>
+                        <th>Product Specific Name</th>
+                        <th>Product Specific Value</th>
+                        <th>Unit Cost</th>
+                        <th>Retail Price</th>
+                        <th>Quantity on hand</th>
+                        <th>Last Updated</th>
+                        <th>Reorder Quantity Threshold</th>
+                        <th>Active</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in products %}
+                        <tr data-category="{{ p.product.category.prod_cat_name }}" 
+                            data-branch="{{ p.branch.branch_id }}" 
+                            data-inventory-id="{{ p.inventory_id }}"
+                            data-product-id="{{ p.product.prod_id }}">
+                            <td>{{ p.product.prod_name }}</td>
+                            <td>{{ p.product.prod_desc }}</td>
+                            <td>{{ p.product.prod_unit_of_measure }}</td>
+                            <td>{% for spec in p.product.product_specification_set.all %}
+                                    {{ spec.spec_name }}<br>
+                                {% empty %}
+                                None
+                                {% endfor %}
+                            </td>
+                            <td>{% for spec in p.product.product_specification_set.all %}
+                                    {{ spec.spec_value }}<br>
+                                {% empty %}
+                                    None
+                                {% endfor %}
+                            </td>
+                            <td>₱{{ p.product.prod_current_cost }}</td>
+                            <td>₱{{ p.product.prod_retail_price }}</td>
+                            <td>{{ p.quantity_on_hand }}</td>
+                            <td>{{ p.last_updated_at }}</td>
+                            <td>{{ p.product.prod_reorder_threshold }}</td>
+                            <td>{{ p.product.prod_is_active }}</td>
+                            <td>
+                                <button type="button" class="stock-in">Stock in</button>
+                                <button type="button" class="stock-out">Stock out</button>
+                                <button type="button" class="edit">Edit</button>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="12" style="text-align:center; color:red;">No products found</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+    <!-- overlay for stock in / stock out-->
+    <div id="overlay-stock" class="overlay" style="display:none;">
+        <div class="overlay-content">
+            <h2 id="overlay-stock-title"></h2>
+
+            <label>Quantity:</label>
+            <input type="number" id="overlay-stock-qty" min="1"><br><br>
+
+            <button id="overlay-stock-save">Save</button>
+            <button id="overlay-stock-close">Cancel</button>
+        </div>
+    </div>
+
+    <!-- overlay for edit product -->
+    <div id="overlay-edit" class="overlay" style="display:none;">
+        <div class="overlay-content">
+            <h2 id="overlay-edit-title">Edit Product</h2>
+
+            <label>Edit Product Name:</label>
+            <input type="text" id="edit-name"><br>
+
+            <label>Edit Description:</label>
+            <input type="text" id="edit-desc"><br>
+
+            <label>Edit Unit of Measure:</label>
+            <input type="text" id="edit-unit"><br>
+
+            <label>Edit Product Specific Name:</label>
+            <input type="text" id="edit-specific-name"><br>
+
+            <label>Edit Product Specific value:</label>
+            <input type="text" id="edit-specific-value"><br>
+
+            <label>Edit Unit Cost:</label>
+            <input type="number" id="edit-cost" min="0" step="0.01"><br>
+
+            <label>Edit Retail Price:</label>
+            <input type="number" id="edit-price" min="0" step="0.01"><br>
+
+            <label>Edit Reorder Threshold:</label>
+            <input type="number" id="edit-reorder" min="0"><br><br>
+
+            <label>Product still active?</label>
+            <input type="checkbox" id="edit-active" checked><br>
+
+            <button id="overlay-edit-save">Save</button>
+            <button id="overlay-edit-close">Cancel</button>
+        </div>
+    </div>
+
+<script>
+    /** category and branch tab pane functionality **/
+    const categoryButtons = document.querySelectorAll('.category-btn');
+    const branchButtons = document.querySelectorAll('.branch-btn');
+    const rows = document.querySelectorAll('tbody tr');
+
+    let selectedCategory = 'all';
+    let selectedBranch = 'all';
+
+    function filterRows() {
+        rows.forEach(row => {
+            const rowCategory = row.getAttribute('data-category');
+            const rowBranch = row.getAttribute('data-branch');
+
+            const categoryMatch = (selectedCategory === 'all' || rowCategory === selectedCategory);
+            const branchMatch = (selectedBranch === 'all' || rowBranch === selectedBranch);
+
+            row.style.display = (categoryMatch && branchMatch) ? '' : 'none';
+        });
+    }
+
+    categoryButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            selectedCategory = btn.getAttribute('data-category');
+            categoryButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            filterRows();
+        });
+    });
+
+    branchButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            selectedBranch = btn.getAttribute('data-branch');
+            branchButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            filterRows();
+        });
+    });
+
+    /** action button functionalities **/
+    const overlayStock = document.getElementById('overlay-stock');
+    const stockTitle = document.getElementById('overlay-stock-title');
+    const stockQty = document.getElementById('overlay-stock-qty');
+    const stockSave = document.getElementById('overlay-stock-save');
+    const stockClose = document.getElementById('overlay-stock-close');
+
+    let currentStockMode = "";
+    let currentRow = null;
+    const userId = "{{ user_id }}";
+
+    document.querySelectorAll('.stock-in').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentRow = btn.closest('tr');
+            const productName = currentRow.children[0].innerText;
+
+            currentStockMode = "in";
+            stockTitle.innerText = "Stock In: " + productName;
+            stockQty.value = "";
+
+            overlayStock.style.display = "flex";
+        });
+    });
+
+    document.querySelectorAll('.stock-out').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentRow = btn.closest('tr');
+            const productName = currentRow.children[0].innerText;
+
+            currentStockMode = "out";
+            stockTitle.innerText = "Stock Out: " + productName;
+            stockQty.value = "";
+
+            overlayStock.style.display = "flex";
+        });
+    });
+
+    stockSave.addEventListener('click', async () => {
+        const qty = Number(stockQty.value);
+
+        if (qty <= 0 || isNaN(qty)) {
+            alert("Quantity must be a positive number");
+            return;
+        }
+
+        const inventoryId = currentRow.getAttribute("data-inventory-id");
+        const qtyCell = currentRow.children[7]; // Quantity on hand cell
+
+        try {
+            const response = await fetch("/inventory/stock_action/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    inventory_id: inventoryId,
+                    quantity: qty,
+                    action_type: currentStockMode,
+                    user_id: userId
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                alert(data.message || "Stock updated successfully!");
+                
+                // Update the quantity in the table
+                qtyCell.innerText = data.new_quantity;
+                
+                // Update last updated cell (index 8)
+                const now = new Date();
+                currentRow.children[8].innerText = now.toISOString().split('T')[0];
+                
+                overlayStock.style.display = "none";
+            } else {
+                alert("Error: " + (data.error || "Failed to update stock"));
+            }
+        } catch (err) {
+            alert("Failed to update stock: " + err.message);
+            console.error("Stock update error:", err);
+        }
+    });
+
+    stockClose.addEventListener('click', () => {
+        overlayStock.style.display = "none";
+    });
+
+     // Edit overlay functionality
+    const overlayEdit = document.getElementById('overlay-edit');
+    const editName = document.getElementById('edit-name');
+    const editDesc = document.getElementById('edit-desc');
+    const editUnit = document.getElementById('edit-unit');
+    const editSpecificName = document.getElementById('edit-specific-name');
+    const editSpecificValue = document.getElementById('edit-specific-value');
+    const editCost = document.getElementById('edit-cost');
+    const editPrice = document.getElementById('edit-price');
+    const editReorder = document.getElementById('edit-reorder');
+    const editActive = document.getElementById('edit-active');
+    const editSave = document.getElementById('overlay-edit-save');
+    const editClose = document.getElementById('overlay-edit-close');
+
+    let currentEditRow = null;
+
+    document.querySelectorAll('.edit').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentEditRow = btn.closest('tr');
+            const row = btn.closest('tr');
+            const specNames = row.children[3].innerText.split('\n').filter(s => s.trim() !== '' && s.trim() !== 'None');
+            const specValues = row.children[4].innerText.split('\n').filter(s => s.trim() !== '' && s.trim() !== 'None');
+
+            editName.value = row.children[0].innerText;
+            editDesc.value = row.children[1].innerText;
+            editUnit.value = row.children[2].innerText;
+            editCost.value = Number(row.children[5].innerText.replace("₱", "").trim());
+            editPrice.value = Number(row.children[6].innerText.replace("₱", "").trim());
+            editReorder.value = row.children[9].innerText;
+            editSpecificName.value = specNames[0] || '';
+            editSpecificValue.value = specValues[0] || '';
+
+            let activeValue = row.children[10].innerText.trim().toLowerCase();
+            editActive.checked = activeValue === "true" || activeValue === "1" || activeValue === "yes";
+
+            overlayEdit.style.display = "flex";
+        });
+    });
+
+    editSave.addEventListener('click', async () => {
+        if (editCost.value < 0 || editPrice.value < 0 || editReorder.value < 0) {
+            alert("Values cannot be negative!");
+            return;
+        }
+        const inventoryId = currentEditRow.getAttribute('data-inventory-id');
+        /** get product_id **/
+        const productId = currentEditRow.getAttribute('data-product-id');
+            if (!productId) {
+            alert("Error: Product ID not found. Please add data-product-id to your table rows.");
+            return;
+        }
+
+        try {
+            const response = await fetch("/inventory/edit_product/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    prod_name: editName.value,
+                    prod_desc: editDesc.value,
+                    prod_unit_of_measure: editUnit.value,
+                    prod_current_cost: editCost.value,
+                    prod_retail_price: editPrice.value,
+                    prod_reorder_threshold: editReorder.value,
+                    prod_is_active: editActive.checked,
+                    spec_name: editSpecificName.value,
+                    spec_value: editSpecificValue.value,
+                    user_id: userId
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                let message = data.message;
+                if (data.price_changed) {
+                    message += "\n\nPrice change has been recorded in price history.";
+                }
+                alert(message);
+
+                // update the table row with new values
+                currentEditRow.children[0].innerText = editName.value;
+                currentEditRow.children[1].innerText = editDesc.value;
+                currentEditRow.children[2].innerText = editUnit.value;
+                
+                // Update spec name and value
+                if (editSpecificName.value) {
+                    currentEditRow.children[3].innerText = editSpecificName.value;
+                } else {
+                    currentEditRow.children[3].innerText = "None";
+                }
+                
+                if (editSpecificValue.value) {
+                    currentEditRow.children[4].innerText = editSpecificValue.value;
+                } else {
+                    currentEditRow.children[4].innerText = "None";
+                }
+                
+                currentEditRow.children[5].innerText = "₱" + parseFloat(editCost.value).toFixed(2);
+                currentEditRow.children[6].innerText = "₱" + parseFloat(editPrice.value).toFixed(2);
+                currentEditRow.children[9].innerText = editReorder.value;
+                currentEditRow.children[10].innerText = editActive.checked ? "True" : "False";
+
+                overlayEdit.style.display = "none";
+            } else {
+                alert("Error: " + (data.error || "Failed to update product"));
+            }
+        } catch (err) {
+            alert("Failed to update product: " + err.message);
+            console.error("Product update error:", err);
+        }
+    });
+
+    editClose.addEventListener('click', () => {
+        overlayEdit.style.display = "none";
+    });
+
+    overlayStock.addEventListener('click', (e) => {
+        if (e.target === overlayStock) {
+            overlayStock.style.display = "none";
+        }
+    });
+
+    overlayEdit.addEventListener('click', (e) => {
+        if (e.target === overlayEdit) {
+            overlayEdit.style.display = "none";
+        }
+    });
+</script>

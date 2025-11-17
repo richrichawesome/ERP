@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Top Management Dashboard</title>
+     <style>
+        body { 
+            margin: 0; 
+            font-family: Arial, sans-serif; 
+            background-color: #f4f4f4;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            height: 100vh; 
+            width: 200px;
+            position: fixed; 
+            top: 0; left: 0;
+            background-color: #111; 
+            padding-top: 20px;
+        }
+        .sidebar a {
+            display: block; 
+            color: white; 
+            padding: 12px 20px;
+            text-decoration: none; 
+            font-weight: bold;
+        }
+        .sidebar a:hover { 
+            background-color: #575757; 
+            color: white; 
+        }
+
+        /* Main content */
+        .content { 
+            margin-left: 200px; 
+            padding: 20px; 
+        }
+
+        /* Add Users Form */
+        .register-container {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 500px;
+            margin: 20px auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .register-container h1 {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+            color: #333;
+        }
+
+        .field-container {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #333;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 0.95em;
+            transition: border 0.3s, box-shadow 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        select:focus {
+            border-color: #007BFF;
+            box-shadow: 0 0 5px rgba(0,123,255,0.3);
+            outline: none;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .submit-btn:hover {
+            background-color: #0056b3;
+            transform: scale(1.02);
+        }
+
+        /* Optional: style select placeholder */
+        select option[disabled] {
+            color: #888;
+        }
+
+        /* Category Navbar */
+        .category-navbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            background-color: #fff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .category-btn {
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .category-btn.active {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="{% url 'top_management_dashboard' %}">Dashboard</a>
+        <a href="{% url 'add_users' %}">Add Users</a>
+        <a href="{% url 'inventory' %}">Inventory</a>
+        {% comment %} <a href="{% url 'logout' %}">Logout</a> {% endcomment %}
+    </div>
+
+    <div class="content">
+        <!-- DASHBOARD -->
+        {% if section == "dashboard" %}
+            <h1>Welcome to Top Management Dashboard</h1>
+            <!-- butang lng ari contents -->
+
+        <!-- ADD USERS -->
+        {% elif section == "add_users" %}
+
+            <h1>Add Users</h1><br>
+            <div class="register-container">
+                <form method="POST" action="{% url 'add_users' %}" class="register-form">
+                    {% csrf_token %}
+                    <div class="field-container">
+                        <label for="username">Username:</label>
+                        <input type="text" name="username" placeholder="admin..." required>
+                    </div>
+
+                    <div class="field-container">
+                        <label for="password">Password:</label>
+                        <input type="password" name="password" placeholder="At least 8 characters" minlength="8" required>
+                    </div>
+
+                    <div class="field-container">
+                        <label for="email">User Email:</label>
+                        <input type="text" name="email" placeholder="juan@example.com" required>
+                    </div>
+
+                    <div class="field-container">
+                        <label for="fname">First Name:</label>
+                        <input type="text" name="fname" placeholder="Juan" required>
+                    </div>
+
+                    <div class="field-container">
+                        <label for="lname">Last Name:</label>
+                        <input type="text" name="lname" placeholder="Cruz" required>
+                    </div>
+
+                    <div class="field-container">
+                        <label for="acc-role">Role:</label>
+                        <select name="acc-role" id="acc-role" required>
+                            <option value="select" selected disabled>---select---</option>
+                            <option value="Branch Manager" >Branch Manager</option>
+                            <option value="Property Custodian" >Property Custodian</option>
+                            <option value="Purchasing Staff" >Purchasing Staff</option>
+                        </select>
+                    </div>
+
+                    <div class="field-container">
+                        <label for="branch">Branch:</label>
+                        <select name="branch" id="branch">
+                            <option value="">Select a branch</option>
+                            {% for branch in branches %}
+                                <option value="{{ branch.branch_id }}">{{ branch.branch_name }}</option>
+                            {% empty %}
+                                <option value="">No branches available</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button type="submit" class="submit-btn">Register</button>
+                </form>
+            </div>
+        <!-- INVENTORY -->
+        {% elif section == "inventory" %}
+            {% include 'main/inventory.html' %}
+            
+        {% elif section == "logout" %}
+            {% endif %}
+    </div>
+</body>
+</html>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const categoryButtons = document.querySelectorAll('.category-btn');
+    const branchButtons = document.querySelectorAll('.branch-btn');
+    const rows = document.querySelectorAll('tbody tr');
+
+    let selectedCategory = 'all';
+    let selectedBranch = 'all';
+
+    function filterRows() {
+        rows.forEach(row => {
+            const rowCategory = row.getAttribute('data-category');
+            const rowBranch = row.getAttribute('data-branch');
+
+            const categoryMatch = (selectedCategory === 'all' || rowCategory === selectedCategory);
+            const branchMatch = (selectedBranch === 'all' || rowBranch === selectedBranch);
+
+            row.style.display = (categoryMatch && branchMatch) ? '' : 'none';
+        });
+    }
+
+    // Category buttons
+    categoryButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            selectedCategory = btn.getAttribute('data-category');
+
+            // Update active class only for category buttons
+            categoryButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            filterRows();
+        });
+    });
+
+    // Branch buttons
+    branchButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            selectedBranch = btn.getAttribute('data-branch');
+
+            // Update active class only for branch buttons
+            branchButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            filterRows();
+        });
+    });
+
+    // Initial filter
+    filterRows();
+});
+</script>
+
