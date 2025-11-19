@@ -19,15 +19,44 @@
         width: 350px;
         text-align: center;
     }
+
+    .search-bar {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    }
+
+    .search-bar label {
+        font-weight: bold;
+    }
+
+    .search-bar-textbox {
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        flex: 1;
+        max-width: 300px;
+        font-size: 14px;
+    }
+
+    .search-bar-textbox:focus {
+        outline: none;
+        border-color: #222;
+        box-shadow: 0 0 0 2px rgba(34, 34, 34, 0.1);
+    }
 </style>
 <h1>Inventory</h1>
-
             <div class="branch-tabs" style="margin-bottom: 15px;">
                 <button class="branch-btn active" data-branch="all">All Branches</button>
                 <button class="branch-btn" data-branch="1">Branch 1</button>
                 <button class="branch-btn" data-branch="2">Branch 2</button>
             </div>
 
+            <div class="search-bar">
+                <label> Search:</label>
+                <input type="text" class="search-bar-textbox" name="search-bar-textbox">
+            </div>
 
             <div class="category-navbar" style="margin-bottom: 20px;">
                 <button class="category-btn" data-category="all">All</button>
@@ -36,19 +65,24 @@
                 {% endfor %}
             </div>
 
+            <div class="add-remove-btn">
+                <button type="button" class="add-product-btn" name="add-product-btn">Add Product</button>
+                <button type="button" class="remove-product-btn" name="remove-product-btn">Remove Product</button>
+                <button type="button" class="inactive-product-btn" name="inactive-product-btn">Inactive Products</button>
+            </div><br>
+
             <table border="1" cellpadding="10" cellspacing="0" style="width: 100%; border-collapse: collapse;">
                 <thead style="background: #222; color: white;">
                     <tr>
                         <th>Name</th>
-                        <th>Description</th>
-                        <th>Unit of Measure</th>
-                        <th>Product Specific Name</th>
-                        <th>Product Specific Value</th>
-                        <th>Unit Cost</th>
-                        <th>Retail Price</th>
+                        <th>SKU</th>
                         <th>Quantity on hand</th>
-                        <th>Last Updated</th>
+                        <th>Unit of Measure</th>
+                        <th>Retail Price</th>
                         <th>Reorder Quantity Threshold</th>
+                        <th>Last Updated</th>
+                        <th>Unit Cost</th>
+                        <th>Specification</th>
                         <th>Active</th>
                         <th>Action</th>
                     </tr>
@@ -60,25 +94,20 @@
                             data-inventory-id="{{ p.inventory_id }}"
                             data-product-id="{{ p.product.prod_id }}">
                             <td>{{ p.product.prod_name }}</td>
-                            <td>{{ p.product.prod_desc }}</td>
+                            <td>{{ p.product.prod_sku}}
+                            <td>{{ p.quantity_on_hand }}</td>
                             <td>{{ p.product.prod_unit_of_measure }}</td>
+                            <td>₱{{ p.product.prod_retail_price }}</td>
+                            <td>{{ p.product.prod_reorder_threshold }}</td> 
+                            <td>{{ p.last_updated_at }}</td>
+                            <td>₱{{ p.product.prod_current_cost }}</td>
+
                             <td>{% for spec in p.product.product_specification_set.all %}
-                                    {{ spec.spec_name }}<br>
+                                    {{ spec.spec_name }}: {{ spec.spec_value }}
                                 {% empty %}
                                 None
                                 {% endfor %}
                             </td>
-                            <td>{% for spec in p.product.product_specification_set.all %}
-                                    {{ spec.spec_value }}<br>
-                                {% empty %}
-                                    None
-                                {% endfor %}
-                            </td>
-                            <td>₱{{ p.product.prod_current_cost }}</td>
-                            <td>₱{{ p.product.prod_retail_price }}</td>
-                            <td>{{ p.quantity_on_hand }}</td>
-                            <td>{{ p.last_updated_at }}</td>
-                            <td>{{ p.product.prod_reorder_threshold }}</td>
                             <td>{{ p.product.prod_is_active }}</td>
                             <td>
                                 <button type="button" class="stock-in">Stock in</button>
@@ -88,7 +117,7 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="12" style="text-align:center; color:red;">No products found</td>
+                            <td colspan="10" style="text-align:center; color:red;">No products found</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -144,25 +173,156 @@
         </div>
     </div>
 
+    <!-- overlay for add product -->
+    <div id="overlay-add" class="overlay" style="display:none;">
+        <div class="overlay-content">
+            <h2 id="overlay-add-title">Add Product</h2>
+
+            <label>Product Name:</label>
+            <input type="text" id="add-name"><br>
+
+            <label>Product Description:</label>
+            <input type="text" id="add-desc"><br>
+
+            <label>Product Unit of Measure:</label>
+            <input type="text" id="add-unit"><br>
+
+            <label>Product Specific Name:</label>
+            <input type="text" id="add-specific-name"><br>
+
+            <label>Product Specific value:</label>
+            <input type="text" id="add-specific-value"><br>
+
+            <label>Product Unit Cost:</label>
+            <input type="number" id="add-cost" min="0" step="0.01"><br>
+
+            <label>Product Retail Price:</label>
+            <input type="number" id="add-price" min="0" step="0.01"><br>
+
+            <label>Product Reorder Threshold:</label>
+            <input type="number" id="add-reorder" min="0"><br>
+
+            <label>Product SKU:</label>
+            <input type="text" id="add-sku"><br>
+
+            <label>Product Category:</label>
+            <select name="category" id="add-category" required>
+                <option value="" selected disabled>--select--</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.prod_cat_id }}">{{ cat.prod_cat_name }}</option>
+                {% endfor %}
+            </select><br>
+
+            <label>Branch:</label>
+            <select name="branch" id="add-branch" required>
+                <option value="" selected disabled>---select---</option>
+                {% for branch in branches %}
+                    <option value="{{ branch.branch_id }}">{{ branch.branch_name }}</option>
+                {% empty %}
+                    <option value="">No branches available</option>
+                {% endfor %}
+            </select><br><br>
+
+            <button id="overlay-add-btn">Add</button>
+            <button type="button" id="overlay-add-close">Cancel</button> 
+        </div>
+    </div>
+
+    <!-- overlay for remove product -->
+    <div id="overlay-remove" class="overlay" style="display:none;">
+        <div class="overlay-content">
+            <h2 id="overlay-add-title">Remove Product</h2>
+            
+            <label>Product:</label>
+            <select name="product" id="remove-product">
+                <option value="" selected disabled>---select---</option>
+                {% for p in products %}
+                    <option value="{{ p.product.prod_id }}">{{ p.product.prod_name }} ({{ p.branch.branch_name }})</option>
+                {% empty %}
+                <option value="">No Products available</option>
+                {% endfor %}
+            </select><br><br>
+
+            <button id="overlay-remove-btn">Remove</button>
+            <button type="button" id="overlay-remove-close">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Add this overlay for inactive products -->
+    <div id="overlay-inactive" class="overlay" style="display:none;">
+        <div class="overlay-content" style="width: 80%; max-width: 1000px;">
+            <h2>Inactive Products</h2>
+            
+            <div class="search-bar">
+                <label>Search:</label>
+                <input type="text" class="inactive-search-textbox" placeholder="Search inactive products...">
+            </div>
+            
+            <table border="1" cellpadding="10" cellspacing="0" style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                <thead style="background: #222; color: white;">
+                    <tr>
+                        <th>Name</th>
+                        <th>SKU</th>
+                        <th>Branch</th>
+                        <th>Last Updated</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="inactive-products-body">
+                    <!-- Inactive products will be loaded here -->
+                </tbody>
+            </table>
+            
+            <br>
+            <button id="overlay-inactive-close">Close</button>
+        </div>
+    </div>
+
 <script>
     /** category and branch tab pane functionality **/
     const categoryButtons = document.querySelectorAll('.category-btn');
     const branchButtons = document.querySelectorAll('.branch-btn');
     const rows = document.querySelectorAll('tbody tr');
+    const searchInput = document.querySelector('.search-bar-textbox');
 
     let selectedCategory = 'all';
     let selectedBranch = 'all';
+    let searchTerm = '';
 
+    searchInput.addEventListener('input', (e) => {
+        searchTerm = e.target.value.toLowerCase().trim();
+        filterRows();
+    });
+
+    // search logic
     function filterRows() {
+        let hasVisibleRows = false;
+        
         rows.forEach(row => {
+            if (row.children.length < 11) return;
+            
             const rowCategory = row.getAttribute('data-category');
             const rowBranch = row.getAttribute('data-branch');
+            const productName = row.children[0].innerText.toLowerCase(); // Name column
+            const productSKU = row.children[1].innerText.toLowerCase();  // SKU column
 
             const categoryMatch = (selectedCategory === 'all' || rowCategory === selectedCategory);
             const branchMatch = (selectedBranch === 'all' || rowBranch === selectedBranch);
+            const searchMatch = searchTerm === '' || 
+                            productName.includes(searchTerm) || 
+                            productSKU.includes(searchTerm);
 
-            row.style.display = (categoryMatch && branchMatch) ? '' : 'none';
+            if (categoryMatch && branchMatch && searchMatch) {
+                row.style.display = '';
+                hasVisibleRows = true;
+            } else {
+                row.style.display = 'none';
+            }
         });
+        const noProductsRow = document.querySelector('tbody tr:only-child');
+        if (noProductsRow && noProductsRow.children.length === 1) {
+            noProductsRow.style.display = hasVisibleRows ? 'none' : '';
+        }
     }
 
     categoryButtons.forEach(btn => {
@@ -181,6 +341,12 @@
             btn.classList.add('active');
             filterRows();
         });
+    });
+
+    /** Search bar functionality **/
+    searchInput.addEventListener('input', (e) => {
+        searchTerm = e.target.value.toLowerCase().trim();
+        filterRows();
     });
 
     /** action button functionalities **/
@@ -229,7 +395,7 @@
         }
 
         const inventoryId = currentRow.getAttribute("data-inventory-id");
-        const qtyCell = currentRow.children[7]; // Quantity on hand cell
+        const qtyCell = currentRow.children[2]; // Quantity on hand cell
 
         try {
             const response = await fetch("/inventory/stock_action/", {
@@ -271,7 +437,7 @@
         overlayStock.style.display = "none";
     });
 
-     // Edit overlay functionality
+    // Edit overlay functionality
     const overlayEdit = document.getElementById('overlay-edit');
     const editName = document.getElementById('edit-name');
     const editDesc = document.getElementById('edit-desc');
@@ -291,19 +457,28 @@
         btn.addEventListener('click', () => {
             currentEditRow = btn.closest('tr');
             const row = btn.closest('tr');
-            const specNames = row.children[3].innerText.split('\n').filter(s => s.trim() !== '' && s.trim() !== 'None');
-            const specValues = row.children[4].innerText.split('\n').filter(s => s.trim() !== '' && s.trim() !== 'None');
+            
+            const specText = row.children[8].innerText;
+            let specName = '';
+            let specValue = '';
+
+            if (specText !== 'None') {
+                const specParts = specText.split(':');
+                if (specParts.length === 2) {
+                    specName = specParts[0].trim();
+                    specValue = specParts[1].trim();
+                }
+            }
 
             editName.value = row.children[0].innerText;
-            editDesc.value = row.children[1].innerText;
-            editUnit.value = row.children[2].innerText;
-            editCost.value = Number(row.children[5].innerText.replace("₱", "").trim());
-            editPrice.value = Number(row.children[6].innerText.replace("₱", "").trim());
-            editReorder.value = row.children[9].innerText;
-            editSpecificName.value = specNames[0] || '';
-            editSpecificValue.value = specValues[0] || '';
+            editUnit.value = row.children[3].innerText;
+            editCost.value = Number(row.children[7].innerText.replace("₱", "").trim());
+            editPrice.value = Number(row.children[4].innerText.replace("₱", "").trim());
+            editReorder.value = row.children[5].innerText;
+            editSpecificName.value = specName;
+            editSpecificValue.value = specValue;
 
-            let activeValue = row.children[10].innerText.trim().toLowerCase();
+            let activeValue = row.children[9].innerText.trim().toLowerCase();
             editActive.checked = activeValue === "true" || activeValue === "1" || activeValue === "yes";
 
             overlayEdit.style.display = "flex";
@@ -316,12 +491,15 @@
             return;
         }
         const inventoryId = currentEditRow.getAttribute('data-inventory-id');
-        /** get product_id **/
         const productId = currentEditRow.getAttribute('data-product-id');
-            if (!productId) {
+        
+        if (!productId) {
             alert("Error: Product ID not found. Please add data-product-id to your table rows.");
             return;
         }
+
+        const oldActiveStatus = currentEditRow.children[9].innerText.trim().toLowerCase() === "true";
+        const newActiveStatus = editActive.checked;
 
         try {
             const response = await fetch("/inventory/edit_product/", {
@@ -355,27 +533,31 @@
 
                 // update the table row with new values
                 currentEditRow.children[0].innerText = editName.value;
-                currentEditRow.children[1].innerText = editDesc.value;
-                currentEditRow.children[2].innerText = editUnit.value;
+                currentEditRow.children[3].innerText = editUnit.value;
+                currentEditRow.children[4].innerText = "₱" + parseFloat(editPrice.value).toFixed(2);
+                currentEditRow.children[5].innerText = editReorder.value;
+                currentEditRow.children[7].innerText = "₱" + parseFloat(editCost.value).toFixed(2);
                 
                 // Update spec name and value
-                if (editSpecificName.value) {
-                    currentEditRow.children[3].innerText = editSpecificName.value;
+                if (editSpecificName.value && editSpecificValue.value) {
+                    currentEditRow.children[8].innerText = editSpecificName.value + ": " + editSpecificValue.value;
                 } else {
-                    currentEditRow.children[3].innerText = "None";
+                    currentEditRow.children[8].innerText = "None";
                 }
-                
-                if (editSpecificValue.value) {
-                    currentEditRow.children[4].innerText = editSpecificValue.value;
-                } else {
-                    currentEditRow.children[4].innerText = "None";
-                }
-                
-                currentEditRow.children[5].innerText = "₱" + parseFloat(editCost.value).toFixed(2);
-                currentEditRow.children[6].innerText = "₱" + parseFloat(editPrice.value).toFixed(2);
-                currentEditRow.children[9].innerText = editReorder.value;
-                currentEditRow.children[10].innerText = editActive.checked ? "True" : "False";
+                currentEditRow.children[9].innerText = editActive.checked ? "True" : "False";
 
+                if (oldActiveStatus === true && newActiveStatus === false) {
+                    currentEditRow.remove();
+                    const visibleRows = document.querySelectorAll('tbody tr[data-product-id]');
+                     if (visibleRows.length === 0) {
+                    const tbody = document.querySelector('tbody');
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="11" style="text-align:center; color:red;">No products found</td>
+                        </tr>
+                    `;
+                }
+            }
                 overlayEdit.style.display = "none";
             } else {
                 alert("Error: " + (data.error || "Failed to update product"));
@@ -399,6 +581,308 @@
     overlayEdit.addEventListener('click', (e) => {
         if (e.target === overlayEdit) {
             overlayEdit.style.display = "none";
+        }
+    });
+
+    // add product functionality
+    const addProductBtn = document.querySelector('.add-product-btn');
+    const overlayAddClose = document.getElementById('overlay-add-close');
+    const overlayAdd = document.getElementById('overlay-add');
+    const addName = document.getElementById('add-name');
+    const addDesc = document.getElementById('add-desc');
+    const addUnit = document.getElementById('add-unit');
+    const addSpecificName = document.getElementById('add-specific-name');
+    const addSpecificValue = document.getElementById('add-specific-value');
+    const addCost = document.getElementById('add-cost');
+    const addPrice = document.getElementById('add-price');
+    const addReorder = document.getElementById('add-reorder');
+    const addSku = document.getElementById('add-sku');
+    const addCategory = document.getElementById('add-category');
+    const addBranch = document.getElementById('add-branch');
+    const addBtn = document.getElementById('overlay-add-btn');
+
+    addProductBtn.addEventListener('click', () => {
+        // Clear all fields
+        addName.value = '';
+        addDesc.value = '';
+        addUnit.value = '';
+        addSpecificName.value = '';
+        addSpecificValue.value = '';
+        addCost.value = '';
+        addPrice.value = '';
+        addReorder.value = '';
+        addSku.value = '';
+        addCategory.value = '';
+        addBranch.value = '';
+        
+        overlayAdd.style.display = 'flex';
+    });
+
+    addBtn.addEventListener('click', async () => {
+        // Validate required fields
+        if (!addName.value || !addCost.value || !addPrice.value || !addReorder.value || !addSku.value || !addCategory.value || !addBranch.value) {
+            alert("Please fill in all required fields!");
+            return;
+        }
+        
+        if (addCost.value < 0 || addPrice.value < 0 || addReorder.value < 0) {
+            alert("Values cannot be negative!");
+            return;
+        }
+        
+        try {
+            const response = await fetch("/inventory/add_product/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    prod_name: addName.value,
+                    prod_desc: addDesc.value,
+                    prod_unit_of_measure: addUnit.value,
+                    prod_current_cost: addCost.value,
+                    prod_retail_price: addPrice.value,
+                    prod_reorder_threshold: addReorder.value,
+                    prod_sku: addSku.value,
+                    category_id: addCategory.value,
+                    branch_id: addBranch.value,
+                    spec_name: addSpecificName.value,
+                    spec_value: addSpecificValue.value,
+                    user_id: userId
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                alert(data.message + "\n\nPlease refresh the page to see the new product.");
+                overlayAdd.style.display = 'none';
+                // Optionally reload the page
+                location.reload();
+            } else {
+                alert("Error: " + (data.error || "Failed to add product"));
+            }
+        } catch (err) {
+            alert("Failed to add product: " + err.message);
+            console.error("Add product error:", err);
+        }
+    });
+
+    // Close overlay when clicking outside
+    overlayAdd.addEventListener('click', (e) => {
+        if (e.target === overlayAdd) {
+            overlayAdd.style.display = 'none';
+        }
+    });
+
+    overlayAddClose.addEventListener('click', () => {
+        overlayAdd.style.display = 'none';
+    });
+
+    // remove product functionality
+    const removeProductBtn = document.querySelector('.remove-product-btn');
+    const overlayRemoveClose = document.getElementById('overlay-remove-close');
+    const overlayRemove = document.getElementById('overlay-remove');
+    const removeProductSelect = document.getElementById('remove-product');
+    const removeBtn = document.getElementById('overlay-remove-btn');
+
+    removeProductBtn.addEventListener('click', () => {
+        overlayRemove.style.display = 'flex';
+    });
+
+    removeBtn.addEventListener('click', async () => {
+        const productId = removeProductSelect.value;
+        
+        if (!productId) {
+            alert("Please select a product to remove!");
+            return;
+        }
+        
+        if (!confirm("Are you sure you want to remove this product? This action cannot be undone.")) {
+            return;
+        }
+        
+        try {
+            const response = await fetch("/inventory/remove_product/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    user_id: userId
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                alert(data.message);
+                overlayRemove.style.display = 'none';
+                // remove the product row from the table
+                const rowToRemove = document.querySelector(`tr[data-product-id="${productId}"]`);
+                if (rowToRemove) {
+                    rowToRemove.remove();
+                }
+                // reload the page to refresh product list
+                location.reload();
+            } else {
+                alert("Error: " + (data.error || "Failed to remove product"));
+            }
+        } catch (err) {
+            alert("Failed to remove product: " + err.message);
+            console.error("Remove product error:", err);
+        }
+    });
+
+    // remove overlay
+    overlayRemoveClose.addEventListener('click', () => {
+        overlayRemove.style.display = 'none';
+    });
+
+    // exit overlay when clicking outside the box
+    overlayRemove.addEventListener('click', (e) => {
+        if (e.target === overlayRemove) {
+            overlayRemove.style.display = 'none';
+        }
+    });
+
+    // inactive Products functionality
+    const inactiveProductBtn = document.querySelector('.inactive-product-btn');
+    const overlayInactive = document.getElementById('overlay-inactive');
+    const overlayInactiveClose = document.getElementById('overlay-inactive-close');
+    const inactiveProductsBody = document.getElementById('inactive-products-body');
+    const inactiveSearchInput = document.querySelector('.inactive-search-textbox');
+
+    inactiveProductBtn.addEventListener('click', async () => {
+        try {
+            const response = await fetch("/inventory/get_inactive_products/", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                displayInactiveProducts(data.inactive_products);
+                overlayInactive.style.display = 'flex';
+            } else {
+                alert("Error loading inactive products: " + (data.error || "Unknown error"));
+            }
+        } catch (err) {
+            alert("Failed to load inactive products: " + err.message);
+            console.error("Inactive products error:", err);
+        }
+    });
+
+    function displayInactiveProducts(products) {
+        inactiveProductsBody.innerHTML = '';
+        
+        if (products.length === 0) {
+            inactiveProductsBody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align:center; color:red;">No inactive products found</td>
+                </tr>
+            `;
+            return;
+        }
+        
+        products.forEach(product => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${product.prod_name}</td>
+                <td>${product.prod_sku}</td>
+                <td>${product.branch_name}</td>
+                <td>${product.last_updated}</td>
+                <td>
+                    <button type="button" class="reactivate-product" data-product-id="${product.prod_id}">Reactivate</button>
+                </td>
+            `;
+            inactiveProductsBody.appendChild(row);
+        });
+        
+        // Add event listeners to reactivate buttons
+        document.querySelectorAll('.reactivate-product').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const productId = btn.getAttribute('data-product-id');
+                const productName = btn.closest('tr').children[0].innerText;
+                
+                if (confirm(`Are you sure you want to reactivate "${productName}"?`)) {
+                    await reactivateProduct(productId, productName);
+                }
+            });
+        });
+    }
+
+    async function reactivateProduct(productId, productName) {
+        try {
+            const response = await fetch("/inventory/reactivate_product/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    user_id: userId
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                alert(data.message);
+
+                const inactiveRow = document.querySelector(`.reactivate-product[data-product-id="${productId}"]`).closest('tr');
+                inactiveRow.remove();
+
+                const inactiveRows = inactiveProductsBody.querySelectorAll('tr[data-product-id]');
+                if (inactiveRows.length === 0) {
+                inactiveProductsBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align:center; color:red;">No inactive products found</td>
+                    </tr>
+                `;
+            }
+            location.reload();
+                       
+            } else {
+                alert("Error: " + (data.error || "Failed to reactivate product"));
+            }
+        } catch (err) {
+            alert("Failed to reactivate product: " + err.message);
+            console.error("Reactivate product error:", err);
+        }
+    }
+
+    // search functionality for inactive products
+    inactiveSearchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        const rows = inactiveProductsBody.querySelectorAll('tr');
+        
+        rows.forEach(row => {
+            if (row.children.length < 5) return; // Skip the "no products" row
+            
+            const productName = row.children[0].innerText.toLowerCase();
+            const productSKU = row.children[1].innerText.toLowerCase();
+            
+            if (productName.includes(searchTerm) || productSKU.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    // close inactive products overlay
+    overlayInactiveClose.addEventListener('click', () => {
+        overlayInactive.style.display = 'none';
+    });
+
+    overlayInactive.addEventListener('click', (e) => {
+        if (e.target === overlayInactive) {
+            overlayInactive.style.display = 'none';
         }
     });
 </script>
