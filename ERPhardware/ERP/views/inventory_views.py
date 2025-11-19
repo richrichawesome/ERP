@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from ..models import Inventory, Product_Category, Product_Specification, Inventory_Transaction, User, Product, Price_History
+from ..models import Inventory, Product_Category, Product_Specification, Inventory_Transaction, User, Product, Price_History, Branch
 from django.utils import timezone
 import json
 
@@ -259,6 +259,223 @@ def edit_product(request):
             "success": False,
             "error": str(e)
         })
+
+@csrf_exempt
+def add_product(request):
+    try:
+        data = json.loads(request.body)
+        
+        # get data
+        prod_name = data.get("prod_name")
+        prod_desc = data.get("prod_desc")
+        prod_unit_of_measure = data.get("prod_unit_of_measure")
+        prod_current_cost = data.get("prod_current_cost")
+        prod_retail_price = data.get("prod_retail_price")
+        prod_reorder_threshold = data.get("prod_reorder_threshold")
+        prod_sku = data.get("prod_sku")
+        category_id = data.get("category_id")
+        branch_id = data.get("branch_id")
+        spec_name = data.get("spec_name")
+        spec_value = data.get("spec_value")
+        user_id = data.get("user_id")
+        
+        # validate fields
+        if not all([prod_name, prod_current_cost, prod_retail_price, prod_reorder_threshold, prod_sku, category_id, branch_id]):
+            return JsonResponse({
+                "success": False,
+                "error": "All required fields must be filled"
+            })
+        
+        # user
+        if not user_id:
+            user_id = request.session.get('user_id')
+        
+        if not user_id:
+            return JsonResponse({
+                "success": False,
+                "error": "User not authenticated"
+            })
+        
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return JsonResponse({
+                "success": False,
+                "error": "User not found"
+            })
+        
+        # category
+        try:
+            category = Product_Category.objects.get(pk=category_id)
+        except Product_Category.DoesNotExist:
+            return JsonResponse({
+                "success": False,
+                "error": "Category not found"
+            })
+        
+        # branch
+        try:
+            branch = Branch.objects.get(pk=branch_id)
+        except Branch.DoesNotExist:
+            return JsonResponse({
+                "success": False,
+                "error": "Branch not found"
+            })
+        
+        # SKU validation
+        if Product.objects.filter(prod_sku=prod_sku).exists():
+            return JsonResponse({
+                "success": False,
+                "error": "SKU already exists"
+            })
+        
+        # create product
+        product = Product.objects.create(
+            prod_name=prod_name,
+            prod_desc=prod_desc or "",
+            prod_unit_of_measure=prod_unit_of_measure or "pcs",
+            prod_current_cost=float(prod_current_cost),
+            prod_retail_price=float(prod_retail_price),
+            prod_reorder_threshold=int(prod_reorder_threshold),
+            prod_sku=prod_sku,
+            category=category,
+            prod_is_active=True
+        )
+        
+        # create inventory record for this product in the selected branch
+        inventory = Inventory.objects.create(
+            product=product,
+            branch=branch,
+            user=user,
+            quantity_on_hand=0,
+            last_updated_at=timezone.now().date()
+        )
+        
+        # create price history record
+        Price_History.objects.create(
+            product=product,
+            cost_price=float(prod_current_cost),
+            retail_price=float(prod_retail_price),
+            effective_date=timezone.now().date(),
+            user=user
+        )
+        
+        # create product specification provided
+        if spec_name and spec_value:
+            Product_Specification.objects.create(
+                product=product,
+                spec_name=spec_name,
+                spec_value=spec_value
+            )
+        
+        return JsonResponse({
+            "success": True,
+            "message": "Product added successfully",
+            "product": {
+                "prod_id": product.prod_id,
+                "prod_name": product.prod_name,
+                "prod_sku": product.prod_sku,
+                "inventory_id": inventory.inventory_id
+            }
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            "success": False,
+            "error": "Invalid JSON"
+        })
+    except ValueError as e:
+        return JsonResponse({
+            "success": False,
+            "error": f"Invalid value: {str(e)}"
+        })
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        })
+
+@csrf_exempt
+def remove_product(request):
+    try:
+        data = json.loads(request.body)
+        
+        # get data
+        product_id = data.get("product_id")
+        user_id = data.get("user_id")
+        
+        # validate fields
+        if not product_id:
+            return JsonResponse({
+                "success": False,
+                "error": "Product ID is required"
+            })
+        
+        # get user
+        if not user_id:
+            user_id = request.session.get('user_id')
+        
+        if not user_id:
+            return JsonResponse({
+                "success": False,
+                "error": "User not authenticated"
+            })
+        
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return JsonResponse({
+                "success": False,
+                "error": "User not found"
+            })
+        
+        # get product
+        try:
+            product = Product.objects.get(pk=product_id)
+        except Product.DoesNotExist:
+            return JsonResponse({
+                "success": False,
+                "error": "Product not found"
+            })
+        
+        # validate product that has inventory records with quantity > 0
+        inventory_with_stock = Inventory.objects.filter(
+            product=product, 
+            quantity_on_hand__gt=0
+        ).exists()
+        
+        if inventory_with_stock:
+            return JsonResponse({
+                "success": False,
+                "error": "Cannot remove product with existing stock. Please stock out all quantities first."
+            })
+        
+        # store product info for response before deletion
+        product_info = {
+            "prod_id": product.prod_id,
+            "prod_name": product.prod_name,
+            "prod_sku": product.prod_sku
+        }
+        
+        # delete the product
+        product.delete()
+        
+        return JsonResponse({
+            "success": True,
+            "message": f"Product '{product_info['prod_name']}' has been removed successfully",
+            "removed_product": product_info
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            "success": False,
+            "error": "Invalid JSON"
+        })
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        })
     
 def inventory(request):
     user_id = request.session.get('user_id')
@@ -271,36 +488,107 @@ def inventory(request):
         'branch'
     ).prefetch_related(
         'product__product_specification_set'
-    ).all().order_by('product__prod_name')
+    ).filter(product__prod_is_active=True).order_by('product__prod_name') #set main inventory to show only is_active == True
     
     categories = Product_Category.objects.all()
+    branches = Branch.objects.filter(branch_is_active=True)
     
     return render(request, "main/top_management_dashboard.html", {
         "section": "inventory", 
         "products": inventories, 
         "categories": categories,
+        "branches": branches,
         "user_id": user_id  
     })
+@csrf_exempt
+def get_inactive_products(request):
+    try:
+        # Get all inactive products with their inventory information
+        inactive_inventories = Inventory.objects.select_related(
+            'product', 
+            'branch'
+        ).filter(product__prod_is_active=False).order_by('product__prod_name')
+        
+        inactive_products = []
+        for inventory in inactive_inventories:
+            inactive_products.append({
+                'prod_id': inventory.product.prod_id,
+                'prod_name': inventory.product.prod_name,
+                'prod_sku': inventory.product.prod_sku,
+                'branch_name': inventory.branch.branch_name,
+                'last_updated': inventory.last_updated_at.strftime('%Y-%m-%d') if inventory.last_updated_at else 'Never',
+                'inventory_id': inventory.inventory_id
+            })
+        
+        return JsonResponse({
+            "success": True,
+            "inactive_products": inactive_products
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        })
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-   
+@csrf_exempt
+def reactivate_product(request):
+    try:
+        data = json.loads(request.body)
+        
+        product_id = data.get("product_id")
+        user_id = data.get("user_id")
+        
+        if not product_id:
+            return JsonResponse({
+                "success": False,
+                "error": "Product ID is required"
+            })
+        
+        # Get user
+        if not user_id:
+            user_id = request.session.get('user_id')
+        
+        if not user_id:
+            return JsonResponse({
+                "success": False,
+                "error": "User not authenticated"
+            })
+        
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return JsonResponse({
+                "success": False,
+                "error": "User not found"
+            })
+        
+        # Get product
+        try:
+            product = Product.objects.get(pk=product_id)
+        except Product.DoesNotExist:
+            return JsonResponse({
+                "success": False,
+                "error": "Product not found"
+            })
+        
+        # Reactivate the product
+        product.prod_is_active = True
+        product.prod_updated_at = timezone.now()
+        product.save()
+        
+        return JsonResponse({
+            "success": True,
+            "message": f"Product '{product.prod_name}' has been reactivated successfully"
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            "success": False,
+            "error": "Invalid JSON"
+        })
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        })
