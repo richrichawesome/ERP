@@ -1,0 +1,37 @@
+<div class="sidebar" id="sidebar">
+    <div class="logo-section">
+        <div class="logo-content">
+            <div class="logo-title">OCE StockFlow</div>
+            <div class="logo-subtitle">Purchasing & Supplier Management</div>
+        </div>
+        <button class="toggle-btn" id="toggleBtn">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+
+    <div class="nav-menu">
+        <a href="{% url 'track_requisition' %}" class="nav-item {% if active_page in 'track_requisition inventory_replenishment internal_transfer' %}active{% endif %}">
+            <div class="nav-icon"><i class="fas fa-th-large"></i></div>
+            <span>Requisitions</span>
+        </a>
+
+    </div>
+
+    <div class="user-section">
+        <div class="user-info">
+            <div class="user-avatar"><i class="fas fa-user"></i></div>
+            <div class="user-details">
+                <div class="user-name">{{ user.user_fname }} {{ user.user_lname }}</div>
+                <div class="user-role">{{ user.role }}</div>
+                <div class="user-branch">{{ user.branch }}</div>
+            </div>
+        </div>
+
+         <button class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Log Out</span>
+            </button>
+       
+    </div>
+
+</div>

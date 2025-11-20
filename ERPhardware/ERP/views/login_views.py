@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from ..models import User
 from django.utils.timezone import now #para sa last_login field
+from Requisition import *
 
 def login(request):
     if request.method == "POST":
@@ -25,7 +26,7 @@ def login(request):
                     return redirect('top_management_dashboard')
                 
                 elif role_id == 2:
-                    return redirect('branch_manager_dashboard')
+                    return redirect('track_requisition')
                 
                 elif role_id == 3:
                     return redirect('purchasing_staff_dashboard')
