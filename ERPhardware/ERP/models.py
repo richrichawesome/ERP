@@ -1,3 +1,4 @@
+#ERP.models (Inventory, Roles, User, Branch)
 from django.db import models
 
 #DATABASE
