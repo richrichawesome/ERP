@@ -8,7 +8,7 @@ urlpatterns = [
     path('add_users/', views.add_users, name="add_users"),
     # path("branch_manager_dashboard/", views.branch_manager_dashboard, name="branch_manager_dashboard"),
     path('track_requisition/', track_requisition_page, name="track_requisition"),
-    path('add_users/', views.add_users, name="add_users"), #urls from top_management_dashboard == make views -> add_users_views.py
+    # path('add_users/', views.add_users, name="add_users"), #urls from top_management_dashboard == make views -> add_users_views.py
     # path("branch_manager_dashboard/", views.branch_manager_dashboard, name="branch_manager_dashboard"),
     path("purchasing_staff_dashboard/", views.purchasing_staff_dashboard, name="purchasing_staff_dashboard"),
     path("property_custodian_dashboard/", views.property_custodian_dashboard, name="property_custodian_dashboard"),
