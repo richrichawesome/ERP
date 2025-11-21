@@ -31,6 +31,8 @@ class RequisitionAdmin(admin.ModelAdmin):
         'get_requisition_number',
         'requested_by', 
         'branch', 
+        'sender_user',          # NEW
+        'sender_branch',        # NEW
         'req_type', 
         'req_main_status',
         'req_substatus',
@@ -43,6 +45,7 @@ class RequisitionAdmin(admin.ModelAdmin):
         'req_main_status',
         'req_substatus',
         'branch',
+        'sender_branch', 
         'req_requested_date'
     )
     
@@ -51,7 +54,11 @@ class RequisitionAdmin(admin.ModelAdmin):
         'requested_by__username',
         'requested_by__user_fname',
         'requested_by__user_lname',
-        'branch__branch_name'
+        'branch__branch_name',
+        'sender_user__username',        # NEW
+        'sender_user__user_fname',      # NEW
+        'sender_user__user_lname',      # NEW
+        'sender_branch__branch_name'    # NEW
     )
     
     readonly_fields = ('req_id', 'req_requested_date')
@@ -62,6 +69,8 @@ class RequisitionAdmin(admin.ModelAdmin):
                 'req_id',
                 'requested_by',
                 'branch',
+                'sender_user',        # NEW
+                'sender_branch',      # NEW
                 'req_type'
             )
         }),

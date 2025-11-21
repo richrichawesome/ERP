@@ -10,6 +10,23 @@ class Requisition(models.Model):
     requested_by = models.ForeignKey(User, on_delete=models.CASCADE)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
 
+    # NEW — sender fields
+    sender_user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="requisition_sender_user"
+    )
+
+    sender_branch = models.ForeignKey(
+        Branch,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="requisition_sender_branch"
+    )
+
     req_type = models.CharField(max_length=100, choices=REQ_TYPE_CHOICES)
 
     # Main status + sub-status combo
