@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from ..models import Inventory, Product_Category, Product_Specification, Inventory_Transaction, User, Product, Price_History, Branch
+from ..models import Inventory, Product_Category, Product_Specification, Inventory_Transaction, User, Product, Price_History, Branch, Role
 from django.utils import timezone
 import json
 
@@ -478,9 +478,14 @@ def remove_product(request):
         })
     
 def inventory(request):
+    print("Inventory view called!")
     user_id = request.session.get('user_id')
+    
+    user = User.objects.get(pk=user_id)
     if not user_id:
         return redirect('login')
+    print(user_id)
+    
         
     inventories = Inventory.objects.select_related(
         'product', 
@@ -493,12 +498,14 @@ def inventory(request):
     categories = Product_Category.objects.all()
     branches = Branch.objects.filter(branch_is_active=True)
     
-    return render(request, "main/top_management_dashboard.html", {
+    return render(request, "main/inventory.html", {
         "section": "inventory", 
         "products": inventories, 
         "categories": categories,
         "branches": branches,
-        "user_id": user_id  
+        "user_id": user_id,
+        "active_page": "inventory",
+        "user": user
     })
 @csrf_exempt
 def get_inactive_products(request):
