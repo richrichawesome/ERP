@@ -1,0 +1,340 @@
+{% extends "main/base.html" %}
+{% block page_content %}
+<style>
+    .content-header {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+    }
+
+    .content-header h1 {
+        color: #030213;
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .content-header p {
+        color: #717182;
+        font-size: 14px;
+    }
+
+    /* Filter and Search styles */
+    .filters-container {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 15px;
+        align-items: end;
+        flex-wrap: wrap;
+    }
+
+    .filter-item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .filter-item label {
+        color: #030213;
+        font-weight: 500;
+        font-size: 14px;
+    }
+
+    .filter-item select,
+    .filter-item input {
+        padding: 8px 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #f3f3f5;
+        color: #030213;
+        font-size: 14px;
+        min-width: 200px;
+    }
+
+    .filter-item select:focus,
+    .filter-item input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }
+
+    /* Card styles */
+    .card {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+    }
+
+    .card h2 {
+        color: #030213;
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    /* Button styles */
+    .btn {
+        padding: 8px 16px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #2563eb;
+        color: #ffffff;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 14px;
+        border: none;
+        height: fit-content;
+    }
+
+    .btn:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(3, 2, 19, 0.1);
+    }
+
+    .btn-secondary {
+        background: #ffffff;
+        color: #030213;
+        border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-secondary:hover {
+        background: #f3f3f5;
+    }
+
+    .btn-small {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    /* Status badges */
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-approved {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-rejected {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* Table styles */
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+        margin-top: 15px;
+    }
+
+    .table th {
+        background: #030213;
+        color: #ffffff;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .table td {
+        padding: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .table tbody tr:nth-child(even) {
+        background: #f8fafc;
+    }
+
+    .table tbody tr:hover {
+        background: #e9ebef;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .filter-group {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .filter-item {
+            width: 100%;
+        }
+        
+        .filter-item select,
+        .filter-item input {
+            min-width: 100%;
+        }
+        
+        .table {
+            font-size: 14px;
+        }
+        
+        .table th,
+        .table td {
+            padding: 8px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .content-header {
+            padding: 15px;
+        }
+        
+        .filters-container {
+            padding: 15px;
+        }
+        
+        .card {
+            padding: 15px;
+        }
+        
+        .table {
+            display: block;
+            overflow-x: auto;
+        }
+    }
+</style>
+<div class="card">
+                <h2>Requisition Management</h2>
+                <p>Manage and track requisition requests.</p>
+                
+                <!-- Filters and Search -->
+                <div class="filters-container">
+                    <div class="filter-group">
+                        <div class="filter-item">
+                            <label>Requisition Type:</label>
+                            <select name="requisition-type" id="requisition-type">
+                                <option value="all" selected>All Types</option>
+                                <option value="INV_REPLENISHMENT">Inventory Replenishment</option>
+                                <option value="INTERNAL_TRANSFER">Internal Transfer</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label>Status:</label>
+                            <select name="requisition-status" id="requisition-status">
+                                <option value="all" selected>All Status</option>
+                                <option value="PENDING_CUSTODIAN">Pending Custodian</option>
+                                <option value="PENDING_TOP_MGMT">Pending Top Management</option>
+                                <option value="APPROVED_REQUISITION">Approved</option>
+                                <option value="PO_APPROVAL">PO Approval</option>
+                                <option value="TO_BE_DELIVERED">To be Delivered</option>
+                                <option value="INSPECTION">Inspection</option>
+                                <option value="FULFILLED">Fulfilled</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label>Search:</label>
+                            <input type="text" name="requisition-search" id="requisition-search" placeholder="Search by ID or requester...">
+                        </div>
+                        
+                        <button class="btn" onclick="filterRequisitions()">Apply Filters</button>
+                    </div>
+                </div>
+
+                <!-- Requisition table -->
+                <div style="margin-top: 20px;">
+                    <h3>Requisitions</h3>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Req. ID</th>
+                                <th>Type</th>
+                                <th>Date Requested</th>
+                                <th>Requested By</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for requisition in requisitions %}
+                            <tr>
+                                <td>REQ-{{ requisition.req_id }}</td>
+                                <td>{{ requisition.get_req_type_display }}</td>
+                                <td>{{ requisition.req_requested_date|date:"M d, Y" }}</td>
+                                <td>{{ requisition.requested_by.user_fname }} {{ requisition.requested_by.user_lname }}</td>
+                                <td>
+                                    <span class="status-badge 
+                                        {% if requisition.req_main_status == 'PENDING_CUSTODIAN' %}status-pending
+                                        {% elif requisition.req_main_status == 'APPROVED_REQUISITION' %}status-approved
+                                        {% else %}status-pending{% endif %}">
+                                        {{ requisition.get_req_main_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'requisition_detail' requisition.req_id %}" class="btn btn-small">
+                                        View
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: #717182; padding: 20px;">
+                                    No requisitions found.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+<script>
+        function filterRequisitions() {
+            const typeFilter = document.getElementById('requisition-type').value;
+            const statusFilter = document.getElementById('requisition-status').value;
+            const searchFilter = document.getElementById('requisition-search').value.toLowerCase();
+            
+            // You can implement AJAX filtering here or reload the page with filters
+            window.location.href = `?section=requisition&type=${typeFilter}&status=${statusFilter}&search=${searchFilter}`;
+        
+
+        // Apply filters from URL parameters on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const type = urlParams.get('type');
+            const status = urlParams.get('status');
+            const search = urlParams.get('search');
+            
+            if (type) document.getElementById('requisition-type').value = type;
+            if (status) document.getElementById('requisition-status').value = status;
+            if (search) document.getElementById('requisition-search').value = search;
+            
+        });
+    }
+</script>
+{% endblock %}

@@ -1,11 +1,13 @@
-<style>
+{% extends "main/base.html" %}
+{% block page_content %}
+<style> 
     .overlay {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0,0,0,0.6);
+        background: rgba(3, 2, 19, 0.8);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -13,40 +15,318 @@
     }
 
     .overlay-content {
-        background: white;
+        background: #ffffff;
         padding: 25px;
         border-radius: 8px;
         width: 350px;
         text-align: center;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 6px rgba(3, 2, 19, 0.1);
     }
 
     .search-bar {
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
     .search-bar label {
         font-weight: bold;
+        color: #030213;
     }
 
     .search-bar-textbox {
         padding: 8px 12px;
-        border: 1px solid #ccc;
+        border: 1px solid rgba(0, 0, 0, 0.1);
         border-radius: 4px;
         flex: 1;
         max-width: 300px;
         font-size: 14px;
+        background: #f3f3f5;
+        color: #030213;
     }
 
     .search-bar-textbox:focus {
         outline: none;
-        border-color: #222;
-        box-shadow: 0 0 0 2px rgba(34, 34, 34, 0.1);
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }
+
+    h1 {
+        color: #030213;
+        margin-bottom: 20px;
+    }
+
+    .branch-tabs {
+        margin-bottom: 15px;
+        display: flex;
+        gap: 8px;
+    }
+
+    .branch-btn {
+        padding: 8px 16px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #ffffff;
+        color: #030213;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .branch-btn:hover {
+        background: #e9ebef;
+        border-color: #2563eb;
+    }
+
+    .branch-btn.active {
+        background: #2563eb;
+        color: #ffffff;
+        border-color: #2563eb;
+    }
+
+    .category-navbar {
+        margin-bottom: 20px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .category-btn {
+        padding: 8px 16px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #ffffff;
+        color: #030213;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .category-btn:hover {
+        background: #e9ebef;
+        border-color: #2563eb;
+    }
+
+    .category-btn.active {
+        background: #2563eb;
+        color: #ffffff;
+        border-color: #2563eb;
+    }
+
+    .add-remove-btn {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .add-product-btn, .remove-product-btn, .inactive-product-btn {
+        padding: 10px 16px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #2563eb;
+        color: #ffffff;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .add-product-btn:hover, .remove-product-btn:hover, .inactive-product-btn:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    thead {
+        background: #030213;
+        color: #ffffff;
+    }
+
+    th {
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    td {
+        padding: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        background: #ffffff;
+    }
+
+    tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    tbody tr:nth-child(even) {
+        background: #f8fafc;
+    }
+
+    tbody tr:nth-child(even):hover {
+        background: #e9ebef;
+    }
+
+    .stock-in, .stock-out, .edit {
+        padding: 6px 12px;
+        margin: 2px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #ffffff;
+        color: #030213;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 12px;
+    }
+
+    .stock-in:hover {
+        background: #2563eb;
+        color: #ffffff;
+        border-color: #2563eb;
+    }
+
+    .stock-out:hover {
+        background: #d4183d;
+        color: #ffffff;
+        border-color: #d4183d;
+    }
+
+    .edit:hover {
+        background: #94a3b8;
+        color: #ffffff;
+        border-color: #94a3b8;
+    }
+
+    button {
+        padding: 8px 16px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #2563eb;
+        color: #ffffff;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    button:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+    }
+
+    button:disabled {
+        background: #94a3b8;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    input[type="text"], input[type="number"], select {
+        padding: 8px 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #f3f3f5;
+        color: #030213;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    input[type="text"]:focus, input[type="number"]:focus, select:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }
+
+    input[type="checkbox"] {
+        margin-right: 8px;
+        accent-color: #2563eb;
+    }
+
+    label {
+        color: #030213;
+        font-weight: 500;
+        display: block;
+        margin-bottom: 5px;
+        text-align: left;
+    }
+
+    .reactivate-product {
+        background: #2563eb;
+        color: #ffffff;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .reactivate-product:hover {
+        background: #1d4ed8;
+    }
+
+    /* Inactive products overlay specific styles */
+    #overlay-inactive .overlay-content {
+        width: 80%;
+        max-width: 1000px;
+    }
+
+    #inactive-products-body tr:hover {
+        background: #f8fafc;
+    }
+
+    /* Error states */
+    .error {
+        color: #d4183d;
+        background: #fff5f5;
+        border: 1px solid #fed7d7;
+        padding: 8px;
+        border-radius: 4px;
+        margin: 10px 0;
+    }
+
+    /* Success states */
+    .success {
+        color: #22543d;
+        background: #f0fff4;
+        border: 1px solid #c6f6d5;
+        padding: 8px;
+        border-radius: 4px;
+        margin: 10px 0;
+    }
+
+    /* Loading states */
+    .loading {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .overlay-content {
+            width: 90%;
+            margin: 20px;
+        }
+        
+        .branch-tabs, .category-navbar {
+            flex-wrap: wrap;
+        }
+        
+        .add-remove-btn {
+            flex-direction: column;
+        }
+        
+        table {
+            font-size: 14px;
+        }
+        
+        th, td {
+            padding: 8px;
+        }
     }
 </style>
-<h1>Inventory</h1>
+    <h1>Inventory</h1>
             <div class="branch-tabs" style="margin-bottom: 15px;">
                 <button class="branch-btn active" data-branch="all">All Branches</button>
                 <button class="branch-btn" data-branch="1">Branch 1</button>
@@ -886,3 +1166,5 @@
         }
     });
 </script>
+</div>
+{% endblock %}

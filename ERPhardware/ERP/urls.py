@@ -19,4 +19,9 @@ urlpatterns = [
     path('inventory/remove_product/', views.remove_product, name='remove_product'), #Note: this url is for the REMOVE product for the inventory itself [REMOVE PRODUCT]
     path('inventory/get_inactive_products/', views.get_inactive_products, name='get_inactive_products'),
     path('inventory/reactivate_product/', views.reactivate_product, name='reactivate_product'),
+    path('property-custodian/', views.property_custodian_dashboard, name='property_custodian_dashboard'), #property custodian
+    path('requisition/', views.property_custodian_dashboard, name='requisition'), #Note: requisition html pero sa property_custodian_dashboard na views
+    path('requisition_detail/<int:req_id>/', views.requisition_detail, name='requisition_detail'),
+    path('requisition/<int:req_id>/approve/', views.approve_requisition, name='approve_requisition'),
+    path('requisition/<int:req_id>/approve-management/', views.approve_to_management, name='approve_to_management'),
 ]
