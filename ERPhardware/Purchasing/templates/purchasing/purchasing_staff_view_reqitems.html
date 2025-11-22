@@ -1,0 +1,45 @@
+{% extends "purchasing/base.html" %}
+
+{% block page_content %}
+   <div class="req-items-top-bar">
+        <a href="{% url 'purchasing_staff_approved_req' %}" class="back-btn">
+            ← Back
+        </a>
+
+        <button class="create-rfq-btn">
+            Create RFQ
+        </button>
+    </div>
+
+
+    <h2>Requisition #{{ requisition.req_id }}</h2>
+    <p>Requested By: {{ requisition.requested_by.user_fname }} {{ requisition.requested_by.user_lname }}</p>
+    <p>Branch: {{ requisition.branch.branch_name }}</p>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Item ID</th>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>UOM</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for item in req_items %}
+            <tr>
+                <td>{{ item.req_item_id }}</td>
+                <td>{{ item.product.prod_name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.uom }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align:center;">No items found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+{% endblock %}
