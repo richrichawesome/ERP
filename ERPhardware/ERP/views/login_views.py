@@ -19,6 +19,7 @@ def login(request):
             if user.is_active:
                 user.last_login = now()
                 user.save()
+                print(f"Role ID: {user.role.role_id if user.role else 'None'}")
 
                 request.session['user_id'] = user.pk
                 role_id = user.role.role_id

@@ -1,8 +1,9 @@
-# Requisition/models.py
+ # Requisition/models.py
 
 from django.db import models
 from ERP.models import User, Product, Branch
 from .constants import *
+
 
 class Requisition(models.Model):
     req_id = models.AutoField(primary_key=True)

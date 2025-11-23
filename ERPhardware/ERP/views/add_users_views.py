@@ -5,6 +5,8 @@ from django.utils.timezone import now #para sa last_login field
 
 def add_users(request):
     branches = Branch.objects.all()
+    user_id = request.session.get('user_id')
+    user = User.objects.get(pk=user_id)
     if request.method == "POST":
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -38,4 +40,4 @@ def add_users(request):
         messages.success(request, f"User '{username}' successfully created!")
         return redirect('top_management_dashboard')
         
-    return render(request, "main/top_management_dashboard.html", {"section": "add_users", "branches": branches})
+    return render(request, "main/add_users.html", {"section": "add_users", "branches": branches, "active_page": "add_users", "user": user})
