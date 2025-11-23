@@ -28,6 +28,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+LOGIN_URL = '/'  #ari cheeeeennnn
+
 
 # Application definition
 
@@ -44,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'ERP',
     'Requisition',
+    'Purchasing',
 ]
 
 MIDDLEWARE = [
@@ -84,7 +87,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'ERP',         # Database name
         'USER': 'postgres',        # PostgreSQL username
-        'PASSWORD': '220067981',      # PostgreSQL password
+        'PASSWORD': 'chenchen25',      # PostgreSQL password
         'HOST': 'localhost',           # Use '127.0.0.1' if needed
         'PORT': '5432',                # Default PostgreSQL port
     }

@@ -1,4 +1,4 @@
-# Requisition/models.py
+ # Requisition/models.py
 
 from django.db import models
 from ERP.models import User, Product, Branch
