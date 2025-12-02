@@ -1,4 +1,6 @@
 {% extends "requisition/base.html" %}
+{% load static %}
+<!-- Requisition\templates\requisition\inventory_replenishment_form.html -->
 
 {% block page_content %}
 
@@ -1092,7 +1094,8 @@ input[type="checkbox"] {
 
 </style>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
+<script src="{% static 'js/jquery.js' %}"></script>
 <script>
 // Global cart storage
 let cart = [];

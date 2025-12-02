@@ -26,7 +26,8 @@ SECRET_KEY = 'django-insecure-obf$0wnzghghr43nn6m2xxnv19n=$2*280ikt8s)7ru6+a)7xf
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+
 
 LOGIN_URL = '/'  #ari cheeeeennnn
 
@@ -87,7 +88,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'ERP',         # Database name
         'USER': 'postgres',        # PostgreSQL username
-        'PASSWORD': 'chenchen25',      # PostgreSQL password
+        'PASSWORD': 'Danesse2005',      # PostgreSQL password
         'HOST': 'localhost',           # Use '127.0.0.1' if needed
         'PORT': '5432',                # Default PostgreSQL port
     }
@@ -128,7 +129,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
@@ -138,3 +139,16 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# settings.py
+SESSION_COOKIE_NAME = 'erphardware_session'
+SESSION_COOKIE_SECURE = False     # must be False on HTTP
+SESSION_COOKIE_HTTPONLY = False   # optional: makes cookie visible to JS
+SESSION_COOKIE_PATH = '/'
+SESSION_COOKIE_SAMESITE = 'Lax'   # 'Strict' can prevent it on localhost
+CSRF_COOKIE_NAME = 'erphardware_csrftoken'
+CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_PATH = '/'
+CSRF_COOKIE_SAMESITE = 'Lax'
+

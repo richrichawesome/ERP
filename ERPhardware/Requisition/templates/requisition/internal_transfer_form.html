@@ -1,5 +1,6 @@
 {% extends "requisition/base.html" %}
-
+{% load static %}
+<!-- Requisition\templates\requisition\internal_transfer_form.html -->
 {% block page_content %}
 
 <div class="requisition-container">
@@ -1136,7 +1137,8 @@ input[type="checkbox"] {
 }
 </style>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
+<script src="{% static 'js/jquery.js' %}"></script>
 <script>
 let cart = [];
 let currentModalProduct = null;

@@ -1,3 +1,5 @@
+# Purchasing/purchasing_staff_sup_manage_views.py
+
 from django.shortcuts import render, redirect
 from ERP.models import User
 
