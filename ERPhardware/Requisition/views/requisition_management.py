@@ -1,6 +1,7 @@
 import json
+import os
 from django.shortcuts import render, redirect
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, FileResponse, Http404
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -12,21 +13,33 @@ from ERP.models import Inventory, Product, User, Product_Specification
 from Requisition.models import Requisition, RequisitionItem, RequisitionStatusTimeline
 from Requisition.utils import generate_requisition_pdf
 
-# def inventory_items_view(request):
-#     inventory_items = Inventory.objects.select_related('product').all()
-    
-#     # Build a dictionary of product_id -> spec dictionary
-#     product_specs = {}
-#     for item in inventory_items:
-#         specs_qs = Product_Specification.objects.filter(product=item.product)
-#         specs_dict = {spec.spec_name: spec.spec_value for spec in specs_qs}
-#         product_specs[item.product.prod_id] = specs_dict
-    
-#     context = {
-#         'inventory_items': inventory_items,
-#         'product_specs': product_specs,
-#     }
-#     return render(request, 'requisition/inventory_list.html', context)
+
+def serve_rf_file(request, filename):
+    """
+    Serve RF (Requisition Form) PDF files from Requisition/media/rfs directory
+    """
+    try:
+        from django.apps import apps
+        requisition_app_path = apps.get_app_config('Requisition').path
+        file_path = os.path.join(requisition_app_path, 'media', 'rfs', filename)
+        
+        print(f"📁 Looking for file at: {file_path}")
+        
+        if not os.path.exists(file_path):
+            print(f"❌ File not found: {file_path}")
+            raise Http404("RF file not found")
+        
+        print(f"✅ Serving file: {filename}")
+        return FileResponse(
+            open(file_path, 'rb'),
+            content_type='application/pdf',
+            as_attachment=True,
+            filename=filename
+        )
+    except Exception as e:
+        print(f"❌ Error serving RF file: {e}")
+        raise Http404("RF file not found")
+
 
 def inventory_items_view(request):
     inventory_items = Inventory.objects.select_related('product').all()
