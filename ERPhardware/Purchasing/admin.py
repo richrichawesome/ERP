@@ -90,3 +90,16 @@ class PurchaseOrderItemAdmin(admin.ModelAdmin):
     list_display = ("po_item_id", "purchase_order", "product", "po_item_ordered_quantity", "po_item_unit_price", "po_item_line_total")
     search_fields = ("purchase_order__po_id", "product__prod_name")
     list_filter = ("purchase_order",)
+
+
+# # Register models
+# admin.site.register(RFQ)
+# admin.site.register(RFQ_Item)
+# admin.site.register(Supplier)
+# admin.site.register(Supplier_Product)
+# admin.site.register(RFQ_Supplier)
+# admin.site.register(Supplier_Category)
+# admin.site.register(Supplier_Quotation)
+# admin.site.register(Supplier_Quotation_Item)
+# admin.site.register(Purchase_Order)
+# admin.site.register(Purchase_Order_Item)

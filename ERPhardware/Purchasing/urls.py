@@ -1,64 +1,13 @@
-# from django.urls import path
-# from . import views
-
-# urlpatterns = [
-#     path("purchasing_staff_dashboard/", views.purchasing_staff_dashboard, name="purchasing_staff_dashboard"),
-#     path("purchasing_staff_approved_req/", views.purchasing_staff_approved_req, name="purchasing_staff_approved_req"),
-
-#     # path("create_po_selection/", views.create_po_selection, name="create_po_selection"),
-#     path('create-po/selection/', views.create_po_selection, name='create_po_selection'),
-#     path('create-po/supplier-selection/', views.create_po_supplier_selection, name='create_po_supplier_selection'),
-#     path('create-po/summary/', views.create_po_summary, name='create_po_summary'),
-
-#     path("purchasing_staff_sup_manage/", views.purchasing_staff_sup_manage, name="purchasing_staff_sup_manage"),
-#     path("purchasing_staff_inventory/", views.purchasing_staff_inventory, name="purchasing_staff_inventory"),
-#     path("purchasing_staff_reports/", views.purchasing_staff_reports, name="purchasing_staff_reports"),
-#     path('requisition/<int:req_id>/create-rfq/', views.create_rfq, name='create_rfq'),
-#     path('requisition/<int:req_id>/input-quotation/', views.input_quotation, name='input_quotation'),
-
-#     # NEW URLS - Add these:
-#     path('add-supplier/', views.input_quotation_views.add_supplier, name='add_supplier'),
-#     path('requisition/<int:req_id>/save-quotation/', views.input_quotation_views.save_quotation, name='save_quotation'),
-
-# ]   
-
-
-
-
-# Purchasing/urls.py
-# from django.urls import path
-# from . import views
-
-# urlpatterns = [
-#     path("purchasing_staff_dashboard/", views.purchasing_staff_dashboard, name="purchasing_staff_dashboard"),
-#     path("purchasing_staff_approved_req/", views.purchasing_staff_approved_req, name="purchasing_staff_approved_req"),
-
-#     # PO Creation URLs
-#     path('create-po/selection/', views.create_po_selection, name='create_po_selection'),
-#     path('create-po/supplier-selection/', views.create_po_supplier_selection, name='create_po_supplier_selection'),
-#     path('create-po/summary/', views.create_po_summary, name='create_po_summary'),
-    
-#     # ADD THIS URL for the AJAX call
-#     path('api/consolidated-items/', views.get_consolidated_items, name='get_consolidated_items'),
-
-#     path("purchasing_staff_sup_manage/", views.purchasing_staff_sup_manage, name="purchasing_staff_sup_manage"),
-#     path("purchasing_staff_inventory/", views.purchasing_staff_inventory, name="purchasing_staff_inventory"),
-#     path("purchasing_staff_reports/", views.purchasing_staff_reports, name="purchasing_staff_reports"),
-#     path('requisition/<int:req_id>/create-rfq/', views.create_rfq, name='create_rfq'),
-#     path('requisition/<int:req_id>/input-quotation/', views.input_quotation, name='input_quotation'),
-
-#     # Quotation URLs
-#     path('add-supplier/', views.add_supplier, name='add_supplier'),
-#     path('requisition/<int:req_id>/save-quotation/', views.save_quotation, name='save_quotation'),
-# ]
 
 
 
 # Purchasing/urls.py
 from django.urls import path
 from . import views
+from .views import supplier_management_views
 
 urlpatterns = [
+    # Dashboard and existing pages
     path("purchasing_staff_dashboard/", views.purchasing_staff_dashboard, name="purchasing_staff_dashboard"),
     path("purchasing_staff_approved_req/", views.purchasing_staff_approved_req, name="purchasing_staff_approved_req"),
 
@@ -77,16 +26,6 @@ urlpatterns = [
 
 
 
-    # Quotation URLs
-    # path('add-supplier/', views.add_supplier, name='add_supplier'),
-    # path('requisition/<int:req_id>/save-quotation/', views.save_quotation, name='save_quotation'),
-
-
-    # path('rf_selection/', views.rf_selection, name="rf_selection"),
-    # path('create_po/', views.create_po, name="create_po"),
-
-    # path('rf_selection/', views.rf_selection, name='rf_selection'),
-    # path('create-po-from-requisitions/', views.create_po_from_requisitions, name='create_po_from_requisitions'),
 
 
 
@@ -104,4 +43,39 @@ urlpatterns = [
     path('purchasing/complete-quotation-input/', views.complete_quotation_input, name='complete_quotation_input'),
     # path('input-quotation/save/', views.save_supplier_quotation, name='save_quote_action'),
     # path('input-quotation/confirm/', views.confirm_quotation_status, name='confirm_quote_action'),
+    
+    
+    # Supplier Management
+    path("purchasing_staff_sup_manage/", 
+         supplier_management_views.purchasing_staff_sup_manage, 
+         name="purchasing_staff_sup_manage"),
+    
+    path("create-supplier/", 
+         supplier_management_views.create_supplier, 
+         name="create_supplier"),
+    
+    path("supplier-catalog/<int:supplier_id>/", 
+         supplier_management_views.supplier_catalog, 
+         name="supplier_catalog"),
+    
+    path("update-supplier/<int:supplier_id>/", 
+         supplier_management_views.update_supplier, 
+         name="update_supplier"),
+    
+    path("add-product-to-supplier/<int:supplier_id>/", 
+         supplier_management_views.add_product_to_supplier, 
+         name="add_product_to_supplier"),
+    
+    path("save-supplier-products/<int:supplier_id>/", 
+         supplier_management_views.save_supplier_products, 
+         name="save_supplier_products"),
+    
+    path("update-product-price/<int:supplier_product_id>/", 
+         supplier_management_views.update_product_price, 
+         name="update_product_price"),
+
+    path("get-price-history/<int:supplier_product_id>/", 
+         supplier_management_views.get_price_history, 
+         name="get_price_history"),
+     
 ]

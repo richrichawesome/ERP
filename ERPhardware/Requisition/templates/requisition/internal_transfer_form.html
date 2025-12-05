@@ -1,5 +1,1799 @@
 {% extends "requisition/base.html" %}
+{% load static %}
+<!-- Requisition\templates\requisition\internal_transfer_form.html -->
 {% block page_content %}
-<h2>Internal Transfer Form</h2>
-<!-- Your form goes here -->
+
+<div class="requisition-container">
+    <!-- Header Section -->
+    <div class="header-section">
+        <a href="{% url 'track_requisition' %}" class="back-button">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Back to Requisitions</span>
+        </a>
+        <div class="header-content">
+            <h2 class="page-title">New Internal Transfer Request</h2>
+            <p class="page-subtitle">Request items from another branch</p>
+        </div>
+    </div>
+
+    <!-- Global Filter Controls -->
+    <div class="global-filters-section">
+        <div class="section-card">
+            <div class="card-header">
+                <h3 class="section-title">Global Filters</h3>
+                <div class="filter-controls">
+                    <div class="search-box">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="globalSearch" placeholder="Search products across all branches..." class="search-input">
+                    </div>
+                    <select id="globalCategoryFilter" class="filter-select">
+                        <option value="all">All Categories</option>
+                        <option value="construction">Construction</option>
+                        <option value="steel">Steel and Metal</option>
+                        <option value="plumbing">Plumbing</option>
+                        <option value="electrical">Electrical</option>
+                        <option value="paints">Paints and Chemicals</option>
+                        <option value="tools">Tools and Accessories</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="content-grid">
+        <!-- Inventory Section - Horizontal Layout -->
+        <div class="inventory-section-horizontal">
+            <!-- Current Branch Inventory -->
+            <div class="section-card table-card">
+                <div class="card-header">
+                    <h3 class="section-title">Your Branch Inventory ({{ current_branch.branch_name }})</h3>
+                    <div class="filter-controls">
+                        <select id="stockFilterCurrent" class="filter-select">
+                            <option value="all">All Stock</option>
+                            <option value="low">Low Stock</option>
+                            <option value="sufficient">Sufficient Stock</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Product Name</th>
+                                <th>Current Stock</th>
+                                <th>Specifications</th>
+                            </tr>
+                        </thead>
+                        <tbody id="currentInventoryBody">
+                            {% for item in current_inventory %}
+                            <tr class="inventory-row" 
+                                data-product-id="{{ item.product.prod_id }}" 
+                                data-stock="{{ item.quantity_on_hand }}"
+                                data-reorder="{{ item.product.prod_reorder_threshold }}"
+                                data-category="{{ item.product.category.prod_cat_name|lower }}"
+                                data-branch-id="{{ current_branch.branch_id }}"
+                                data-branch-name="{{ current_branch.branch_name }}">
+                                <td class="product-name">{{ item.product.prod_name }}</td>
+                                <td>
+                                    <span class="stock-badge {% if item.quantity_on_hand <= item.product.prod_reorder_threshold %}stock-low{% else %}stock-normal{% endif %}">
+                                        {{ item.quantity_on_hand }} {{ item.product.prod_unit_of_measure }}
+                                    </span>
+                                </td>
+                                <td class="specs-cell">
+                                    {% if item.specs_list %}
+                                        <div class="specs-container">
+                                            {% for spec_name, spec_value in item.specs_list %}
+                                                <div class="spec-item">
+                                                    <strong>{{ spec_name }}:</strong> {{ spec_value }}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <span class="no-specs">No specifications available</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Other Branches Inventory -->
+            <div class="section-card table-card">
+                <div class="card-header">
+                    <h3 class="section-title">Other Branch Inventory</h3>
+                    <div class="filter-controls">
+                        <select id="branchFilter" class="filter-select">
+                            <option value="all">All Branches</option>
+                            {% for branch_data in other_branches %}
+                                <option value="{{ branch_data.branch.branch_id }}">{{ branch_data.branch.branch_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <select id="stockFilterOther" class="filter-select">
+                            <option value="all">All Stock</option>
+                            <option value="low">Low Stock</option>
+                            <option value="sufficient">Sufficient Stock</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bulk-actions">
+                    <button id="selectAllBtn" class="btn-secondary">
+                        <i class="fa-solid fa-check-square"></i>
+                        Select All
+                    </button>
+                    <button id="bulkAddBtn" class="btn-primary" disabled>
+                        <i class="fa-solid fa-cart-plus"></i>
+                        Add Selected to Cart
+                    </button>
+                </div>
+
+                <div class="table-container">
+                    <table class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th width="50">
+                                    <input type="checkbox" id="selectAllCheckbox">
+                                </th>
+                                <th>Branch</th>
+                                <th>Product Name</th>
+                                <th>Available Stock</th>
+                                <th>Specifications</th>
+                                <th width="100">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="otherInventoryBody">
+                            {% for branch_data in other_branches %}
+                                {% for item in branch_data.inventory %}
+                                <tr class="inventory-row" 
+                                    data-product-id="{{ item.product.prod_id }}" 
+                                    data-branch-id="{{ branch_data.branch.branch_id }}"
+                                    data-branch-name="{{ branch_data.branch.branch_name }}"
+                                    data-stock="{{ item.quantity_on_hand }}"
+                                    data-reorder="{{ item.product.prod_reorder_threshold }}"
+                                    data-category="{{ item.product.category.prod_cat_name|lower }}">
+                                    <td>
+                                        <input type="checkbox" class="row-checkbox" 
+                                               data-product-id="{{ item.product.prod_id }}"
+                                               data-branch-id="{{ branch_data.branch.branch_id }}">
+                                    </td>
+                                    <td class="branch-name">{{ branch_data.branch.branch_name }}</td>
+                                    <td class="product-name">{{ item.product.prod_name }}</td>
+                                    <td>
+                                        <span class="stock-badge {% if item.quantity_on_hand <= item.product.prod_reorder_threshold %}stock-low{% else %}stock-normal{% endif %}">
+                                            {{ item.quantity_on_hand }} {{ item.product.prod_unit_of_measure }}
+                                        </span>
+                                    </td>
+                                    <td class="specs-cell">
+                                        {% if item.specs_list %}
+                                            <div class="specs-container">
+                                                {% for spec_name, spec_value in item.specs_list %}
+                                                    <div class="spec-item">
+                                                        <strong>{{ spec_name }}:</strong> {{ spec_value }}
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <span class="no-specs">No specifications available</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn-add"
+                                            onclick="openQuantityModal(
+                                                '{{ item.product.prod_id }}',
+                                                '{{ branch_data.branch.branch_id }}',
+                                                '{{ branch_data.branch.branch_name|escapejs }}',
+                                                '{{ item.product.prod_name|escapejs }}',
+                                                '{{ item.product.prod_unit_of_measure|escapejs }}',
+                                                '{{ item.quantity_on_hand }}',
+                                                '{% if item.specs_list %}{% for spec_name, spec_value in item.specs_list %}{{ spec_name }}: {{ spec_value }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}No specifications available{% endif %}'
+                                            )">
+                                            <i class="fa-solid fa-plus"></i>
+                                            Add
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cart Section -->
+        <div class="cart-section">
+            <div class="section-card cart-card">
+                <div class="card-header">
+                    <h3 class="section-title">Transfer Request Cart</h3>
+                    <span class="cart-count" id="cartCount">0 items</span>
+                </div>
+
+                <div class="cart-info">
+                    <div class="info-row">
+                        <span class="info-label">Requisition Type:</span>
+                        <span class="info-value">Internal Transfer</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Requesting Branch:</span>
+                        <span class="info-value">{{ user.branch.branch_name }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Requested By:</span>
+                        <span class="info-value">{{ user.user_fname }} {{ user.user_lname }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Date Required:</span>
+                        <div class="date-input-container">
+                            <input type="date" id="reqDateRequired" class="date-input" 
+                                min="{% now 'Y-m-d' %}" 
+                                value="{% now 'Y-m-d' %}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cart-items" id="cartItems">
+                    <div class="empty-cart">
+                        <i class="fa-solid fa-exchange-alt"></i>
+                        <p>No items in cart</p>
+                        <small>Add items from other branches</small>
+                    </div>
+                </div>
+
+                <div class="cart-actions" id="cartActions" style="display: none;">
+                    <div class="bulk-cart-actions">
+                        <button id="selectAllCartBtn" class="btn-text">
+                            <i class="fa-solid fa-check-square"></i>
+                            Select All
+                        </button>
+                        <button id="removeSelectedBtn" class="btn-text text-destructive" disabled>
+                            <i class="fa-solid fa-trash"></i>
+                            Remove Selected
+                        </button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reqNotes">Notes (Optional)</label>
+                        <textarea id="reqNotes" class="form-textarea" rows="3" placeholder="Add any additional notes or requirements..."></textarea>
+                    </div>
+
+                    <button id="submitRequisitionBtn" class="btn-submit">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        Submit Transfer Request
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quantity Modal -->
+<div id="quantityModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Add to Cart</h3>
+            <button class="modal-close" onclick="closeQuantityModal()">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="product-info">
+                <h4 id="modalProductName"></h4>
+                <p id="modalBranchName" class="branch-badge"></p>
+                <div id="modalProductSpecs" style="margin-top: 0.5rem;"></div>
+            </div>
+            <div class="form-group">
+                <label for="quantityInput">Quantity</label>
+                <div class="quantity-control">
+                    <button type="button" class="qty-btn" onclick="decrementQuantity()">
+                        <i class="fa-solid fa-minus"></i>
+                    </button>
+                    <input type="number" id="quantityInput" class="quantity-input" value="1" min="1">
+                    <button type="button" class="qty-btn" onclick="incrementQuantity()">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+                <small class="form-hint">
+                    Unit: <span id="modalUnitOfMeasure"></span> | 
+                    Available: <span id="modalAvailableStock"></span>
+                </small>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeQuantityModal()">Cancel</button>
+            <button class="btn-primary" onclick="addToCart()">Add to Cart</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Quantity Modal -->
+<div id="bulkQuantityModal" class="modal">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h3>Add Multiple Items to Cart</h3>
+            <button class="modal-close" onclick="closeBulkQuantityModal()">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div id="bulkItemsList" class="bulk-items-list"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeBulkQuantityModal()">Cancel</button>
+            <button class="btn-primary" onclick="addBulkToCart()">Add All to Cart</button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Reuse all styles from inventory_replenishment_form.html */
+.requisition-container {
+    padding: 1rem;
+    background: #f8fafc;
+    min-height: 100vh;
+}
+
+.header-section {
+    margin-bottom: 2rem;
+}
+
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #717182;
+    text-decoration: none;
+    font-size: 0.875rem;
+    padding: 0.5rem 0;
+    transition: color 0.2s;
+}
+
+.back-button:hover {
+    color: #030213;
+}
+
+.header-content {
+    margin-top: 1rem;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #030213;
+    margin: 0;
+}
+
+.page-subtitle {
+    font-size: 1rem;
+    color: #94a3b8;
+    margin: 0.5rem 0 0 0;
+}
+
+/* Global Filters Section */
+.global-filters-section {
+    margin-bottom: 1.5rem;
+}
+
+.global-filters-section .section-card {
+    margin-bottom: 0;
+}
+
+/* Horizontal Layout for Tables */
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 1.5rem;
+}
+
+.inventory-section-horizontal {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.table-card {
+    height: fit-content;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.table-card .table-container {
+    flex: 1;
+    overflow-y: auto;
+}
+
+@media (max-width: 1400px) {
+    .inventory-section-horizontal {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 1200px) {
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .inventory-section-horizontal {
+        grid-template-columns: 1fr;
+    }
+}
+
+.section-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e9ebef;
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #030213;
+    margin: 0 0 1rem 0;
+}
+
+.filter-controls {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.search-box {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+}
+
+.search-box i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #717182;
+    font-size: 0.875rem;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background: #f3f3f5;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: #ffffff;
+}
+
+.filter-select {
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background: #f3f3f5;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: #ffffff;
+}
+
+.bulk-actions {
+    padding: 1rem 1.5rem;
+    background: #f8fafc;
+    display: flex;
+    gap: 0.75rem;
+    border-bottom: 1px solid #e9ebef;
+}
+
+.btn-primary, .btn-secondary, .btn-add, .btn-submit, .btn-text {
+    padding: 0.625rem 1.25rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #1e40af;
+    transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+    background: #cbced4;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-secondary {
+    background: #e9ebef;
+    color: #030213;
+}
+
+.btn-secondary:hover {
+    background: #cbced4;
+}
+
+.btn-add {
+    background: #2563eb;
+    color: #ffffff;
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8125rem;
+}
+
+.btn-add:hover {
+    background: #1e40af;
+}
+
+.btn-submit {
+    width: 100%;
+    background: #2563eb;
+    color: #ffffff;
+    padding: 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    justify-content: center;
+}
+
+.btn-submit:hover {
+    background: #1e40af;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.btn-text {
+    background: transparent;
+    color: #717182;
+    padding: 0.5rem 0.75rem;
+}
+
+.btn-text:hover {
+    color: #030213;
+    background: #f3f3f5;
+}
+
+.btn-text.text-destructive {
+    color: #d4183d;
+}
+
+.btn-text.text-destructive:hover {
+    background: #fee;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.inventory-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.inventory-table thead {
+    background: #f8fafc;
+}
+
+.inventory-table th {
+    padding: 1rem 1.5rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #717182;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.inventory-table td {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e9ebef;
+    font-size: 0.875rem;
+    color: #030213;
+    vertical-align: top;
+}
+
+.inventory-row:hover {
+    background: #f8fafc;
+}
+
+.product-name {
+    font-weight: 500;
+}
+
+.branch-name {
+    font-weight: 500;
+    color: #2563eb;
+}
+
+.specs-cell {
+    color: #717182;
+    max-width: 250px;
+    min-width: 200px;
+}
+
+.specs-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.spec-item {
+    font-size: 0.75rem;
+    line-height: 1.2;
+}
+
+.spec-item strong {
+    color: #030213;
+    font-weight: 600;
+}
+
+.no-specs {
+    color: #94a3b8;
+    font-style: italic;
+    font-size: 0.8rem;
+}
+
+.stock-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.stock-normal {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.stock-low {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.cart-card {
+    position: sticky;
+    top: 2rem;
+    max-height: calc(100vh - 4rem);
+    display: flex;
+    flex-direction: column;
+}
+
+.cart-count {
+    background: #2563eb;
+    color: #ffffff;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.cart-info {
+    padding: 1rem 1.5rem;
+    background: #f8fafc;
+    border-bottom: 1px solid #e9ebef;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    font-size: 0.875rem;
+}
+
+.info-label {
+    color: #717182;
+    font-weight: 500;
+}
+
+.info-value {
+    color: #030213;
+    font-weight: 600;
+}
+
+.date-input-container {
+    display: flex;
+    align-items: center;
+}
+
+.date-input {
+    padding: 0.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    background: #ffffff;
+    font-size: 0.875rem;
+    color: #030213;
+    cursor: pointer;
+}
+
+.date-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.cart-items {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 200px;
+}
+
+.empty-cart {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: #717182;
+}
+
+.empty-cart i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+}
+
+.empty-cart p {
+    margin: 0.5rem 0;
+    font-weight: 500;
+}
+
+.empty-cart small {
+    font-size: 0.8125rem;
+}
+
+.cart-item {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ebef;
+    display: flex;
+    gap: 0.75rem;
+}
+
+.cart-item-checkbox {
+    margin-top: 0.25rem;
+}
+
+.cart-item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.cart-item-name {
+    font-weight: 600;
+    color: #030213;
+    margin: 0 0 0.25rem 0;
+    font-size: 0.875rem;
+    line-height: 1.2;
+}
+
+.cart-item-branch {
+    display: inline-block;
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.cart-item-specs {
+    color: #717182;
+    font-size: 0.8125rem;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.3;
+}
+
+.cart-specs-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0.25rem 0;
+}
+
+.cart-spec-item {
+    font-size: 0.75rem;
+    line-height: 1.2;
+    color: #717182;
+}
+
+.cart-spec-item strong {
+    color: #030213;
+    font-weight: 600;
+}
+
+.cart-item-quantity {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.qty-display {
+    background: #f3f3f5;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.cart-item-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-icon {
+    background: transparent;
+    border: none;
+    color: #717182;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+}
+
+.btn-icon:hover {
+    background: #f3f3f5;
+    color: #030213;
+}
+
+.btn-icon.text-destructive {
+    color: #d4183d;
+}
+
+.btn-icon.text-destructive:hover {
+    background: #fee;
+}
+
+.cart-actions {
+    padding: 1.5rem;
+    border-top: 1px solid #e9ebef;
+    background: #ffffff;
+}
+
+.bulk-cart-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #030213;
+}
+
+.form-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background: #f3f3f5;
+    font-size: 0.875rem;
+    font-family: inherit;
+    resize: vertical;
+    transition: all 0.2s;
+}
+
+.form-textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: #ffffff;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(3, 2, 19, 0.6);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: #ffffff;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modal-large {
+    max-width: 700px;
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e9ebef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #030213;
+}
+
+.modal-close {
+    background: transparent;
+    border: none;
+    color: #717182;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+    font-size: 1.25rem;
+}
+
+.modal-close:hover {
+    background: #f3f3f5;
+    color: #030213;
+}
+
+.modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.product-info h4 {
+    margin: 0 0 0.5rem 0;
+    color: #030213;
+    font-size: 1.125rem;
+}
+
+.product-info p {
+    margin: 0 0 1rem 0;
+    color: #717182;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.branch-badge {
+    display: inline-block;
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.modal-specs {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 1rem;
+}
+
+.modal-spec-item {
+    font-size: 0.875rem;
+    line-height: 1.4;
+    padding: 4px 0;
+}
+
+.modal-spec-item strong {
+    color: #030213;
+    font-weight: 600;
+}
+
+.quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.qty-btn {
+    background: #e9ebef;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #030213;
+}
+
+.qty-btn:hover {
+    background: #cbced4;
+}
+
+.quantity-input {
+    flex: 1;
+    text-align: center;
+    padding: 0.75rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background: #f3f3f5;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.quantity-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: #ffffff;
+}
+
+.form-hint {
+    display: block;
+    margin-top: 0.5rem;
+    color: #717182;
+    font-size: 0.8125rem;
+}
+
+.modal-footer {
+    padding: 1.5rem;
+    border-top: 1px solid #e9ebef;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.bulk-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.bulk-item {
+    border: 1px solid #e9ebef;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.bulk-item-header {
+    font-weight: 600;
+    color: #030213;
+    margin-bottom: 0.5rem;
+}
+
+.bulk-item-specs {
+    color: #717182;
+    font-size: 0.875rem;
+    margin-bottom: 0.75rem;
+}
+
+input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #2563eb;
+}
+
+.cart-items::-webkit-scrollbar,
+.modal-body::-webkit-scrollbar,
+.table-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.cart-items::-webkit-scrollbar-track,
+.modal-body::-webkit-scrollbar-track,
+.table-container::-webkit-scrollbar-track {
+    background: #f3f3f5;
+}
+
+.cart-items::-webkit-scrollbar-thumb,
+.modal-body::-webkit-scrollbar-thumb,
+.table-container::-webkit-scrollbar-thumb {
+    background: #cbced4;
+    border-radius: 3px;
+}
+
+.cart-items::-webkit-scrollbar-thumb:hover,
+.modal-body::-webkit-scrollbar-thumb:hover,
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: #717182;
+}
+</style>
+
+<!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
+<script src="{% static 'js/jquery.js' %}"></script>
+<script>
+let cart = [];
+let currentModalProduct = null;
+
+$(document).ready(function() {
+    initializeFilters();
+    initializeSelectAll();
+    initializeBulkAdd();
+    updateCartDisplay();
+});
+
+// Global Filter Functions
+function initializeFilters() {
+    // Global search and category filter
+    $('#globalSearch').on('input', filterAllTables);
+    $('#globalCategoryFilter').on('change', filterAllTables);
+    
+    // Individual stock filters
+    $('#stockFilterCurrent').on('change', filterCurrentInventory);
+    $('#stockFilterOther').on('change', filterOtherInventory);
+    $('#branchFilter').on('change', filterOtherInventory);
+}
+
+function filterAllTables() {
+    const searchTerm = $('#globalSearch').val().toLowerCase();
+    const categoryFilter = $('#globalCategoryFilter').val();
+
+    // Filter both tables
+    filterCurrentInventory();
+    filterOtherInventory();
+    
+    // Apply global filters to both tables
+    $('.inventory-row').each(function() {
+        const $row = $(this);
+        const productName = $row.find('.product-name').text().toLowerCase();
+        const category = $row.data('category');
+
+        let showRow = true;
+
+        if (searchTerm && !productName.includes(searchTerm)) {
+            showRow = false;
+        }
+
+        if (categoryFilter !== 'all' && !category.includes(categoryFilter)) {
+            showRow = false;
+        }
+
+        // Only hide if global filters don't match
+        if (!showRow) {
+            $row.hide();
+        } else {
+            // Check if row should be visible based on individual filters
+            const tableType = $row.closest('tbody').attr('id');
+            if (tableType === 'currentInventoryBody') {
+                showRow = shouldShowCurrentRow($row);
+            } else if (tableType === 'otherInventoryBody') {
+                showRow = shouldShowOtherRow($row);
+            }
+            $row.toggle(showRow);
+        }
+    });
+}
+
+function filterCurrentInventory() {
+    $('#currentInventoryBody .inventory-row').each(function() {
+        const $row = $(this);
+        const showRow = shouldShowCurrentRow($row) && shouldShowGlobalRow($row);
+        $row.toggle(showRow);
+    });
+}
+
+function filterOtherInventory() {
+    $('#otherInventoryBody .inventory-row').each(function() {
+        const $row = $(this);
+        const showRow = shouldShowOtherRow($row) && shouldShowGlobalRow($row);
+        $row.toggle(showRow);
+    });
+}
+
+function shouldShowGlobalRow($row) {
+    const searchTerm = $('#globalSearch').val().toLowerCase();
+    const categoryFilter = $('#globalCategoryFilter').val();
+    const productName = $row.find('.product-name').text().toLowerCase();
+    const category = $row.data('category');
+
+    if (searchTerm && !productName.includes(searchTerm)) {
+        return false;
+    }
+
+    if (categoryFilter !== 'all' && !category.includes(categoryFilter)) {
+        return false;
+    }
+
+    return true;
+}
+
+function shouldShowCurrentRow($row) {
+    const stockFilter = $('#stockFilterCurrent').val();
+    const stock = parseInt($row.data('stock'));
+    const reorder = parseInt($row.data('reorder'));
+
+    if (stockFilter === 'low' && stock > reorder) {
+        return false;
+    } else if (stockFilter === 'sufficient' && stock <= reorder) {
+        return false;
+    }
+
+    return true;
+}
+
+function shouldShowOtherRow($row) {
+    const branchFilter = $('#branchFilter').val();
+    const stockFilter = $('#stockFilterOther').val();
+    const branchId = $row.data('branch-id').toString();
+    const stock = parseInt($row.data('stock'));
+    const reorder = parseInt($row.data('reorder'));
+
+    if (branchFilter !== 'all' && branchId !== branchFilter) {
+        return false;
+    }
+
+    if (stockFilter === 'low' && stock > reorder) {
+        return false;
+    } else if (stockFilter === 'sufficient' && stock <= reorder) {
+        return false;
+    }
+
+    return true;
+}
+
+// Select All Functions
+function initializeSelectAll() {
+    $('#selectAllCheckbox').on('change', function() {
+        const isChecked = $(this).prop('checked');
+        $('#otherInventoryBody .inventory-row:visible .row-checkbox').prop('checked', isChecked);
+        updateBulkAddButton();
+    });
+
+    $('.row-checkbox').on('change', updateBulkAddButton);
+}
+
+function updateBulkAddButton() {
+    const checkedCount = $('.row-checkbox:checked').length;
+    $('#bulkAddBtn').prop('disabled', checkedCount === 0);
+    
+    if (checkedCount > 0) {
+        $('#selectAllBtn').html('<i class="fa-solid fa-square"></i> Unselect All');
+    } else {
+        $('#selectAllBtn').html('<i class="fa-solid fa-check-square"></i> Select All');
+    }
+}
+
+$('#selectAllBtn').on('click', function() {
+    const anyChecked = $('.row-checkbox:checked').length > 0;
+    $('#otherInventoryBody .inventory-row:visible .row-checkbox').prop('checked', !anyChecked);
+    $('#selectAllCheckbox').prop('checked', !anyChecked);
+    updateBulkAddButton();
+});
+
+// Bulk Add Functions
+function initializeBulkAdd() {
+    $('#bulkAddBtn').on('click', function() {
+        const selectedProducts = [];
+        
+        $('.row-checkbox:checked').each(function() {
+            const $row = $(this).closest('.inventory-row');
+            const branchId = $row.data('branch-id');
+            const branchName = $row.data('branch-name');
+            const productId = $row.data('product-id');
+            const productName = $row.find('.product-name').text();
+            const stockBadge = $row.find('.stock-badge').text().trim();
+            const availableStock = parseInt($row.data('stock'));
+            
+            const specsContainer = $row.find('.specs-container');
+            let specs = '';
+            if (specsContainer.length > 0) {
+                const specItems = specsContainer.find('.spec-item');
+                const specPairs = [];
+                specItems.each(function() {
+                    specPairs.push($(this).text().trim());
+                });
+                specs = specPairs.join(', ');
+            } else {
+                specs = $row.find('.specs-cell').text().trim();
+            }
+            
+            selectedProducts.push({
+                productId: productId,
+                branchId: branchId,
+                branchName: branchName,
+                name: productName,
+                stockInfo: stockBadge,
+                availableStock: availableStock,
+                specs: specs
+            });
+        });
+        
+        if (selectedProducts.length > 0) {
+            openBulkQuantityModal(selectedProducts);
+        }
+    });
+}
+
+function openBulkQuantityModal(products) {
+    const $bulkList = $('#bulkItemsList');
+    $bulkList.empty();
+    
+    products.forEach(product => {
+        const itemHtml = `
+            <div class="bulk-item" data-product-id="${product.productId}" data-branch-id="${product.branchId}">
+                <div class="bulk-item-header">${product.name}</div>
+                <div class="branch-badge" style="margin-bottom: 0.5rem;">${product.branchName}</div>
+                <div class="bulk-item-specs">${product.specs}</div>
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <div class="quantity-control">
+                        <button type="button" class="qty-btn" onclick="decrementBulkQty('${product.productId}-${product.branchId}')">
+                            <i class="fa-solid fa-minus"></i>
+                        </button>
+                        <input type="number" class="quantity-input bulk-qty-input" 
+                               data-product-id="${product.productId}" 
+                               data-branch-id="${product.branchId}"
+                               id="bulk-qty-${product.productId}-${product.branchId}"
+                               value="1" min="1" max="${product.availableStock}">
+                        <button type="button" class="qty-btn" onclick="incrementBulkQty('${product.productId}-${product.branchId}')">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                    <small class="form-hint">${product.stockInfo} | Max: ${product.availableStock}</small>
+                </div>
+            </div>
+        `;
+        $bulkList.append(itemHtml);
+    });
+    
+    $('#bulkQuantityModal').addClass('active');
+}
+
+function closeBulkQuantityModal() {
+    $('#bulkQuantityModal').removeClass('active');
+}
+
+function incrementBulkQty(id) {
+    const $input = $(`#bulk-qty-${id}`);
+    const max = parseInt($input.attr('max'));
+    const current = parseInt($input.val());
+    if (current < max) {
+        $input.val(current + 1);
+    }
+}
+
+function decrementBulkQty(id) {
+    const $input = $(`#bulk-qty-${id}`);
+    const currentVal = parseInt($input.val());
+    if (currentVal > 1) {
+        $input.val(currentVal - 1);
+    }
+}
+
+function addBulkToCart() {
+    $('.bulk-item').each(function() {
+        const $item = $(this);
+        const productId = $item.data('product-id');
+        const branchId = $item.data('branch-id');
+        const quantity = parseInt($item.find('.bulk-qty-input').val());
+        const name = $item.find('.bulk-item-header').text();
+        const branchName = $item.find('.branch-badge').text();
+        const specs = $item.find('.bulk-item-specs').text();
+        const stockInfo = $item.find('.form-hint').text().split('|')[0].trim();
+        
+        const existingIndex = cart.findIndex(item => 
+            item.productId === productId && item.branchId === branchId
+        );
+        
+        if (existingIndex !== -1) {
+            cart[existingIndex].quantity += quantity;
+        } else {
+            cart.push({
+                productId: productId,
+                branchId: branchId,
+                name: name,
+                branchName: branchName,
+                uom: stockInfo.split(' ')[1],
+                specs: specs,
+                quantity: quantity,
+                availableStock: parseInt(stockInfo.split(' ')[0])
+            });
+        }
+    });
+    
+    $('.row-checkbox').prop('checked', false);
+    $('#selectAllCheckbox').prop('checked', false);
+    updateBulkAddButton();
+    
+    updateCartDisplay();
+    closeBulkQuantityModal();
+}
+
+// Modal Functions
+function openQuantityModal(productId, branchId, branchName, productName, uom, availableStock, specs) {
+    currentModalProduct = {
+        productId: productId,
+        branchId: branchId,
+        branchName: branchName,
+        name: productName,
+        uom: uom,
+        availableStock: parseInt(availableStock),
+        specs: specs
+    };
+    
+    $('#modalProductName').text(productName);
+    $('#modalBranchName').text(branchName);
+    $('#modalUnitOfMeasure').text(uom);
+    $('#modalAvailableStock').text(availableStock + ' ' + uom);
+    $('#quantityInput').val(1);
+    $('#quantityInput').attr('max', availableStock);
+    
+    let specsHtml = '';
+    if (specs && specs !== 'No specifications available' && specs !== 'N/A') {
+        const specPairs = specs.split(', ');
+        specsHtml = '<div class="modal-specs">';
+        specPairs.forEach(pair => {
+            if (pair.trim()) {
+                specsHtml += `<div class="modal-spec-item">${pair.trim()}</div>`;
+            }
+        });
+        specsHtml += '</div>';
+    } else {
+        specsHtml = '<span class="no-specs">No specifications available</span>';
+    }
+    
+    $('#modalProductSpecs').html(specsHtml);
+    $('#quantityModal').addClass('active');
+}
+
+function closeQuantityModal() {
+    $('#quantityModal').removeClass('active');
+    currentModalProduct = null;
+}
+
+function incrementQuantity() {
+    const input = $('#quantityInput');
+    const max = parseInt(input.attr('max'));
+    const current = parseInt(input.val());
+    if (current < max) {
+        input.val(current + 1);
+    }
+}
+
+function decrementQuantity() {
+    const input = $('#quantityInput');
+    const currentVal = parseInt(input.val());
+    if (currentVal > 1) {
+        input.val(currentVal - 1);
+    }
+}
+
+function addToCart() {
+    if (!currentModalProduct) return;
+    
+    const quantity = parseInt($('#quantityInput').val());
+    
+    if (quantity > currentModalProduct.availableStock) {
+        alert(`Cannot request more than available stock (${currentModalProduct.availableStock} ${currentModalProduct.uom})`);
+        return;
+    }
+    
+    const existingIndex = cart.findIndex(item => 
+        item.productId === currentModalProduct.productId && 
+        item.branchId === currentModalProduct.branchId
+    );
+    
+    if (existingIndex !== -1) {
+        const newQuantity = cart[existingIndex].quantity + quantity;
+        if (newQuantity > currentModalProduct.availableStock) {
+            alert(`Total quantity would exceed available stock (${currentModalProduct.availableStock} ${currentModalProduct.uom})`);
+            return;
+        }
+        cart[existingIndex].quantity = newQuantity;
+    } else {
+        cart.push({
+            productId: currentModalProduct.productId,
+            branchId: currentModalProduct.branchId,
+            name: currentModalProduct.name,
+            branchName: currentModalProduct.branchName,
+            uom: currentModalProduct.uom,
+            specs: currentModalProduct.specs,
+            quantity: quantity,
+            availableStock: currentModalProduct.availableStock
+        });
+    }
+    
+    updateCartDisplay();
+    closeQuantityModal();
+}
+
+// Cart Display
+function updateCartDisplay() {
+    const $cartItems = $('#cartItems');
+    const $cartActions = $('#cartActions');
+    
+    if (cart.length === 0) {
+        $cartItems.html(`
+            <div class="empty-cart">
+                <i class="fa-solid fa-exchange-alt"></i>
+                <p>No items in cart</p>
+                <small>Add items from other branches</small>
+            </div>
+        `);
+        $cartActions.hide();
+    } else {
+        let cartHtml = '';
+        cart.forEach((item, index) => {
+            let specsHtml = '';
+            if (item.specs && item.specs !== 'No specifications available' && item.specs !== 'N/A') {
+                const specPairs = item.specs.split(', ');
+                specsHtml = '<div class="cart-specs-container">';
+                specPairs.forEach(pair => {
+                    if (pair.trim()) {
+                        const colonIndex = pair.indexOf(':');
+                        if (colonIndex !== -1) {
+                            const specName = pair.substring(0, colonIndex).trim();
+                            const specValue = pair.substring(colonIndex + 1).trim();
+                            specsHtml += `<div class="cart-spec-item"><strong>${specName}:</strong> ${specValue}</div>`;
+                        } else {
+                            specsHtml += `<div class="cart-spec-item">${pair}</div>`;
+                        }
+                    }
+                });
+                specsHtml += '</div>';
+            } else {
+                specsHtml = '<span class="no-specs">No specifications available</span>';
+            }
+            
+            cartHtml += `
+                <div class="cart-item">
+                    <input type="checkbox" class="cart-item-checkbox" data-index="${index}">
+                    <div class="cart-item-content">
+                        <h4 class="cart-item-name">${item.name}</h4>
+                        <div class="cart-item-branch">From: ${item.branchName}</div>
+                        <div class="cart-item-specs">
+                            ${specsHtml}
+                        </div>
+                        <div class="cart-item-quantity">
+                            <span class="qty-display">${item.quantity} ${item.uom}</span>
+                        </div>
+                    </div>
+                    <div class="cart-item-actions">
+                        <button class="btn-icon" onclick="editCartItem(${index})" title="Edit quantity">
+                            <i class="fa-solid fa-edit"></i>
+                        </button>
+                        <button class="btn-icon text-destructive" onclick="removeCartItem(${index})" title="Remove">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        $cartItems.html(cartHtml);
+        $cartActions.show();
+        
+        $('#cartCount').text(`${cart.length} item${cart.length !== 1 ? 's' : ''}`);
+        
+        $('.cart-item-checkbox').on('change', updateRemoveSelectedButton);
+    }
+}
+
+function editCartItem(index) {
+    const item = cart[index];
+    currentModalProduct = {
+        productId: item.productId,
+        branchId: item.branchId,
+        name: item.name,
+        branchName: item.branchName,
+        uom: item.uom,
+        specs: item.specs,
+        availableStock: item.availableStock,
+        editIndex: index
+    };
+    
+    $('#modalProductName').text(item.name);
+    $('#modalBranchName').text(item.branchName);
+    $('#modalUnitOfMeasure').text(item.uom);
+    $('#modalAvailableStock').text(item.availableStock + ' ' + item.uom);
+    $('#quantityInput').val(item.quantity);
+    $('#quantityInput').attr('max', item.availableStock);
+    
+    let specsHtml = '';
+    if (item.specs && item.specs !== 'No specifications available' && item.specs !== 'N/A') {
+        const specPairs = item.specs.split(', ');
+        specsHtml = '<div class="modal-specs">';
+        specPairs.forEach(pair => {
+            if (pair.trim()) {
+                specsHtml += `<div class="modal-spec-item">${pair.trim()}</div>`;
+            }
+        });
+        specsHtml += '</div>';
+    } else {
+        specsHtml = '<span class="no-specs">No specifications available</span>';
+    }
+    
+    $('#modalProductSpecs').html(specsHtml);
+    
+    $('#quantityModal .modal-footer .btn-primary').text('Update Quantity');
+    $('#quantityModal').addClass('active');
+}
+
+function removeCartItem(index) {
+    if (confirm('Remove this item from cart?')) {
+        cart.splice(index, 1);
+        updateCartDisplay();
+    }
+}
+
+$('#selectAllCartBtn').on('click', function() {
+    const anyChecked = $('.cart-item-checkbox:checked').length > 0;
+    $('.cart-item-checkbox').prop('checked', !anyChecked);
+    updateRemoveSelectedButton();
+});
+
+function updateRemoveSelectedButton() {
+    const checkedCount = $('.cart-item-checkbox:checked').length;
+    $('#removeSelectedBtn').prop('disabled', checkedCount === 0);
+}
+
+$('#removeSelectedBtn').on('click', function() {
+    const indicesToRemove = [];
+    $('.cart-item-checkbox:checked').each(function() {
+        indicesToRemove.push($(this).data('index'));
+    });
+    
+    if (indicesToRemove.length > 0 && confirm(`Remove ${indicesToRemove.length} item(s) from cart?`)) {
+        indicesToRemove.sort((a, b) => b - a).forEach(index => {
+            cart.splice(index, 1);
+        });
+        updateCartDisplay();
+    }
+});
+
+// Submit Requisition
+$('#submitRequisitionBtn').on('click', function() {
+    if (cart.length === 0) {
+        alert('Please add at least one item to the cart.');
+        return;
+    }
+    
+    const dateRequired = $('#reqDateRequired').val();
+    if (!dateRequired) {
+        alert('Please select when the transfer is required.');
+        return;
+    }
+    
+    const today = new Date().toISOString().split('T')[0];
+    if (dateRequired < today) {
+        alert('Date required cannot be in the past.');
+        return;
+    }
+    
+    // Group items by sender branch
+    const senderBranches = [...new Set(cart.map(item => item.branchId))];
+    if (senderBranches.length > 1) {
+        alert('All items must be from the same branch. Please create separate requisitions for items from different branches.');
+        return;
+    }
+    
+    if (!confirm(`Submit internal transfer request with ${cart.length} item(s)?`)) {
+        return;
+    }
+    
+    const notes = $('#reqNotes').val().trim();
+    
+    const requisitionData = {
+        items: cart.map(item => ({
+            product_id: item.productId,
+            quantity: item.quantity,
+            uom: item.uom
+        })),
+        notes: notes,
+        date_required: dateRequired,
+        sender_branch_id: cart[0].branchId
+    };
+    
+    console.log('Submitting internal transfer:', requisitionData);
+    
+    const $submitBtn = $('#submitRequisitionBtn');
+    const originalText = $submitBtn.html();
+    $submitBtn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Creating Transfer Request...');
+    
+    $.ajax({
+        url: '{% url "create_internal_transfer" %}',
+        method: 'POST',
+        data: JSON.stringify(requisitionData),
+        contentType: 'application/json',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        success: function(response) {
+            console.log('Server response:', response);
+            if (response.success) {
+                const successMessage = `✅ ${response.message}\nRequisition Number: ${response.requisition_number}\nRequired Date: ${new Date(dateRequired).toLocaleDateString()}`;
+                
+                if (response.rf_url) {
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = response.rf_url;
+                    downloadLink.download = `RF_${response.requisition_number.replace('REQ-', '')}.pdf`;
+                    downloadLink.style.display = 'none';
+                    
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                    
+                    alert(successMessage + '\n\n📄 Your RF is downloading automatically.');
+                } else {
+                    alert(successMessage + '\n\n⚠️ RF form could not be generated.');
+                }
+
+                cart = [];
+                updateCartDisplay();
+                $('#reqNotes').val('');
+                $('#reqDateRequired').val(today);
+                
+                setTimeout(() => {
+                    window.location.href = response.redirect_url;
+                }, 2000);
+                
+            } else {
+                alert('❌ Error: ' + (response.error || 'Failed to submit transfer request'));
+                $submitBtn.prop('disabled', false).html(originalText);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX error:', xhr.responseText);
+            let errorMessage = 'Error submitting transfer request. Please try again.';
+            
+            try {
+                const response = JSON.parse(xhr.responseText);
+                if (response.error) {
+                    errorMessage = response.error;
+                }
+            } catch (e) {
+                // Use default error message
+            }
+            
+            alert('❌ ' + errorMessage);
+            $submitBtn.prop('disabled', false).html(originalText);
+        }
+    });
+});
+
+$('.modal').on('click', function(e) {
+    if ($(e.target).hasClass('modal')) {
+        closeQuantityModal();
+        closeBulkQuantityModal();
+    }
+});
+</script>
 {% endblock %}

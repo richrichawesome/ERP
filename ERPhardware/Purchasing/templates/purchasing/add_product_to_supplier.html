@@ -1,0 +1,1395 @@
+{% extends "purchasing/base.html" %}
+{% load static %}
+
+{% block page_content %}
+<div class="page-header-section">
+    <a href="{% url 'supplier_catalog' supplier.sup_id %}" class="back-button">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Back to Catalog</span>
+    </a>
+    <div class="header-content">
+        <h2 class="page-title">Add Products to {{ supplier.sup_name }}</h2>
+        <p class="page-subtitle">Select products to add to supplier's catalog</p>
+    </div>
+</div>
+
+<div class="content-grid">
+    <!-- Products Table Section -->
+    <div class="products-section">
+        <div class="section-card">
+            <div class="card-header">
+                <h3 class="section-title">Available Products</h3>
+                <div class="filter-controls">
+                    <div class="search-box">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="searchProduct" placeholder="Search products..." class="search-input">
+                    </div>
+                    <select id="categoryFilter" class="filter-select">
+                        <option value="all">All Categories</option>
+                        {% for category in categories %}
+                        <option value="{{ category.prod_cat_name|lower }}">{{ category.prod_cat_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="bulk-actions">
+                <button id="selectAllBtn" class="btn-secondary">
+                    <i class="fa-solid fa-check-square"></i>
+                    Select All
+                </button>
+                <button id="bulkAddBtn" class="btn-primary" disabled>
+                    <i class="fa-solid fa-cart-plus"></i>
+                    Add Selected Products
+                </button>
+            </div>
+
+            <div class="table-container">
+                <table class="products-table">
+                    <thead>
+                        <tr>
+                            <th width="50">
+                                <input type="checkbox" id="selectAllCheckbox">
+                            </th>
+                            <th>Product Name</th>
+                            <th>SKU</th>
+                            <th>Category</th>
+                            <th>Specifications</th>
+                            <th width="100">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsTableBody">
+                        {% for product in available_products %}
+                        <tr class="product-row" 
+                            data-product-id="{{ product.prod_id }}"
+                            data-category="{{ product.category.prod_cat_name|lower }}"
+                            data-sku="{{ product.prod_sku|lower }}">
+                            <td>
+                                <input type="checkbox" class="row-checkbox" data-product-id="{{ product.prod_id }}">
+                            </td>
+                            <td class="product-name">{{ product.prod_name }}</td>
+                            <td>{{ product.prod_sku }}</td>
+                            <td>
+                                <span class="category-badge">{{ product.category.prod_cat_name }}</span>
+                            </td>
+                            <td class="specs-cell">
+                                {% if product.specs_list %}
+                                    <div class="specs-container">
+                                        {% for spec_name, spec_value in product.specs_list %}
+                                            <div class="spec-item">
+                                                <strong>{{ spec_name }}:</strong> {{ spec_value }}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <span class="no-specs">No specifications</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn-add" 
+                                    onclick="openPriceModal(
+                                        '{{ product.prod_id }}',
+                                        '{{ product.prod_name|escapejs }}',
+                                        '{{ product.prod_sku|escapejs }}',
+                                        '{% if product.specs_list %}{% for spec_name, spec_value in product.specs_list %}{{ spec_name }}: {{ spec_value }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}No specifications{% endif %}'
+                                    )">
+                                    <i class="fa-solid fa-plus"></i>
+                                    Add
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 2rem; color: #717182;">
+                                All products have been added to this supplier's catalog.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Section -->
+    <div class="cart-section">
+        <div class="section-card cart-card">
+            <div class="card-header">
+                <h3 class="section-title">Add Products to {{ supplier.sup_name }}</h3>
+                <span class="cart-count" id="cartCount">0 items</span>
+            </div>
+
+            <div class="cart-info">
+                <div class="info-row">
+                    <span class="info-label">Supplier:</span>
+                    <span class="info-value">{{ supplier.sup_name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Contact:</span>
+                    <span class="info-value">{{ supplier.sup_contact_person }}</span>
+                </div>
+            </div>
+
+            <div class="cart-items" id="cartItems">
+                <div class="empty-cart">
+                    <i class="fa-solid fa-shopping-cart"></i>
+                    <p>No items added</p>
+                    <small>Select products from the list</small>
+                </div>
+            </div>
+
+            <div class="cart-actions" id="cartActions" style="display: none;">
+                <div class="bulk-cart-actions">
+                    <button id="selectAllCartBtn" class="btn-text">
+                        <i class="fa-solid fa-check-square"></i>
+                        Select All
+                    </button>
+                    <button id="removeSelectedBtn" class="btn-text text-destructive" disabled>
+                        <i class="fa-solid fa-trash"></i>
+                        Remove Selected
+                    </button>
+                </div>
+
+                <button id="saveProductsBtn" class="btn-submit">
+                    <i class="fa-solid fa-save"></i>
+                    Save Products to Catalog
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Price Modal -->
+<div id="priceModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Add Product to Catalog</h3>
+            <button class="modal-close" onclick="closePriceModal()">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="product-info">
+                <h4 id="modalProductName"></h4>
+                <p class="modal-sku" id="modalProductSku"></p>
+                <div id="modalProductSpecs" style="margin-top: 0.5rem;"></div>
+            </div>
+            <div class="form-group">
+                <label for="productCodeInput">Product Code (Optional)</label>
+                <input type="text" id="productCodeInput" class="form-input" placeholder="Enter supplier's product code">
+                <small class="form-hint">Leave blank to use default SKU</small>
+            </div>
+            <div class="form-group">
+                <label for="priceInput">Unit Price <span class="required">*</span></label>
+                <div class="price-input-group">
+                    <span class="currency-symbol">₱</span>
+                    <input type="number" id="priceInput" class="form-input price-input" step="0.01" min="0" placeholder="0.00" required>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closePriceModal()">Cancel</button>
+            <button class="btn-primary" onclick="addToCart()">Add to Cart</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Price Modal -->
+<div id="bulkPriceModal" class="modal">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h3>Add Multiple Products</h3>
+            <button class="modal-close" onclick="closeBulkPriceModal()">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div id="bulkItemsList" class="bulk-items-list"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeBulkPriceModal()">Cancel</button>
+            <button class="btn-primary" onclick="addBulkToCart()">Add All to Cart</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.page-header-section {
+    margin-bottom: 2rem;
+}
+
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #717182;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 0.5rem 0;
+    transition: color 0.2s;
+    margin-bottom: 1rem;
+}
+
+.back-button:hover {
+    color: #030213;
+}
+
+.header-content {
+    margin-top: 1rem;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #030213;
+    margin: 0;
+}
+
+.page-subtitle {
+    font-size: 1rem;
+    color: #94a3b8;
+    margin: 0.5rem 0 0 0;
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.section-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e9ebef;
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #030213;
+    margin: 0 0 1rem 0;
+}
+
+.filter-controls {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.search-box {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+}
+
+.search-box i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #717182;
+    font-size: 14px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    border: 1px solid #e9ebef;
+    border-radius: 8px;
+    background: #f8fafc;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: white;
+}
+
+.filter-select {
+    padding: 0.75rem 1rem;
+    border: 1px solid #e9ebef;
+    border-radius: 8px;
+    background: #f8fafc;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: white;
+}
+
+.bulk-actions {
+    padding: 1rem 1.5rem;
+    background: #f8fafc;
+    display: flex;
+    gap: 0.75rem;
+    border-bottom: 1px solid #e9ebef;
+}
+
+.btn-primary, .btn-secondary, .btn-add, .btn-submit, .btn-text {
+    padding: 0.625rem 1.25rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: #2563eb;
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #1e40af;
+    transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+    background: #cbced4;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-secondary {
+    background: #e9ebef;
+    color: #030213;
+}
+
+.btn-secondary:hover {
+    background: #cbced4;
+}
+
+.btn-add {
+    background: #2563eb;
+    color: white;
+    padding: 0.5rem 0.875rem;
+    font-size: 13px;
+}
+
+.btn-add:hover {
+    background: #1e40af;
+}
+
+.btn-submit {
+    width: 100%;
+    background: #2563eb;
+    color: white;
+    padding: 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    justify-content: center;
+}
+
+.btn-submit:hover {
+    background: #1e40af;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.btn-text {
+    background: transparent;
+    color: #717182;
+    padding: 0.5rem 0.75rem;
+}
+
+.btn-text:hover {
+    color: #030213;
+    background: #f3f3f5;
+}
+
+.btn-text.text-destructive {
+    color: #d4183d;
+}
+
+.btn-text.text-destructive:hover {
+    background: #fee;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.products-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.products-table thead {
+    background: #f8fafc;
+}
+
+.products-table th {
+    padding: 1rem 1.5rem;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: #717182;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.products-table td {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e9ebef;
+    font-size: 14px;
+    color: #030213;
+    vertical-align: top;
+}
+
+.product-row:hover {
+    background: #f8fafc;
+}
+
+.product-name {
+    font-weight: 500;
+}
+
+.category-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: #dbeafe;
+    color: #1e40af;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.specs-cell {
+    max-width: 250px;
+    min-width: 200px;
+}
+
+.specs-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.spec-item {
+    font-size: 12px;
+    line-height: 1.2;
+    color: #717182;
+}
+
+.spec-item strong {
+    color: #030213;
+    font-weight: 600;
+}
+
+.no-specs {
+    color: #94a3b8;
+    font-style: italic;
+    font-size: 12px;
+}
+
+input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #2563eb;
+}
+
+/* Cart Section */
+.cart-card {
+    position: sticky;
+    top: 2rem;
+    max-height: calc(100vh - 4rem);
+    display: flex;
+    flex-direction: column;
+}
+
+.cart-count {
+    background: #2563eb;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.cart-info {
+    padding: 1rem 1.5rem;
+    background: #f8fafc;
+    border-bottom: 1px solid #e9ebef;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    font-size: 14px;
+}
+
+.info-label {
+    color: #717182;
+    font-weight: 500;
+}
+
+.info-value {
+    color: #030213;
+    font-weight: 600;
+}
+
+.cart-items {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 200px;
+}
+
+.empty-cart {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: #717182;
+}
+
+.empty-cart i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+}
+
+.empty-cart p {
+    margin: 0.5rem 0;
+    font-weight: 500;
+}
+
+.empty-cart small {
+    font-size: 13px;
+}
+
+.cart-item {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ebef;
+    display: flex;
+    gap: 0.75rem;
+}
+
+.cart-item-checkbox {
+    margin-top: 0.25rem;
+}
+
+.cart-item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.cart-item-name {
+    font-weight: 600;
+    color: #030213;
+    margin: 0 0 0.25rem 0;
+    font-size: 14px;
+    line-height: 1.2;
+}
+
+.cart-item-sku {
+    display: inline-block;
+    background: #f3f3f5;
+    color: #717182;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.cart-item-specs {
+    color: #717182;
+    font-size: 13px;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.3;
+}
+
+.cart-specs-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0.25rem 0;
+}
+
+.cart-spec-item {
+    font-size: 11px;
+    line-height: 1.2;
+    color: #717182;
+}
+
+.cart-spec-item strong {
+    color: #030213;
+    font-weight: 600;
+}
+
+.cart-item-price {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.price-display {
+    background: #dcfce7;
+    color: #166534;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.cart-item-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-icon {
+    background: transparent;
+    border: none;
+    color: #717182;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.btn-icon:hover {
+    background: #f3f3f5;
+    color: #030213;
+}
+
+.btn-icon.text-destructive {
+    color: #d4183d;
+}
+
+.btn-icon.text-destructive:hover {
+    background: #fee;
+}
+
+.cart-actions {
+    padding: 1.5rem;
+    border-top: 1px solid #e9ebef;
+    background: white;
+}
+
+.bulk-cart-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(3, 2, 19, 0.6);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modal-large {
+    max-width: 700px;
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e9ebef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #030213;
+}
+
+.modal-close {
+    background: transparent;
+    border: none;
+    color: #717182;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+    font-size: 1.25rem;
+}
+
+.modal-close:hover {
+    background: #f3f3f5;
+    color: #030213;
+}
+
+.modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.product-info h4 {
+    margin: 0 0 0.5rem 0;
+    color: #030213;
+    font-size: 1.125rem;
+}
+
+.modal-sku {
+    display: inline-block;
+    background: #f3f3f5;
+    color: #717182;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.modal-specs {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 1rem;
+}
+
+.modal-spec-item {
+    font-size: 14px;
+    line-height: 1.4;
+    padding: 4px 0;
+}
+
+.modal-spec-item strong {
+    color: #030213;
+    font-weight: 600;
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 14px;
+    font-weight: 500;
+    color: #030213;
+}
+
+.required {
+    color: #d4183d;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #e9ebef;
+    border-radius: 8px;
+    background: #f8fafc;
+    font-size: 14px;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: white;
+}
+
+.price-input-group {
+    position: relative;
+}
+
+.currency-symbol {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #717182;
+    font-weight: 600;
+}
+
+.price-input {
+    padding-left: 2rem;
+}
+
+.form-hint {
+    display: block;
+    margin-top: 0.5rem;
+    color: #717182;
+    font-size: 13px;
+}
+
+.modal-footer {
+    padding: 1.5rem;
+    border-top: 1px solid #e9ebef;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.bulk-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.bulk-item {
+    border: 1px solid #e9ebef;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.bulk-item-header {
+    font-weight: 600;
+    color: #030213;
+    margin-bottom: 0.5rem;
+}
+
+.bulk-item-specs {
+    color: #717182;
+    font-size: 13px;
+    margin-bottom: 0.75rem;
+}
+
+/* Scrollbar */
+.cart-items::-webkit-scrollbar,
+.modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.cart-items::-webkit-scrollbar-track,
+.modal-body::-webkit-scrollbar-track {
+    background: #f3f3f5;
+}
+
+.cart-items::-webkit-scrollbar-thumb,
+.modal-body::-webkit-scrollbar-thumb {
+    background: #cbced4;
+    border-radius: 3px;
+}
+
+.cart-items::-webkit-scrollbar-thumb:hover,
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: #717182;
+}
+</style>
+
+<!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
+<script src="{% static 'js/jquery.js' %}"></script>
+<script>
+let cart = [];
+let currentModalProduct = null;
+
+$(document).ready(function() {
+    initializeFilters();
+    initializeSelectAll();
+    initializeBulkAdd();
+    updateCartDisplay();
+});
+
+// Filter Functions
+function initializeFilters() {
+    $('#searchProduct').on('input', filterProducts);
+    $('#categoryFilter').on('change', filterProducts);
+}
+
+function filterProducts() {
+    const searchTerm = $('#searchProduct').val().toLowerCase();
+    const category = $('#categoryFilter').val();
+
+    $('.product-row').each(function() {
+        const $row = $(this);
+        const productName = $row.find('.product-name').text().toLowerCase();
+        const sku = $row.data('sku');
+        const rowCategory = $row.data('category');
+
+        let showRow = true;
+
+        if (searchTerm && !productName.includes(searchTerm) && !sku.includes(searchTerm)) {
+            showRow = false;
+        }
+
+        if (category !== 'all' && rowCategory !== category) {
+            showRow = false;
+        }
+
+        $row.toggle(showRow);
+    });
+}
+
+// Select All Functions
+function initializeSelectAll() {
+    $('#selectAllCheckbox').on('change', function() {
+        const isChecked = $(this).prop('checked');
+        $('.product-row:visible .row-checkbox').prop('checked', isChecked);
+        updateBulkAddButton();
+    });
+
+    $('.row-checkbox').on('change', updateBulkAddButton);
+}
+
+function updateBulkAddButton() {
+    const checkedCount = $('.row-checkbox:checked').length;
+    $('#bulkAddBtn').prop('disabled', checkedCount === 0);
+    
+    if (checkedCount > 0) {
+        $('#selectAllBtn').html('<i class="fa-solid fa-square"></i> Unselect All');
+    } else {
+        $('#selectAllBtn').html('<i class="fa-solid fa-check-square"></i> Select All');
+    }
+}
+
+$('#selectAllBtn').on('click', function() {
+    const anyChecked = $('.row-checkbox:checked').length > 0;
+    $('.product-row:visible .row-checkbox').prop('checked', !anyChecked);
+    $('#selectAllCheckbox').prop('checked', !anyChecked);
+    updateBulkAddButton();
+});
+
+// Bulk Add Functions
+function initializeBulkAdd() {
+    $('#bulkAddBtn').on('click', function() {
+        const selectedProducts = [];
+        
+        $('.row-checkbox:checked').each(function() {
+            const $row = $(this).closest('.product-row');
+            const productId = $row.data('product-id');
+            const productName = $row.find('.product-name').text();
+            const sku = $row.find('td:eq(2)').text();
+            
+            const specsContainer = $row.find('.specs-container');
+            let specs = '';
+            if (specsContainer.length > 0) {
+                const specItems = specsContainer.find('.spec-item');
+                const specPairs = [];
+                specItems.each(function() {
+                    specPairs.push($(this).text().trim());
+                });
+                specs = specPairs.join(', ');
+            } else {
+                specs = $row.find('.specs-cell').text().trim();
+            }
+            
+            selectedProducts.push({
+                productId: productId,
+                name: productName,
+                sku: sku,
+                specs: specs
+            });
+        });
+        
+        if (selectedProducts.length > 0) {
+            openBulkPriceModal(selectedProducts);
+        }
+    });
+}
+
+function openBulkPriceModal(products) {
+    const $bulkList = $('#bulkItemsList');
+    $bulkList.empty();
+    
+    products.forEach(product => {
+        const itemHtml = `
+            <div class="bulk-item" data-product-id="${product.productId}">
+                <div class="bulk-item-header">${product.name}</div>
+                <div class="modal-sku">${product.sku}</div>
+                <div class="bulk-item-specs">${product.specs}</div>
+                <div class="form-group">
+                    <label>Product Code (Optional)</label>
+                    <input type="text" class="form-input bulk-code-input" 
+                           data-product-id="${product.productId}"
+                           id="bulk-code-${product.productId}"
+                           placeholder="Leave blank to use SKU">
+                </div>
+                <div class="form-group">
+                    <label>Unit Price <span class="required">*</span></label>
+                    <div class="price-input-group">
+                        <span class="currency-symbol">₱</span>
+                        <input type="number" class="form-input price-input bulk-price-input" 
+                               data-product-id="${product.productId}"
+                               id="bulk-price-${product.productId}"
+                               step="0.01" min="0" placeholder="0.00" required>
+                    </div>
+                </div>
+            </div>
+        `;
+        $bulkList.append(itemHtml);
+    });
+    
+    $('#bulkPriceModal').addClass('active');
+}
+
+function closeBulkPriceModal() {
+    $('#bulkPriceModal').removeClass('active');
+}
+
+function addBulkToCart() {
+    let allValid = true;
+    
+    $('.bulk-item').each(function() {
+        const $item = $(this);
+        const productId = $item.data('product-id');
+        const price = parseFloat($item.find('.bulk-price-input').val());
+        
+        if (!price || price <= 0) {
+            allValid = false;
+        }
+    });
+    
+    if (!allValid) {
+        alert('Please enter valid prices for all products');
+        return;
+    }
+    
+    $('.bulk-item').each(function() {
+        const $item = $(this);
+        const productId = $item.data('product-id');
+        const price = parseFloat($item.find('.bulk-price-input').val());
+        const code = $item.find('.bulk-code-input').val().trim();
+        const name = $item.find('.bulk-item-header').text();
+        const sku = $item.find('.modal-sku').text();
+        const specs = $item.find('.bulk-item-specs').text();
+        
+        // Check if already in cart
+        const existingIndex = cart.findIndex(item => item.productId === productId);
+        
+        if (existingIndex !== -1) {
+            cart[existingIndex].price = price;
+            cart[existingIndex].code = code || sku;
+        } else {
+            cart.push({
+                productId: productId,
+                name: name,
+                sku: sku,
+                code: code || sku,
+                specs: specs,
+                price: price
+            });
+        }
+    });
+    
+    // Uncheck all checkboxes
+    $('.row-checkbox').prop('checked', false);
+    $('#selectAllCheckbox').prop('checked', false);
+    updateBulkAddButton();
+    
+    updateCartDisplay();
+    closeBulkPriceModal();
+}
+
+// Price Modal Functions
+function openPriceModal(productId, productName, sku, specs) {
+    currentModalProduct = {
+        id: productId,
+        name: productName,
+        sku: sku,
+        specs: specs
+    };
+    
+    $('#modalProductName').text(productName);
+    $('#modalProductSku').text(sku);
+    $('#productCodeInput').val('');
+    $('#priceInput').val('');
+    
+    // Format specifications for modal display
+    let specsHtml = '';
+    if (specs && specs !== 'No specifications') {
+        const specPairs = specs.split(', ');
+        specsHtml = '<div class="modal-specs">';
+        specPairs.forEach(pair => {
+            if (pair.trim()) {
+                specsHtml += `<div class="modal-spec-item">${pair.trim()}</div>`;
+            }
+        });
+        specsHtml += '</div>';
+    } else {
+        specsHtml = '<span class="no-specs">No specifications</span>';
+    }
+    
+    $('#modalProductSpecs').html(specsHtml);
+    $('#priceModal').addClass('active');
+}
+
+function closePriceModal() {
+    $('#priceModal').removeClass('active');
+    currentModalProduct = null;
+}
+
+function addToCart() {
+    if (!currentModalProduct) return;
+    
+    const price = parseFloat($('#priceInput').val());
+    const code = $('#productCodeInput').val().trim();
+    
+    if (!price || price <= 0) {
+        alert('Please enter a valid price');
+        return;
+    }
+    
+    // Check if product already in cart
+    const existingIndex = cart.findIndex(item => item.productId === currentModalProduct.id);
+    
+    if (existingIndex !== -1) {
+        cart[existingIndex].price = price;
+        cart[existingIndex].code = code || currentModalProduct.sku;
+    } else {
+        cart.push({
+            productId: currentModalProduct.id,
+            name: currentModalProduct.name,
+            sku: currentModalProduct.sku,
+            code: code || currentModalProduct.sku,
+            specs: currentModalProduct.specs,
+            price: price
+        });
+    }
+    
+    updateCartDisplay();
+    closePriceModal();
+}
+
+// Cart Display Functions
+function updateCartDisplay() {
+    const $cartItems = $('#cartItems');
+    const $cartActions = $('#cartActions');
+    
+    if (cart.length === 0) {
+        $cartItems.html(`
+            <div class="empty-cart">
+                <i class="fa-solid fa-shopping-cart"></i>
+                <p>No items added</p>
+                <small>Select products from the list</small>
+            </div>
+        `);
+        $cartActions.hide();
+    } else {
+        let cartHtml = '';
+        cart.forEach((item, index) => {
+            // Format specifications
+            let specsHtml = '';
+            if (item.specs && item.specs !== 'No specifications') {
+                const specPairs = item.specs.split(', ');
+                specsHtml = '<div class="cart-specs-container">';
+                specPairs.forEach(pair => {
+                    if (pair.trim()) {
+                        const colonIndex = pair.indexOf(':');
+                        if (colonIndex !== -1) {
+                            const specName = pair.substring(0, colonIndex).trim();
+                            const specValue = pair.substring(colonIndex + 1).trim();
+                            specsHtml += `<div class="cart-spec-item"><strong>${specName}:</strong> ${specValue}</div>`;
+                        } else {
+                            specsHtml += `<div class="cart-spec-item">${pair}</div>`;
+                        }
+                    }
+                });
+                specsHtml += '</div>';
+            } else {
+                specsHtml = '<span class="no-specs">No specifications</span>';
+            }
+            
+            cartHtml += `
+                <div class="cart-item">
+                    <input type="checkbox" class="cart-item-checkbox" data-index="${index}">
+                    <div class="cart-item-content">
+                        <h4 class="cart-item-name">${item.name}</h4>
+                        <div class="cart-item-sku">SKU: ${item.sku}</div>
+                        <div class="cart-item-specs">
+                            ${specsHtml}
+                        </div>
+                        <div class="cart-item-price">
+                            <span class="price-display">₱${parseFloat(item.price).toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <div class="cart-item-actions">
+                        <button class="btn-icon" onclick="editCartItem(${index})" title="Edit price">
+                            <i class="fa-solid fa-edit"></i>
+                        </button>
+                        <button class="btn-icon text-destructive" onclick="removeCartItem(${index})" title="Remove">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        $cartItems.html(cartHtml);
+        $cartActions.show();
+        
+        // Update cart count
+        $('#cartCount').text(`${cart.length} item${cart.length !== 1 ? 's' : ''}`);
+        
+        // Initialize cart checkboxes
+        $('.cart-item-checkbox').on('change', updateRemoveSelectedButton);
+    }
+}
+
+function editCartItem(index) {
+    const item = cart[index];
+    currentModalProduct = {
+        id: item.productId,
+        name: item.name,
+        sku: item.sku,
+        specs: item.specs,
+        editIndex: index
+    };
+    
+    $('#modalProductName').text(item.name);
+    $('#modalProductSku').text(item.sku);
+    $('#productCodeInput').val(item.code !== item.sku ? item.code : '');
+    $('#priceInput').val(item.price);
+    
+    // Format specifications
+    let specsHtml = '';
+    if (item.specs && item.specs !== 'No specifications') {
+        const specPairs = item.specs.split(', ');
+        specsHtml = '<div class="modal-specs">';
+        specPairs.forEach(pair => {
+            if (pair.trim()) {
+                specsHtml += `<div class="modal-spec-item">${pair.trim()}</div>`;
+            }
+        });
+        specsHtml += '</div>';
+    } else {
+        specsHtml = '<span class="no-specs">No specifications</span>';
+    }
+    
+    $('#modalProductSpecs').html(specsHtml);
+    $('#priceModal').addClass('active');
+}
+
+function removeCartItem(index) {
+    if (confirm('Remove this item from cart?')) {
+        cart.splice(index, 1);
+        updateCartDisplay();
+    }
+}
+
+// Cart Select All
+$('#selectAllCartBtn').on('click', function() {
+    const anyChecked = $('.cart-item-checkbox:checked').length > 0;
+    $('.cart-item-checkbox').prop('checked', !anyChecked);
+    updateRemoveSelectedButton();
+});
+
+function updateRemoveSelectedButton() {
+    const checkedCount = $('.cart-item-checkbox:checked').length;
+    $('#removeSelectedBtn').prop('disabled', checkedCount === 0);
+}
+
+$('#removeSelectedBtn').on('click', function() {
+    const indicesToRemove = [];
+    $('.cart-item-checkbox:checked').each(function() {
+        indicesToRemove.push($(this).data('index'));
+    });
+    
+    if (indicesToRemove.length > 0 && confirm(`Remove ${indicesToRemove.length} item(s) from cart?`)) {
+        // Remove in reverse order to maintain indices
+        indicesToRemove.sort((a, b) => b - a).forEach(index => {
+            cart.splice(index, 1);
+        });
+        updateCartDisplay();
+    }
+});
+
+// Save Products
+$('#saveProductsBtn').on('click', function() {
+    if (cart.length === 0) {
+        alert('Please add at least one product to the cart');
+        return;
+    }
+    
+    if (!confirm(`Add ${cart.length} product(s) to supplier catalog?`)) {
+        return;
+    }
+    
+    const productsData = {
+        items: cart.map(item => ({
+            product_id: item.productId,
+            product_code: item.code,
+            unit_price: item.price
+        }))
+    };
+    
+    const $saveBtn = $('#saveProductsBtn');
+    const originalText = $saveBtn.html();
+    $saveBtn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Saving...');
+    
+    $.ajax({
+        url: '{% url "save_supplier_products" supplier.sup_id %}',
+        method: 'POST',
+        data: JSON.stringify(productsData),
+        contentType: 'application/json',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        success: function(response) {
+            if (response.success) {
+                alert('✅ ' + response.message);
+                window.location.href = response.redirect_url;
+            } else {
+                alert('❌ Error: ' + response.error);
+                $saveBtn.prop('disabled', false).html(originalText);
+            }
+        },
+        error: function(xhr) {
+            let errorMsg = 'Error saving products';
+            try {
+                const response = JSON.parse(xhr.responseText);
+                errorMsg = response.error || errorMsg;
+            } catch (e) {}
+            alert('❌ ' + errorMsg);
+            $saveBtn.prop('disabled', false).html(originalText);
+        }
+    });
+});
+
+// Close modals on outside click
+$('.modal').on('click', function(e) {
+    if ($(e.target).hasClass('modal')) {
+        closePriceModal();
+        closeBulkPriceModal();
+    }
+});
+</script>
+{% endblock %}
