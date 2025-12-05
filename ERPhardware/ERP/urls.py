@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from Requisition.views import track_requisition_page  # <- correct import
+from Requisition.views import track_requisition_page  # <- correct import   
 
 urlpatterns = [
     path('', views.login, name="login"),
@@ -24,4 +24,6 @@ urlpatterns = [
     path('requisition_detail/<int:req_id>/', views.requisition_detail, name='requisition_detail'),
     path('requisition/<int:req_id>/approve/', views.approve_requisition, name='approve_requisition'),
     path('requisition/<int:req_id>/approve-management/', views.approve_to_management, name='approve_to_management'),
+    path('requisition/<int:req_id>/create-rfq/', views.create_rfq, name='create_rfq'),
+
 ]

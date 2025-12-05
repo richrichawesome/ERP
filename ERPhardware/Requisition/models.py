@@ -35,6 +35,18 @@ class Requisition(models.Model):
         related_name="requisition_approver"
     )
 
+    rfq = models.ForeignKey('Purchasing.RFQ', on_delete=models.SET_NULL, null=True, blank=True, related_name="requisitions")
+
+    po = models.ForeignKey(
+        "Purchasing.Purchase_Order",  # Note: "app_name.ModelName" as a string
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="requisitions"
+    )
+
+
+
     def __str__(self):
         return f"REQ-{self.req_id} ({self.req_type})"
 

@@ -260,6 +260,7 @@ def edit_product(request):
             "error": str(e)
         })
 
+# ari chen
 @csrf_exempt
 def add_product(request):
     try:
@@ -275,8 +276,7 @@ def add_product(request):
         prod_sku = data.get("prod_sku")
         category_id = data.get("category_id")
         branch_id = data.get("branch_id")
-        spec_name = data.get("spec_name")
-        spec_value = data.get("spec_value")
+        specifications = data.get("specifications", [])  # Get specifications as list
         user_id = data.get("user_id")
         
         # validate fields
@@ -360,13 +360,14 @@ def add_product(request):
             user=user
         )
         
-        # create product specification provided
-        if spec_name and spec_value:
-            Product_Specification.objects.create(
-                product=product,
-                spec_name=spec_name,
-                spec_value=spec_value
-            )
+        # create product specifications from the list
+        for spec in specifications:
+            if spec.get('name') and spec.get('value'):
+                Product_Specification.objects.create(
+                    product=product,
+                    spec_name=spec['name'],
+                    spec_value=spec['value']
+                )
         
         return JsonResponse({
             "success": True,

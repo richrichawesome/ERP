@@ -22,6 +22,8 @@
         text-align: center;
         border: 1px solid rgba(0, 0, 0, 0.1);
         box-shadow: 0 4px 6px rgba(3, 2, 19, 0.1);
+        max-height: 90vh; /* Limit height to 90% of viewport */
+        overflow-y: auto; /* Enable vertical scrolling */
     }
 
     .search-bar {
@@ -302,6 +304,108 @@
         pointer-events: none;
     }
 
+
+    /* ari chen */
+
+    /* Specification Styles */
+
+
+    .specs-cell {
+        max-width: 200px;
+        word-wrap: break-word;
+    }
+
+    .specs-container {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .spec-item {
+        padding: 2px 0;
+        /* border-bottom: 1px solid #f1f1f1; */
+    }
+
+    .spec-item:last-child {
+        border-bottom: none;
+    }
+
+    .spec-item strong {
+        color: #030213;
+        font-weight: 600;
+    }
+
+    .no-specs {
+        color: #94a3b8;
+        font-style: italic;
+    }
+
+    /* Ensure table cells have proper spacing */
+    td {
+        padding: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        background: #ffffff;
+        vertical-align: top; /* Align content to top for better appearance */
+    }
+
+
+    .specification-group {
+        margin-bottom: 10px;
+    }
+
+    .spec-row {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+        margin-bottom: 10px;
+    }
+
+    .spec-input-group {
+        flex: 1;
+    }
+
+    .spec-input-group label {
+        font-size: 12px;
+        margin-bottom: 3px;
+    }
+
+    .spec-input-group input {
+        margin-bottom: 0;
+    }
+
+    .remove-spec-btn {
+        background: #d4183d;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        height: fit-content;
+        margin-bottom: 10px;
+    }
+
+    .remove-spec-btn:hover {
+        background: #b31533;
+    }
+
+    #add-spec-btn {
+        background: #10b981;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    #add-spec-btn:hover {
+        background: #0da271;
+    }
+
+
+
+
+
     /* Responsive design */
     @media (max-width: 768px) {
         .overlay-content {
@@ -382,12 +486,21 @@
                             <td>{{ p.last_updated_at }}</td>
                             <td>₱{{ p.product.prod_current_cost }}</td>
 
-                            <td>{% for spec in p.product.product_specification_set.all %}
-                                    {{ spec.spec_name }}: {{ spec.spec_value }}
-                                {% empty %}
-                                None
-                                {% endfor %}
+                            <td class="specs-cell">
+                                {% if p.product.product_specification_set.all %}
+                                    <div class="specs-container">
+                                        {% for spec in p.product.product_specification_set.all %}
+                                            <div class="spec-item">
+                                                <strong>{{ spec.spec_name }}:</strong> {{ spec.spec_value }}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <span class="no-specs">No specifications available</span>
+                                {% endif %}
                             </td>
+
+
                             <td>{{ p.product.prod_is_active }}</td>
                             <td>
                                 <button type="button" class="stock-in">Stock in</button>
@@ -453,60 +566,86 @@
         </div>
     </div>
 
+
+    <!-- Ari chen-->
+
     <!-- overlay for add product -->
     <div id="overlay-add" class="overlay" style="display:none;">
-        <div class="overlay-content">
-            <h2 id="overlay-add-title">Add Product</h2>
+    <div class="overlay-content">
+        <h2 id="overlay-add-title">Add Product</h2>
 
-            <label>Product Name:</label>
-            <input type="text" id="add-name"><br>
+        <label>Product Name:</label>
+        <input type="text" id="add-name"><br>
 
-            <label>Product Description:</label>
-            <input type="text" id="add-desc"><br>
+        <label>Product Description:</label>
+        <input type="text" id="add-desc"><br>
 
-            <label>Product Unit of Measure:</label>
-            <input type="text" id="add-unit"><br>
+        <label>Product Unit of Measure:</label>
+        <input type="text" id="add-unit"><br>
 
-            <label>Product Specific Name:</label>
-            <input type="text" id="add-specific-name"><br>
-
-            <label>Product Specific value:</label>
-            <input type="text" id="add-specific-value"><br>
-
-            <label>Product Unit Cost:</label>
-            <input type="number" id="add-cost" min="0" step="0.01"><br>
-
-            <label>Product Retail Price:</label>
-            <input type="number" id="add-price" min="0" step="0.01"><br>
-
-            <label>Product Reorder Threshold:</label>
-            <input type="number" id="add-reorder" min="0"><br>
-
-            <label>Product SKU:</label>
-            <input type="text" id="add-sku"><br>
-
-            <label>Product Category:</label>
-            <select name="category" id="add-category" required>
-                <option value="" selected disabled>--select--</option>
-                {% for cat in categories %}
-                    <option value="{{ cat.prod_cat_id }}">{{ cat.prod_cat_name }}</option>
-                {% endfor %}
-            </select><br>
-
-            <label>Branch:</label>
-            <select name="branch" id="add-branch" required>
-                <option value="" selected disabled>---select---</option>
-                {% for branch in branches %}
-                    <option value="{{ branch.branch_id }}">{{ branch.branch_name }}</option>
-                {% empty %}
-                    <option value="">No branches available</option>
-                {% endfor %}
-            </select><br><br>
-
-            <button id="overlay-add-btn">Add</button>
-            <button type="button" id="overlay-add-close">Cancel</button> 
+        <!-- Product Specifications Container -->
+        <div id="specifications-container">
+            <div class="specification-group">
+                <div class="spec-row">
+                    <div class="spec-input-group">
+                        <label>Product Specific Name:</label>
+                        <input type="text" class="add-specific-name" placeholder="e.g., Grade">
+                    </div>
+                    <div class="spec-input-group">
+                        <label>Product Specific Value:</label>
+                        <input type="text" class="add-specific-value" placeholder="e.g., Fine">
+                    </div>
+                    <button type="button" class="remove-spec-btn" style="display:none;">Remove</button>
+                </div>
+            </div>
         </div>
+        
+        <!-- Add Specification Button -->
+        <button type="button" id="add-spec-btn" style="margin-bottom: 15px;">
+            + Add Another Specification
+        </button>
+
+        <label>Product Unit Cost:</label>
+        <input type="number" id="add-cost" min="0" step="0.01"><br>
+
+        <label>Product Retail Price:</label>
+        <input type="number" id="add-price" min="0" step="0.01"><br>
+
+        <label>Product Reorder Threshold:</label>
+        <input type="number" id="add-reorder" min="0"><br>
+
+        <label>Product SKU:</label>
+        <input type="text" id="add-sku"><br>
+
+        <label>Product Category:</label>
+        <select name="category" id="add-category" required>
+            <option value="" selected disabled>--select--</option>
+            {% for cat in categories %}
+                <option value="{{ cat.prod_cat_id }}">{{ cat.prod_cat_name }}</option>
+            {% endfor %}
+        </select><br>
+
+        <label>Branch:</label>
+        <select name="branch" id="add-branch" required>
+            <option value="" selected disabled>---select---</option>
+            {% for branch in branches %}
+                <option value="{{ branch.branch_id }}">{{ branch.branch_name }}</option>
+            {% empty %}
+                <option value="">No branches available</option>
+            {% endfor %}
+        </select><br><br>
+
+        <button id="overlay-add-btn">Add</button>
+        <button type="button" id="overlay-add-close">Cancel</button> 
     </div>
+</div>
+
+
+
+
+
+
+
 
     <!-- overlay for remove product -->
     <div id="overlay-remove" class="overlay" style="display:none;">
@@ -864,15 +1003,17 @@
         }
     });
 
+
+    // ari chen
+
     // add product functionality
+    // Add product functionality with multiple specifications
     const addProductBtn = document.querySelector('.add-product-btn');
     const overlayAddClose = document.getElementById('overlay-add-close');
     const overlayAdd = document.getElementById('overlay-add');
     const addName = document.getElementById('add-name');
     const addDesc = document.getElementById('add-desc');
     const addUnit = document.getElementById('add-unit');
-    const addSpecificName = document.getElementById('add-specific-name');
-    const addSpecificValue = document.getElementById('add-specific-value');
     const addCost = document.getElementById('add-cost');
     const addPrice = document.getElementById('add-price');
     const addReorder = document.getElementById('add-reorder');
@@ -880,14 +1021,66 @@
     const addCategory = document.getElementById('add-category');
     const addBranch = document.getElementById('add-branch');
     const addBtn = document.getElementById('overlay-add-btn');
+    const specificationsContainer = document.getElementById('specifications-container');
+    const addSpecBtn = document.getElementById('add-spec-btn');
 
+    // Add specification functionality
+    addSpecBtn.addEventListener('click', () => {
+        addSpecification();
+    });
+
+    function addSpecification(specName = '', specValue = '') {
+        const specGroup = document.createElement('div');
+        specGroup.className = 'specification-group';
+        
+        specGroup.innerHTML = `
+            <div class="spec-row">
+                <div class="spec-input-group">
+                    <label>Product Specific Name:</label>
+                    <input type="text" class="add-specific-name" placeholder="e.g., Grade" value="${specName}">
+                </div>
+                <div class="spec-input-group">
+                    <label>Product Specific Value:</label>
+                    <input type="text" class="add-specific-value" placeholder="e.g., Fine" value="${specValue}">
+                </div>
+                <button type="button" class="remove-spec-btn">Remove</button>
+            </div>
+        `;
+        
+        specificationsContainer.appendChild(specGroup);
+        
+        // Add event listener to remove button
+        const removeBtn = specGroup.querySelector('.remove-spec-btn');
+        removeBtn.addEventListener('click', () => {
+            specGroup.remove();
+            updateRemoveButtonsVisibility();
+        });
+        
+        updateRemoveButtonsVisibility();
+    }
+
+    function updateRemoveButtonsVisibility() {
+        const specGroups = specificationsContainer.querySelectorAll('.specification-group');
+        const removeButtons = specificationsContainer.querySelectorAll('.remove-spec-btn');
+        
+        // Show remove buttons only if there's more than one specification
+        if (specGroups.length > 1) {
+            removeButtons.forEach(btn => {
+                btn.style.display = 'block';
+            });
+        } else {
+            removeButtons.forEach(btn => {
+                btn.style.display = 'none';
+            });
+        }
+    }
+
+    // Initialize with one specification when opening the overlay
     addProductBtn.addEventListener('click', () => {
         // Clear all fields
         addName.value = '';
         addDesc.value = '';
         addUnit.value = '';
-        addSpecificName.value = '';
-        addSpecificValue.value = '';
         addCost.value = '';
         addPrice.value = '';
         addReorder.value = '';
@@ -895,10 +1088,30 @@
         addCategory.value = '';
         addBranch.value = '';
         
+        // Clear specifications and add one empty one
+        specificationsContainer.innerHTML = '';
+        addSpecification();
+        
         overlayAdd.style.display = 'flex';
     });
 
     addBtn.addEventListener('click', async () => {
+        // Collect specifications
+        const specifications = [];
+        const specGroups = specificationsContainer.querySelectorAll('.specification-group');
+        
+        specGroups.forEach(group => {
+            const specName = group.querySelector('.add-specific-name').value.trim();
+            const specValue = group.querySelector('.add-specific-value').value.trim();
+            
+            if (specName && specValue) {
+                specifications.push({
+                    name: specName,
+                    value: specValue
+                });
+            }
+        });
+
         // Validate required fields
         if (!addName.value || !addCost.value || !addPrice.value || !addReorder.value || !addSku.value || !addCategory.value || !addBranch.value) {
             alert("Please fill in all required fields!");
@@ -926,8 +1139,7 @@
                     prod_sku: addSku.value,
                     category_id: addCategory.value,
                     branch_id: addBranch.value,
-                    spec_name: addSpecificName.value,
-                    spec_value: addSpecificValue.value,
+                    specifications: specifications, // Send as array
                     user_id: userId
                 })
             });
@@ -958,6 +1170,15 @@
     overlayAddClose.addEventListener('click', () => {
         overlayAdd.style.display = 'none';
     });
+    
+
+
+
+
+
+
+
+
 
     // remove product functionality
     const removeProductBtn = document.querySelector('.remove-product-btn');

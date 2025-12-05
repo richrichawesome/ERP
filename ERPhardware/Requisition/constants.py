@@ -18,6 +18,7 @@ REQ_MAIN_STATUS_CHOICES = [
 REQ_SUBSTATUS_CHOICES = [
     # Approved Requisition sub-status
     ("RFQ_CREATED", "RFQ Created"),
+    # ("QUOTATIONS_COMPLETED", "Quotations Completed"),
     ("PENDING_PO", "Pending Purchase Order"),
 
     # # PO Approval sub-status

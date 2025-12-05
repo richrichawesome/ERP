@@ -47,14 +47,7 @@
             box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
         }
 
-        .create-rfq-btn {
-            background: #8b5cf6;
-            color: white;
-        }
-
-        .create-rfq-btn:hover {
-            background: #7c3aed;
-        }
+        
 
         /* Progress Bar Styles */
         .progress-container {
@@ -127,6 +120,49 @@
             max-width: 120px;
         }
 
+
+        /* Specification Display Styles */
+        .specs-cell {
+            max-width: 200px;
+            word-wrap: break-word;
+        }
+
+        .specs-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .spec-item {
+            padding: 2px 0;
+            /* border-bottom: 1px solid #f1f1f1; */
+        }
+
+        .spec-item:last-child {
+            border-bottom: none;
+        }
+
+        .spec-item strong {
+            color: #030213;
+            font-weight: 600;
+        }
+
+        .no-specs {
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        /* Ensure table cells have proper spacing */
+        td {
+            padding: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: #ffffff;
+            vertical-align: top;
+        }
+
+
+
+
         /* Table Styles */
         .table {
             width: 100%;
@@ -145,10 +181,10 @@
             font-weight: 600;
         }
 
-        .table td {
+        /* .table td {
             padding: 12px;
             border: 1px solid rgba(0, 0, 0, 0.1);
-        }
+        } */
 
         .table tbody tr:nth-child(even) {
             background: #f8fafc;
@@ -178,13 +214,34 @@
             color: #030213;
         }
 
+        .status-badges-container {
+            display: block;
+        }
+
         .status-badge {
             padding: 6px 12px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
             text-transform: uppercase;
+            display: block; 
+            width: fit-content;
+            margin-bottom: 8px; 
         }
+
+
+        .status-blue {
+            background: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #3b82f6;
+            padding: 12px 12px;
+            border-radius: 5px;
+            font-size: 15px;
+            font-weight: 600;
+            display: block;
+            width: fit-content;
+        }
+
 
         .status-pending {
             background: #fef3c7;
@@ -406,14 +463,24 @@
                     {% for item in requisition_items %}
                     <tr>
                         <td>{{ item.product.prod_name }}</td>
-                        <td>
-                            {% for spec in item.product.product_specification_set.all %}
-                                {{ spec.spec_name }}: {{ spec.spec_value }}{% if not forloop.last %}, {% endif %}
-                            {% empty %}
-                                No specifications
-                            {% endfor %}
-                        </td>
-                        <td>{{ item.product.prod_desc }}</td>  <!-- Using description as brand -->
+
+
+                        <td class="specs-cell">
+                          {% if item.product.product_specification_set.all %}
+                              <div class="specs-container">
+                                  {% for spec in item.product.product_specification_set.all %}
+                                      <div class="spec-item">
+                                          <strong>{{ spec.spec_name }}:</strong> {{ spec.spec_value }}
+                                      </div>
+                                  {% endfor %}
+                              </div>
+                          {% else %}
+                              <span class="no-specs">No specifications available</span>
+                          {% endif %}
+                      </td>
+
+
+                        <td>{{ item.product.prod_desc }}</td>
                         <td>{{ item.quantity }}</td>
                     </tr>
                     {% empty %}
@@ -441,12 +508,25 @@
                     <div class="info-group">
                         <div class="info-label">Status</div>
                         <div class="info-value">
-                            <span class="status-badge 
-                                {% if requisition.req_main_status == 'PENDING_CUSTODIAN' %}status-pending
-                                {% elif requisition.req_main_status == 'APPROVED_REQUISITION' %}status-approved
-                                {% else %}status-pending{% endif %}">
-                                {{ requisition.get_req_main_status_display }}
-                            </span>
+                            <div class="status-badges-container">
+                                <span class="status-badge 
+                                    {% if requisition.req_main_status == 'PENDING_CUSTODIAN' %}status-pending
+                                    {% elif requisition.req_main_status == 'APPROVED_REQUISITION' %}status-approved
+                                    {% else %}status-pending{% endif %}">
+                                    {{ requisition.get_req_main_status_display }}
+                                </span>
+
+                                {% if status_message %}
+                                    <div class="status-blue" style="margin-top: 8px; display: inline-block;">
+                                    {{ status_message }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+
+
+
+
                         </div>
                     </div>
                 </div>
@@ -487,9 +567,7 @@
                         <button type="button" class="btn reject-btn" name="reject-btn">Reject</button>
                         <button type="button" class="btn approve-btn" name="approve-btn">Approve</button>
                     
-                    {% elif show_purchase_management_buttons %}
-                        <!-- Purchase Management Button -->
-                        <button type="button" class="btn create-rfq-btn" name="create-rfq-btn">Create RFQ</button>
+                    
                     {% endif %}
                 </div>
             {% endif %}
@@ -533,158 +611,173 @@
         </div>
     </div>
 
-    <script>
-        // Calculate progress bar width dynamically
-        document.addEventListener('DOMContentLoaded', function() {
-            const completedSteps = document.querySelectorAll('.step.completed').length;
-            const activeSteps = document.querySelectorAll('.step.active').length;
-            const totalSteps = document.querySelectorAll('.step').length;
-            const progressBar = document.querySelector('.progress-bar');
-            
-            if (totalSteps > 1) {
-                const currentStepCount = completedSteps + (activeSteps > 0 ? 1 : 0);
-                const progressWidth = ((currentStepCount - 1) / (totalSteps - 1)) * 100;
-                progressBar.style.width = Math.max(0, progressWidth) + '%';
-            }
 
-            // Add event listeners to buttons
-            document.querySelector('.reject-btn').addEventListener('click', function() {
+
+
+ <script>
+    // Calculate progress bar width dynamically
+    document.addEventListener('DOMContentLoaded', function() {
+        const completedSteps = document.querySelectorAll('.step.completed').length;
+        const activeSteps = document.querySelectorAll('.step.active').length;
+        const totalSteps = document.querySelectorAll('.step').length;
+        const progressBar = document.querySelector('.progress-bar');
+        
+        if (totalSteps > 1) {
+            const currentStepCount = completedSteps + (activeSteps > 0 ? 1 : 0);
+            const progressWidth = ((currentStepCount - 1) / (totalSteps - 1)) * 100;
+            progressBar.style.width = Math.max(0, progressWidth) + '%';
+        }
+
+        // Add event listeners to buttons (only if they exist)
+        const rejectBtn = document.querySelector('.reject-btn');
+        if (rejectBtn) {
+            rejectBtn.addEventListener('click', function() {
                 openModal('rejectModal');
             });
+        }
 
-            document.querySelector('.approve-btn').addEventListener('click', function() {
+        const approveBtn = document.querySelector('.approve-btn');
+        if (approveBtn) {
+            approveBtn.addEventListener('click', function() {
                 openModal('approveModal');
             });
+        }
 
-            document.querySelector('.approve-management-btn').addEventListener('click', function() {
+        const approveManagementBtn = document.querySelector('.approve-management-btn');
+        if (approveManagementBtn) {
+            approveManagementBtn.addEventListener('click', function() {
                 openModal('approveManagementModal');
             });
+        }
+    });
 
-            // Add event listener for Create RFQ button
-            const createRfqBtn = document.querySelector('.create-rfq-btn');
-            if (createRfqBtn) {
-                createRfqBtn.addEventListener('click', function() {
-                    // TODO: Implement Create RFQ functionality
-                    alert('Create RFQ functionality will be implemented later.');
-                });
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Modal functions
+    function openModal(modalId) {
+        document.getElementById(modalId).style.display = 'flex';
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+        // Clear reject reason when closing reject modal
+        if (modalId === 'rejectModal') {
+            document.getElementById('rejectReason').value = '';
+        }
+    }
+
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+                // Clear reject reason when closing reject modal
+                if (modal.id === 'rejectModal') {
+                    document.getElementById('rejectReason').value = '';
+                }
             }
         });
+    });
 
-        // Modal functions
-        function openModal(modalId) {
-            document.getElementById(modalId).style.display = 'flex';
+    // Confirmation functions
+    function confirmReject() {
+        const rejectReason = document.getElementById('rejectReason').value.trim();
+        
+        if (!rejectReason) {
+            alert('Please provide a reason for rejection.');
+            return;
         }
 
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-            // Clear reject reason when closing reject modal
-            if (modalId === 'rejectModal') {
-                document.getElementById('rejectReason').value = '';
+        // TODO: Implement reject functionality later
+        alert('Reject functionality will be implemented later.');
+        closeModal('rejectModal');
+    }
+
+    function confirmApprove() {
+        const reqId = {{ requisition.req_id }};
+        
+        // Disable button to prevent double clicks
+        const confirmBtn = document.querySelector('.modal-confirm.approve');
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Processing...';
+        
+        fetch(`/requisition/${reqId}/approve/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
             }
-        }
-
-        // Close modal when clicking outside
-        window.addEventListener('click', function(event) {
-            const modals = document.querySelectorAll('.modal');
-            modals.forEach(modal => {
-                if (event.target === modal) {
-                    modal.style.display = 'none';
-                    // Clear reject reason when closing reject modal
-                    if (modal.id === 'rejectModal') {
-                        document.getElementById('rejectReason').value = '';
-                    }
-                }
-            });
-        });
-
-        // Confirmation functions
-        function confirmReject() {
-            const rejectReason = document.getElementById('rejectReason').value.trim();
-            
-            if (!rejectReason) {
-                alert('Please provide a reason for rejection.');
-                return;
-            }
-
-            // TODO: Implement reject functionality later
-            alert('Reject functionality will be implemented later.');
-            closeModal('rejectModal');
-        }
-
-        function confirmApprove() {
-            const reqId = {{ requisition.req_id }};
-            
-            // Disable button to prevent double clicks
-            const confirmBtn = document.querySelector('.modal-confirm.approve');
-            confirmBtn.disabled = true;
-            confirmBtn.textContent = 'Processing...';
-            
-            fetch(`/requisition/${reqId}/approve/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(data.message);
-                    closeModal('approveModal');
-                    // Reload page to show updated status and progress
-                    window.location.reload();
-                } else {
-                    alert('Error approving requisition: ' + data.error);
-                    confirmBtn.disabled = false;
-                    confirmBtn.textContent = 'Confirm Approve';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to approve requisition. Please try again.');
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                closeModal('approveModal');
+                // Reload page to show updated status and progress
+                window.location.reload();
+            } else {
+                alert('Error approving requisition: ' + data.error);
                 confirmBtn.disabled = false;
                 confirmBtn.textContent = 'Confirm Approve';
-            });
-        }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to approve requisition. Please try again.');
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Confirm Approve';
+        });
+    }
 
-        function confirmApproveManagement() {
-            const reqId = {{ requisition.req_id }};
-            
-            // Disable button to prevent double clicks
-            const confirmBtn = document.querySelector('.modal-confirm.approve-management');
-            confirmBtn.disabled = true;
-            confirmBtn.textContent = 'Processing...';
-            
-            fetch(`/requisition/${reqId}/approve-management/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(data.message);
-                    closeModal('approveManagementModal');
-                    // Reload page to show updated status and progress
-                    window.location.reload();
-                } else {
-                    alert('Error: ' + data.error);
-                    confirmBtn.disabled = false;
-                    confirmBtn.textContent = 'Confirm';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to send to management. Please try again.');
+    function confirmApproveManagement() {
+        const reqId = {{ requisition.req_id }};
+        
+        // Disable button to prevent double clicks
+        const confirmBtn = document.querySelector('.modal-confirm.approve-management');
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Processing...';
+        
+        fetch(`/requisition/${reqId}/approve-management/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                closeModal('approveManagementModal');
+                // Reload page to show updated status and progress
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.error);
                 confirmBtn.disabled = false;
                 confirmBtn.textContent = 'Confirm';
-            });
-        }
-
-        // Helper function to get CSRF token (for Django)
-        function getCSRFToken() {
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-            return csrfToken ? csrfToken.value : '';
-        }
-    </script>
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to send to management. Please try again.');
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Confirm';
+        });
+    }
+</script>   
 {% endblock %}

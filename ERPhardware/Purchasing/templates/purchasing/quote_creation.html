@@ -1,0 +1,1301 @@
+{% extends "main/base.html" %}
+{% block page_content %}
+<style>
+    .content-header {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+    }
+
+    .content-header h1 {
+        color: #030213;
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .content-header p {
+        color: #717182;
+        font-size: 14px;
+    }
+
+    /* Filter and Search styles */
+    .filters-container {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 15px;
+        align-items: end;
+        flex-wrap: wrap;
+    }
+
+    .filter-item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .filter-item label {
+        color: #030213;
+        font-weight: 500;
+        font-size: 14px;
+    }
+
+    .filter-item select,
+    .filter-item input {
+        padding: 8px 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #f3f3f5;
+        color: #030213;
+        font-size: 14px;
+        min-width: 200px;
+    }
+
+    .filter-item select:focus,
+    .filter-item input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }
+
+    /* Card styles */
+    .card {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+    }
+
+    .card h2 {
+        color: #030213;
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    /* Button styles */
+    .btn {
+        padding: 8px 16px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #2563eb;
+        color: #ffffff;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 14px;
+        border: none;
+        height: fit-content;
+    }
+
+    .btn:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(3, 2, 19, 0.1);
+    }
+
+    .btn-secondary {
+        background: #ffffff;
+        color: #030213;
+        border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-secondary:hover {
+        background: #f3f3f5;
+    }
+
+    .btn-small {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    /* Status badges */
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-approved {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-rejected {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* Table styles */
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+        margin-top: 15px;
+    }
+
+    .table th {
+        background: #030213;
+        color: #ffffff;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .table td {
+        padding: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .table tbody tr:nth-child(even) {
+        background: #f8fafc;
+    }
+
+    .table tbody tr:hover {
+        background: #e9ebef;
+    }
+
+    /* Modal Styles */
+    .modal {
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background-color: #fff;
+        margin: 50px auto;
+        padding: 30px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 900px;
+        max-height: 90vh;
+        overflow-y: auto;
+        position: relative;
+    }
+
+    .close-btn {
+        position: absolute;
+        right: 15px;
+        top: 10px;
+        font-size: 24px;
+        font-weight: bold;
+        cursor: pointer;
+        color: #717182;
+    }
+
+    .close-btn:hover {
+        color: #030213;
+    }
+
+    /* Supplier Tab Styles */
+    .supplier-tabs-container {
+        display: flex;
+        gap: 10px;
+        margin: 20px 0;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #cbd5e1;
+        flex-wrap: wrap;
+    }
+
+    .supplier-tab {
+        padding: 8px 16px;
+        background: #f8fafc;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        border-bottom: 1px solid #cbd5e1;
+        border-radius: 4px 4px 0 0;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        position: relative;
+        top: 1px;
+    }
+
+    .supplier-tab:hover {
+        background: #e2e8f0;
+        color: #030213;
+    }
+
+    .supplier-tab.active {
+        background: #2563eb;
+        color: white;
+        border-color: #2563eb;
+        border-bottom: 2px solid #2563eb;
+    }
+
+    /* Quotation Content Area - Now single form */
+    .quotation-content {
+        margin-top: 20px;
+        min-height: 400px;
+    }
+
+    /* Supplier Quotation Form */
+    .supplier-quotation {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .supplier-quotation.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    /* Quotation Table Styles */
+    .quotation-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+    }
+
+    .quotation-table th {
+        background: #030213;
+        color: white;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        border: 1px solid #030213;
+    }
+
+    .quotation-table td {
+        padding: 12px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        vertical-align: top;
+    }
+
+    .quotation-table tbody tr:nth-child(even) {
+        background: #f8fafc;
+    }
+
+    .price-input {
+        width: 120px;
+        padding: 8px;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        text-align: right;
+    }
+
+    .price-input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }
+
+    /* Quotation Details Grid */
+    .quotation-details-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+        margin-top: 25px;
+    }
+
+    .quotation-details-grid div {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .quotation-details-grid label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #030213;
+        font-size: 14px;
+    }
+
+    .quotation-details-grid input {
+        padding: 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        background: white;
+        font-size: 14px;
+    }
+
+    /* Save Button Styles */
+    .save-supplier-btn {
+        padding: 10px 20px;
+        background: #10b981;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-weight: 500;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background 0.2s ease;
+    }
+
+    .save-supplier-btn:hover {
+        background: #0da271;
+    }
+
+    .save-supplier-btn.saved {
+        background: #6b7280;
+        cursor: not-allowed;
+    }
+
+    /* Cancel Button Styles */
+    .cancel-supplier-btn {
+        padding: 10px 20px;
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-weight: 500;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background 0.2s ease;
+    }
+
+    .cancel-supplier-btn:hover {
+        background: #dc2626;
+    }
+
+    /* Button Container */
+    .supplier-buttons-container {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 25px;
+    }
+
+    /* Saved Status */
+    .saved-status {
+        margin-top: 15px;
+        text-align: right;
+        display: none;
+    }
+
+    .saved-status span {
+        color: #10b981;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        justify-content: flex-end;
+        font-size: 14px;
+    }
+
+    /* Modal Footer */
+    .modal-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #e2e8f0;
+    }
+
+
+    
+    /* Add Supplier Modal Styles */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #030213;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.form-group label.required:after {
+    content: " *";
+    color: #ef4444;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    font-size: 14px;
+    background: white;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+
+
+
+
+
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .filter-group {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .filter-item {
+            width: 100%;
+        }
+        
+        .filter-item select,
+        .filter-item input {
+            min-width: 100%;
+        }
+        
+        .table {
+            font-size: 14px;
+        }
+        
+        .table th,
+        .table td {
+            padding: 8px;
+        }
+
+        .modal-content {
+            padding: 20px;
+            margin: 20px auto;
+        }
+
+        .quotation-details-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .supplier-tabs-container {
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            padding-bottom: 5px;
+        }
+
+        .supplier-tab {
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .supplier-buttons-container {
+            flex-direction: column;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .content-header {
+            padding: 15px;
+        }
+        
+        .filters-container {
+            padding: 15px;
+        }
+        
+        .card {
+            padding: 15px;
+        }
+        
+        .table {
+            display: block;
+            overflow-x: auto;
+        }
+
+        .modal-footer {
+            flex-direction: column;
+            gap: 10px;
+            align-items: stretch;
+        }
+
+        .modal-footer .btn {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+
+<div class="card">
+    <h2>RFQs for Quotation Input</h2>
+    <p>Select RFQs to input supplier quotations.</p>
+    
+    <!-- Filters and Search -->
+    <div class="filters-container">
+        <div class="filter-group">
+            <div class="filter-item">
+                <label>Status:</label>
+                <select name="requisition-status" id="requisition-status">
+                    <option value="all">All Status</option>
+                    <option value="PENDING_CUSTODIAN">Pending Custodian</option>
+                    <option value="PENDING_TOP_MGMT">Pending Top Management</option>
+                    <option value="APPROVED_REQUISITION" selected>Approved Requisition</option>
+                    <option value="PO_APPROVAL">PO Approval</option>
+                    <option value="TO_BE_DELIVERED">To be Delivered</option>
+                    <option value="INSPECTION">Inspection</option>
+                    <option value="FULFILLED">Fulfilled</option>
+                </select>
+            </div>
+            
+            <div class="filter-item">
+                <label>Search:</label>
+                <input type="text" name="requisition-search" id="requisition-search" placeholder="Search by Requisition ID...">
+            </div>
+            
+            <button class="btn" id="search-btn">Search</button>
+        </div>
+    </div>
+
+    <!-- RFQ table -->
+    <div style="margin-top: 20px;">
+        <h3>RFQs with Requisitions</h3>
+        
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>RFQ ID</th>
+                    <th>Requisition ID/s</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rfq in rfq_data %}
+                <tr>
+                    <td>{{ rfq.rfq_display }}</td>
+                    <td>{{ rfq.requisition_ids }}</td>
+                    <td>{{ rfq.req_type }}</td>
+                    <td>
+                        <span class="status-badge 
+                            {% if rfq.main_status == 'PENDING_CUSTODIAN' %}status-pending
+                            {% elif rfq.main_status == 'APPROVED_REQUISITION' %}status-approved
+                            {% elif rfq.main_status == 'FULFILLED' %}status-approved
+                            {% elif rfq.main_status == 'REJECTED' %}status-rejected
+                            {% else %}status-pending{% endif %}">
+                            {{ rfq.status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-small view-rfq-btn" data-rfq-id="{{ rfq.rfq_id }}" data-requisition-ids="{{ rfq.requisition_ids }}">
+                            Input Supplier Quotation
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #717182; padding: 20px;">
+                        No RFQs found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ===== MODAL===== -->
+<div id="quotationModal" class="modal">
+    <div class="modal-content">
+        
+
+       <h2>Input Supplier Quotation</h2>
+
+<div class="rfq-info" style="margin-bottom: 20px;">
+    <p><strong>RFQ ID:</strong> <span id="modal-rfq-id"></span></p>
+    <p><strong>Requisition ID/s:</strong> <span id="modal-requisition-ids"></span></p>
+</div>
+
+<!-- Supplier Navigation Bar -->
+                <div style="margin-bottom: 25px;">
+                    <label style="font-weight: bold; color: #030213; display: block; margin-bottom: 12px;">
+                        Select Supplier:
+                    </label>
+                    <div id="supplier-tabs-container" style="display: flex; gap: 10px; flex-wrap: wrap; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px;">
+                        <!-- Existing Suppliers -->
+                        {% for supplier in suppliers %}
+                        <button type="button" 
+                                class="supplier-tab" 
+                                data-supplier-id="{{ supplier.sup_id }}"
+                                onclick="switchSupplier(this, '{{ supplier.sup_id }}')"
+                                style="padding: 10px 20px; border: 1px solid #cbd5e1; border-radius: 6px 6px 0 0; background: #f8fafc; color: #475569; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                            {{ supplier.sup_name }}
+                        </button>
+                        {% endfor %}
+                        
+                        <!-- Add New Supplier Button -->
+                        <button type="button" 
+                                onclick="showAddSupplierModal()"
+                                style="padding: 10px 15px; border: 1px dashed #cbd5e1; border-radius: 6px; background: transparent; color: #475569; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                            + Add New Supplier
+                        </button>
+                    </div>
+                </div>
+
+
+                <!-- Supplier Content Area -->
+                <div id="supplier-content">
+                    <div class="placeholder-message" style="text-align: center; padding: 40px; color: #64748b; background: #f8fafc; border-radius: 8px;">
+                        <div style="font-size: 16px; margin-bottom: 10px;">👆</div>
+                        <div style="font-weight: 500;">Please select a supplier from above to input quotation</div>
+                        <div style="font-size: 14px; margin-top: 5px; color: #94a3b8;">Choose a supplier to start entering prices and details</div>
+                    </div>
+                </div>
+
+
+                <!-- Main Action Buttons -->
+                <div class="modal-footer" style="margin-top: 30px; display: flex; gap: 12px; justify-content: flex-end; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+                    <button type="button" class="cancel-supplier-btn" style="padding: 12px 25px; background: #6b7280; color: white; border: none; border-radius: 4px; font-weight: 500; cursor: pointer;">
+                        Cancel
+                    </button>
+                     <button class="btn btn-primary" id="doneQuotationBtn">Done Quotation</button>
+                </div>
+
+
+
+
+                <!-- Supplier Quotation Template (Hidden) -->
+        <div id="supplier-quotation-template" style="display: none;">
+            <div class="supplier-quotation" data-supplier-id="">
+                <!-- Quotation Items Table -->
+                <div style="overflow-x: auto; margin-bottom: 25px;">
+                    <table id="quotationTable" class="quotation-table" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
+                        <thead>
+                            <tr>
+                                <th style="padding: 12px; background: #030213; color: white; text-align: left; border: 1px solid #030213;">Item</th>
+                                <th style="padding: 12px; background: #030213; color: white; text-align: left; border: 1px solid #030213;">Specifications</th>
+                                <th style="padding: 12px; background: #030213; color: white; text-align: left; border: 1px solid #030213;">Unit of Measure</th>
+                                <th style="padding: 12px; background: #030213; color: white; text-align: left; border: 1px solid #030213;">Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+    {% for item in rfq_items %}
+    <tr>
+
+        <!-- PRODUCT NAME -->
+        <td style="padding: 12px; border: 1px solid #e2e8f0;">
+            <strong>{{ item.productName }}</strong>
+        </td>
+
+        <!-- SPECIFICATIONS -->
+        <td style="padding: 12px; border: 1px solid #e2e8f0;">
+            {% if item.specifications %}
+                <div style="display: flex; flex-direction: column; gap: 2px;">
+                    {% for spec in item.specifications %}
+                    <div>
+                        <strong>{{ spec.name }}:</strong> {{ spec.value }}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <span style="color: #94a3b8; font-style: italic;">No specifications</span>
+            {% endif %}
+        </td>
+
+        <!-- UOM -->
+        <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">
+            {{ item.uom }}
+        </td>
+
+        <!-- PRICE INPUT -->
+        <td style="padding: 12px; border: 1px solid #e2e8f0;">
+            <input type="number"
+                   step="0.01"
+                   min="0"
+                   class="price-input unit-price"
+                   data-item-id="{{ item.itemId }}"
+                   placeholder="0.00"
+                   style="width: 120px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: right;">
+        </td>
+
+    </tr>
+    {% endfor %}
+</tbody>
+
+                    </table>
+                </div>
+
+
+
+                 <!-- Additional Quotation Details -->
+                <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+                    <div>
+                        <label style="font-weight: bold; display: block; margin-bottom: 8px; color: #030213;">
+                            Estimated Time Arrival:
+                        </label>
+                        <input type="date" class="eta-date" style="padding: 10px; width: 100%; border: 1px solid #cbd5e1; border-radius: 4px; background: white;">
+                    </div>
+                    <div>
+                        <label style="font-weight: bold; display: block; margin-bottom: 8px; color: #030213;">
+                            Quotation Valid Until:
+                        </label>
+                        <input type="date" class="valid-until-date" style="padding: 10px; width: 100%; border: 1px solid #cbd5e1; border-radius: 4px; background: white;">
+                    </div>
+                </div>
+                
+                <!-- Save Button for This Supplier -->
+                <div class="supplier-buttons-container">
+    <button class="save-supplier-btn" id="saveSupplierBtn">Save Quotation for this Supplier</button>
+    <button class="cancel-supplier-btn" id="cancelSupplierBtn">Cancel</button>
+</div>
+
+
+
+
+
+
+                
+
+
+
+
+
+
+
+    </div> <!--modal-content-->
+</div> <!--"quotationModal-->
+
+
+
+<!-- ===== ADD SUPPLIER MODAL (Separate Modal) ===== -->
+<div id="addSupplierModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+        <span class="close-btn" onclick="closeAddSupplierModal()">&times;</span>
+        <h2 style="margin-bottom: 25px;">Add New Supplier</h2>
+        
+        <form id="addSupplierForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="required">Supplier Name</label>
+                    <input type="text" id="sup_name" name="sup_name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="required">Contact Number</label>
+                    <input type="text" id="sup_phone" name="sup_phone" required>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Contact Person</label>
+                    <input type="text" id="sup_contact_person" name="sup_contact_person">
+                </div>
+                
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="sup_email" name="sup_email">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Address</label>
+                <textarea id="sup_address" name="sup_address"></textarea>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Payment Terms</label>
+                    <textarea id="sup_payment_terms" name="sup_payment_terms" style="min-height: 60px;"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Delivery Terms</label>
+                    <textarea id="sup_delivery_terms" name="sup_delivery_terms" style="min-height: 60px;"></textarea>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px;">
+                <button type="button" class="cancel-supplier-btn" onclick="closeAddSupplierModal()">Cancel</button>
+                <button type="submit" class="save-supplier-btn">Save Supplier</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    // --- GLOBAL VARIABLES ---
+    let currentRFQData = null;
+    let currentSuppliers = [];
+    let currentSupplierId = null;
+    let savedSuppliers = new Set();
+    let supplierForms = {};
+    let currentRFQId = null;
+
+    // --- FILTER & SEARCH ---
+    const statusSelect = document.getElementById('requisition-status');
+    const searchInput = document.getElementById('requisition-search');
+    const searchBtn = document.getElementById('search-btn');
+
+    function applyFilters() {
+        const status = statusSelect.value;
+        const searchFilter = searchInput.value;
+        window.location.href = `?section=input_quotation&status=${status}&search=${searchFilter}`;
+    }
+
+    statusSelect.addEventListener('change', applyFilters);
+    searchBtn.addEventListener('click', applyFilters);
+
+    searchInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') applyFilters();
+    });
+
+    searchInput.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9-]/g, '');
+        if (this.value.toLowerCase().startsWith('req-')) {
+            this.value = this.value.substring(4);
+        }
+    });
+
+    // --- URL PARAMETERS ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get('status');
+    const search = urlParams.get('search');
+    if (status) statusSelect.value = status;
+    if (search) searchInput.value = search;
+
+    // --- MODAL LOGIC ---
+    const modal = document.getElementById("quotationModal");
+    const doneQuotationBtn = document.getElementById("doneQuotationBtn");
+
+    // OPEN MODAL WHEN BUTTON IS CLICKED
+    document.querySelectorAll(".view-rfq-btn").forEach(btn => {
+        btn.addEventListener("click", function() {
+            const rfqId = this.dataset.rfqId;
+            const requisitions = this.dataset.requisitionIds;
+            currentRFQId = rfqId;
+
+            document.getElementById("modal-rfq-id").textContent = rfqId;
+            document.getElementById("modal-requisition-ids").textContent = requisitions;
+
+            // Fetch RFQ items before showing modal
+            fetch(`/purchasing/get-rfq-items/${rfqId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        populateQuotationTable(data.items);
+                        modal.style.display = "flex";
+                        savedSuppliers.clear(); // Reset saved suppliers for new RFQ
+                    } else {
+                        alert('Error loading RFQ items: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to load RFQ items');
+                });
+        });
+    });
+
+    // CLOSE MODAL (Cancel button beside Done Quotation)
+    document.querySelector(".modal-footer .cancel-supplier-btn").addEventListener("click", function() {
+        if (confirm('Are you sure you want to close? Any unsaved changes will be lost.')) {
+            modal.style.display = "none";
+            resetModal();
+        }
+    });
+
+    // DONE QUOTATION BUTTON
+    doneQuotationBtn.addEventListener("click", function() {
+        if (savedSuppliers.size === 0) {
+            alert('Please save at least one supplier quotation before marking as done.');
+            return;
+        }
+
+        const confirmMessage = `You have saved quotations for ${savedSuppliers.size} supplier(s). Are you done inputting all quotations?`;
+        
+        if (confirm(confirmMessage)) {
+            // Send request to update requisition status to PENDING_PO
+            fetch('/purchasing/complete-quotation-input/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    rfq_id: currentRFQId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Quotation process completed successfully!');
+                    modal.style.display = "none";
+                    resetModal();
+                    location.reload(); // Refresh to show updated status
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to complete quotation process');
+            });
+        }
+    });
+
+    // Function to populate quotation table
+    function populateQuotationTable(items) {
+        const template = document.getElementById('supplier-quotation-template');
+        const tbody = template.querySelector('tbody');
+        
+        tbody.innerHTML = '';
+        
+        items.forEach(item => {
+            const row = document.createElement('tr');
+            
+            let specsHtml = '<span style="color: #94a3b8; font-style: italic;">No specifications</span>';
+            if (item.specifications && item.specifications.length > 0) {
+                specsHtml = '<div style="display: flex; flex-direction: column; gap: 2px;">';
+                item.specifications.forEach(spec => {
+                    specsHtml += `<div style="padding: 1px 0;"><strong>${spec.spec_name}:</strong> ${spec.spec_value}</div>`;
+                });
+                specsHtml += '</div>';
+            }
+            
+            row.innerHTML = `
+                <td style="padding: 12px; border: 1px solid #e2e8f0; vertical-align: top;">
+                    <strong>${item.product_name}</strong>
+                </td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; vertical-align: top;">
+                    ${specsHtml}
+                </td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; vertical-align: top; text-align: center;">
+                    ${item.rfq_item_req_uom || 'Each'}
+                </td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; vertical-align: top;">
+                    <input type="number" 
+                        step="0.01" 
+                        min="0" 
+                        class="price-input unit-price" 
+                        data-item-id="${item.rfq_item_id}"
+                        placeholder="0.00"
+                        style="width: 120px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: right;">
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+        });
+    }
+
+    // Switch supplier function
+    window.switchSupplier = function(tabElement, supplierId) {
+        document.querySelectorAll('.supplier-tab').forEach(tab => {
+            tab.style.background = '#f8fafc';
+            tab.style.color = '#475569';
+            tab.style.borderBottom = '1px solid #cbd5e1';
+        });
+
+        tabElement.style.background = '#2563eb';
+        tabElement.style.color = 'white';
+        tabElement.style.borderBottom = '2px solid #2563eb';
+
+        currentSupplierId = supplierId;
+        loadSupplierContent(supplierId);
+        attachButtonHandlers(supplierId);
+    };
+
+    // Load supplier content
+    function loadSupplierContent(supplierId) {
+        const contentArea = document.getElementById('supplier-content');
+
+        const placeholder = contentArea.querySelector('.placeholder-message');
+        if (placeholder) placeholder.remove();
+
+        const existingContent = contentArea.querySelector(`.supplier-quotation[data-supplier-id="${supplierId}"]`);
+
+        if (existingContent) {
+            contentArea.querySelectorAll('.supplier-quotation').forEach(el => el.style.display = 'none');
+            existingContent.style.display = 'block';
+        } else {
+            const template = document.getElementById('supplier-quotation-template').firstElementChild.cloneNode(true);
+            template.dataset.supplierId = supplierId;
+            template.style.display = 'block';
+
+            contentArea.querySelectorAll('.supplier-quotation').forEach(el => el.style.display = 'none');
+            contentArea.appendChild(template);
+        }
+    }
+
+
+
+
+    // Add Supplier Modal Functions
+window.showAddSupplierModal = function() {
+    document.getElementById('addSupplierModal').style.display = 'flex';
+};
+
+window.closeAddSupplierModal = function() {
+    document.getElementById('addSupplierModal').style.display = 'none';
+    document.getElementById('addSupplierForm').reset();
+};
+
+// Add Supplier Form Submit Handler
+document.getElementById('addSupplierForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        sup_name: document.getElementById('sup_name').value.trim(),
+        sup_phone: document.getElementById('sup_phone').value.trim(),
+        sup_contact_person: document.getElementById('sup_contact_person').value.trim(),
+        sup_email: document.getElementById('sup_email').value.trim(),
+        sup_address: document.getElementById('sup_address').value.trim(),
+        sup_payment_terms: document.getElementById('sup_payment_terms').value.trim(),
+        sup_delivery_terms: document.getElementById('sup_delivery_terms').value.trim()
+    };
+
+    fetch('/purchasing/add-supplier/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Supplier added successfully!');
+            
+            // Add new supplier tab to the UI
+            const tabsContainer = document.getElementById('supplier-tabs-container');
+            const addButton = tabsContainer.querySelector('button[onclick*="showAddSupplierModal"]');
+            
+            const newTab = document.createElement('button');
+            newTab.type = 'button';
+            newTab.className = 'supplier-tab';
+            newTab.dataset.supplierId = data.supplier.sup_id;
+            newTab.textContent = data.supplier.sup_name;
+            newTab.onclick = function() { switchSupplier(this, data.supplier.sup_id); };
+            
+            // Insert the new tab before the "Add New Supplier" button
+            tabsContainer.insertBefore(newTab, addButton);
+            
+            // Close the modal
+            closeAddSupplierModal();
+            
+            // Auto-select the newly added supplier
+            switchSupplier(newTab, data.supplier.sup_id);
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to add supplier');
+    });
+});
+
+
+
+
+
+
+
+
+    // Attach handlers to Save and Cancel buttons for each supplier
+    function attachButtonHandlers(supplierId) {
+        const contentArea = document.getElementById('supplier-content');
+        const supplierForm = contentArea.querySelector(`.supplier-quotation[data-supplier-id="${supplierId}"]`);
+        
+        if (!supplierForm) return;
+
+        const saveBtn = supplierForm.querySelector('.save-supplier-btn');
+        const cancelBtn = supplierForm.querySelector('#cancelSupplierBtn');
+
+        // Remove old event listeners by replacing elements
+        const newSaveBtn = saveBtn.cloneNode(true);
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        saveBtn.replaceWith(newSaveBtn);
+        cancelBtn.replaceWith(newCancelBtn);
+
+        // SAVE QUOTATION FOR THIS SUPPLIER
+        newSaveBtn.addEventListener('click', function() {
+            saveSupplierQuotation(supplierId, supplierForm);
+        });
+
+        // CANCEL - Clear inputs
+        newCancelBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to clear all inputs for this supplier?')) {
+                clearSupplierInputs(supplierForm);
+            }
+        });
+    }
+
+    // Save supplier quotation
+    function saveSupplierQuotation(supplierId, supplierForm) {
+        const priceInputs = supplierForm.querySelectorAll('.unit-price');
+        const etaDate = supplierForm.querySelector('.eta-date').value;
+        const validUntilDate = supplierForm.querySelector('.valid-until-date').value;
+
+        // Validate inputs
+        let hasValidPrice = false;
+        const items = [];
+
+        priceInputs.forEach(input => {
+            const price = parseFloat(input.value);
+            if (price && price > 0) {
+                hasValidPrice = true;
+                items.push({
+                    rfq_item_id: input.dataset.itemId,
+                    unit_price: price
+                });
+            }
+        });
+
+        if (!hasValidPrice) {
+            alert('Please enter at least one valid price.');
+            return;
+        }
+
+        if (!etaDate || !validUntilDate) {
+            alert('Please fill in both ETA and Valid Until dates.');
+            return;
+        }
+
+        // Prepare quotation data
+        const quotationData = {
+            rfq_id: currentRFQId,
+            supplier_id: supplierId,
+            eta: etaDate,
+            valid_until: validUntilDate,
+            items: items
+        };
+
+        // Send to server
+        fetch('/purchasing/save-supplier-quotation/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ quotation_data: quotationData })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                savedSuppliers.add(supplierId);
+                alert('Quotation saved successfully for this supplier!');
+                
+                // Mark button as saved
+                const saveBtn = supplierForm.querySelector('.save-supplier-btn');
+                saveBtn.textContent = '✓ Saved';
+                saveBtn.style.background = '#6b7280';
+                saveBtn.style.cursor = 'not-allowed';
+                saveBtn.disabled = true;
+            } else {
+                alert('Error saving quotation: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to save quotation');
+        });
+    }
+
+    // Clear supplier inputs
+    function clearSupplierInputs(supplierForm) {
+        supplierForm.querySelectorAll('.unit-price').forEach(input => {
+            input.value = '';
+        });
+        supplierForm.querySelector('.eta-date').value = '';
+        supplierForm.querySelector('.valid-until-date').value = '';
+        
+        const saveBtn = supplierForm.querySelector('.save-supplier-btn');
+        saveBtn.textContent = 'Save Quotation for this Supplier';
+        saveBtn.style.background = '#10b981';
+        saveBtn.style.cursor = 'pointer';
+        saveBtn.disabled = false;
+    }
+
+    // Reset modal
+    function resetModal() {
+        savedSuppliers.clear();
+        currentRFQId = null;
+        currentSupplierId = null;
+        
+        const contentArea = document.getElementById('supplier-content');
+        contentArea.innerHTML = `
+            <div class="placeholder-message" style="text-align: center; padding: 40px; color: #64748b; background: #f8fafc; border-radius: 8px;">
+                <div style="font-size: 16px; margin-bottom: 10px;">👆</div>
+                <div style="font-weight: 500;">Please select a supplier from above to input quotation</div>
+                <div style="font-size: 14px; margin-top: 5px; color: #94a3b8;">Choose a supplier to start entering prices and details</div>
+            </div>
+        `;
+        
+        document.querySelectorAll('.supplier-tab').forEach(tab => {
+            tab.style.background = '#f8fafc';
+            tab.style.color = '#475569';
+            tab.style.borderBottom = '1px solid #cbd5e1';
+        });
+    }
+
+    // Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
+{% endblock %}
