@@ -13,10 +13,12 @@ from reportlab.lib.enums import TA_CENTER
 from io import BytesIO
 from ERP.models import User, Branch
 from datetime import datetime
-
-
+from django.views.decorators.csrf import csrf_exempt
 from django.db.models import F, Sum
 
+
+
+@csrf_exempt 
 def create_rfq_multiple(request):
     """Create a single RFQ for multiple approved requisitions"""
     if request.method != 'POST':
@@ -98,6 +100,7 @@ def create_rfq_multiple(request):
 
 
 
+# @csrf_exempt 
 def generate_rfq_pdf_multiple(rfq, combined_items):
     """Generate RFQ PDF with Unit Price column blank for supplier"""
     buffer = BytesIO()
@@ -228,6 +231,7 @@ def generate_rfq_pdf_multiple(rfq, combined_items):
 
 
 
+@csrf_exempt 
 def preview_rfq_data(request):
     """Generate preview data for RFQ before creating it"""
     if request.method != 'POST':

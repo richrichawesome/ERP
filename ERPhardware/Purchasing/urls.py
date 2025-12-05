@@ -12,20 +12,14 @@ urlpatterns = [
     path("purchasing_staff_approved_req/", views.purchasing_staff_approved_req, name="purchasing_staff_approved_req"),
 
 
-    path("purchasing_staff_sup_manage/", views.purchasing_staff_sup_manage, name="purchasing_staff_sup_manage"),
     path("purchasing_staff_inventory/", views.purchasing_staff_inventory, name="purchasing_staff_inventory"),
     path("purchasing_staff_reports/", views.purchasing_staff_reports, name="purchasing_staff_reports"),
-    # path('requisition/<int:req_id>/create-rfq/', views.create_rfq, name='create_rfq'),
-    # path('requisition/<int:req_id>/input-quotation/', views.input_quotation, name='input_quotation'),
+    
 
 
      # RFQ Quotation URLs
     path('rfq/<int:rfq_id>/input-quotation/', views.input_quotation, name='input_quotation'),
-    # path('purchasing/save-quotation/', views.save_rfq_quotation, name='save_rfq_quotation'),
     path('purchasing/get-rfq-items/<int:rfq_id>/', views.get_rfq_items, name='get_rfq_items'),
-
-
-
 
 
 
@@ -41,8 +35,7 @@ urlpatterns = [
     path('purchasing/add-supplier/', views.add_supplier, name='add_supplier'),
     path('purchasing/save-supplier-quotation/', views.save_supplier_quotation, name='save_supplier_quotation'),
     path('purchasing/complete-quotation-input/', views.complete_quotation_input, name='complete_quotation_input'),
-    # path('input-quotation/save/', views.save_supplier_quotation, name='save_quote_action'),
-    # path('input-quotation/confirm/', views.confirm_quotation_status, name='confirm_quote_action'),
+    
     
     
     # Supplier Management
