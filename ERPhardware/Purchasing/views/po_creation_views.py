@@ -1,7 +1,4 @@
 
-
-
-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 from django.http import JsonResponse
@@ -15,7 +12,7 @@ from ERP.models import User
 
 
 
-def rfq_creation(request):
+def po_creation(request):
     user_id = request.session.get('user_id')
     user = User.objects.get(pk=user_id)
     if not user_id:
@@ -45,7 +42,7 @@ def rfq_creation(request):
         if status == 'APPROVED_REQUISITION':
             requisitions = requisitions.filter(
                 req_main_status=status,
-                req_substatus='NONE'  # Only show APPROVED_REQUISITION with NONE substatus
+                req_substatus='PENDING_PO'  # Only show APPROVED_REQUISITION with NONE substatus
             )
         else:
             # For all other statuses, just filter by main status
@@ -58,9 +55,9 @@ def rfq_creation(request):
             # Q(requested_by__user_lname__icontains=search)
         )
     
-    return render(request, "purchasing/rfq_creation.html", {
+    return render(request, "purchasing/po_creation.html", {
         "section": section,
         "requisitions": requisitions,
         "user": user,
-        "active_page": "requisition"
+        "active_page": "po"
     })

@@ -71,4 +71,14 @@ urlpatterns = [
          supplier_management_views.get_price_history, 
          name="get_price_history"),
      
+
+
+
+     path("po_creation/", views.po_creation, name="po_creation"),
+     path('purchasing/preview-po/', views.preview_po_data, name='preview_po_data'),
+     path('purchasing/generate-po-preview/', views.generate_po_preview_data, name='generate_po_preview_data'),
+     path('purchasing/create-po-multiple/', views.create_po_multiple, name='create_po_multiple'),
+
+
+
 ]

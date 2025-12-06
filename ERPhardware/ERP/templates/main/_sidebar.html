@@ -86,6 +86,16 @@
 
 
     <a
+      href="{% url 'po_creation' %}"
+      class="nav-item {% if active_page == 'po' %}active{% endif %}"
+    >
+      <div class="nav-icon"><i class="fas fa-file-alt"></i></div>
+      <span>Purchase Order Creation</span>
+    </a>
+
+
+
+    <a
       href="{% url 'purchasing_staff_sup_manage' %}"
       class="nav-item {% if active_page == 'supplier' %}active{% endif %}"
     >

@@ -6,6 +6,8 @@ from Requisition.models import RequisitionItem
 from ERP.models import *
 from Requisition.constants import *
 from Requisition.models import Requisition
+from decimal import Decimal
+
 
 class RFQ(models.Model):
     rfq_id = models.AutoField(primary_key=True)
@@ -160,12 +162,18 @@ class Purchase_Order(models.Model):
     po_date_sent_to_sup = models.DateField(null=True, blank=True)               
     po_eta = models.DateField(null=True, blank=True)                             
     
+    po_subtotal = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'))
+
     po_total_amount = models.DecimalField(max_digits=14, decimal_places=2)
     po_approval_date = models.DateField(null=True, blank=True)
     po_rejection_reason = models.TextField(null=True, blank=True)
     
     po_created_at = models.DateTimeField(auto_now_add=True)
     po_pdf = models.FileField(upload_to='po_pdfs/', null=True, blank=True)
+
+    rfq_supplier = models.ForeignKey(RFQ_Supplier, null=True, blank=True, on_delete=models.SET_NULL)
+    supplier_quotation = models.ForeignKey(Supplier_Quotation, null=True, blank=True, on_delete=models.SET_NULL)
+
 
     def __str__(self):
         return f"PO-{self.po_id} | {self.supplier.sup_name}"

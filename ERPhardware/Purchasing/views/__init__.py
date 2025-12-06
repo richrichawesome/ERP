@@ -22,6 +22,7 @@ from .rfq_creation_views import*
 from .quote_creation_views import*
 from .purchasing_staff_inventory_views import *
 from .purchasing_staff_reports_views import *
+from .po_creation_views import*
 from . import supplier_management_views
 
 __all__ = [
