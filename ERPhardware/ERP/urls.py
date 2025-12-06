@@ -19,6 +19,13 @@ urlpatterns = [
     path('inventory/remove_product/', views.remove_product, name='remove_product'), #Note: this url is for the REMOVE product for the inventory itself [REMOVE PRODUCT]
     path('inventory/get_inactive_products/', views.get_inactive_products, name='get_inactive_products'),
     path('inventory/reactivate_product/', views.reactivate_product, name='reactivate_product'),
+    path('inventory/get_products_not_in_inventory/', views.get_products_not_in_inventory, name='get_products_not_in_inventory'),
+    path('inventory/add_product_to_inventory/', views.add_product_to_inventory, name='add_product_to_inventory'),
+
+    path('product_management/', views.product_management, name='product_management'),
+
+    path('inventory/get_movement_history/', views.get_movement_history, name='get_movement_history'),
+
     path('property-custodian/', views.property_custodian_dashboard, name='property_custodian_dashboard'), #property custodian
     path('requisition/', views.property_custodian_dashboard, name='requisition'), #Note: requisition html pero sa property_custodian_dashboard na views
     path('requisition_detail/<int:req_id>/', views.requisition_detail, name='requisition_detail'),

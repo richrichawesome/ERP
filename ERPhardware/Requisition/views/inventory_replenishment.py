@@ -127,6 +127,7 @@ def inventory_replenishment_form(request):
         context = {
             'inventory_items': inventory_items,
             'user': user,
+            "active_page": "inventory_replenishment",
         }
         
         print("🎯 === DEBUG: RENDERING TEMPLATE ===")

@@ -104,9 +104,15 @@
             {% if messages %}
             <div class="message-box">
                 {% for message in messages %}
-                    <p style="color: {% if message.tags == 'success' %}green{% else %}red{% endif %};">
-                        {{ message }}
-                    </p>
+                    {% if message.tags == 'success' %}
+                        <p style="color: green;">
+                            {{ message }}
+                        </p>
+                    {% else %}
+                        <p style="color: red;">
+                            {{ message }}
+                        </p>
+                    {% endif %}
                 {% endfor %}
             </div>
             {% endif %}

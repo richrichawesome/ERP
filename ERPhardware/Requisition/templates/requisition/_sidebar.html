@@ -10,7 +10,7 @@
     </div>
 
     <div class="nav-menu">
-        <a href="{% url 'track_requisition' %}" class="nav-item {% if active_page in 'track_requisition inventory_replenishment internal_transfer' %}active{% endif %}">
+        <a href="{% url 'track_requisition' %}" class="nav-item {% if active_page == 'track_requisition' or active_page == 'inventory_replenishment' or active_page == 'internal_transfer' %}active{% endif %}">
             <div class="nav-icon"><i class="fas fa-th-large"></i></div>
             <span>Requisitions</span>
         </a>

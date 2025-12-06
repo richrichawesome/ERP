@@ -1,0 +1,1286 @@
+
+{% extends "main/base.html" %}
+{% block page_content %}
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    * {
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* Page Header */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 20px;
+    }
+
+    .page-title h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0 0 4px 0;
+    }
+
+    .page-description {
+        font-size: 14px;
+        color: #6b7280;
+        margin: 0;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .create-btn {
+        border: none;
+        padding: 10px 18px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        transition: all 0.2s ease;
+        background-color: #1a2332;
+        color: white;
+    }
+
+    .create-btn:hover {
+        background-color: #060607;
+    }
+
+    /* Search and Filter Section */
+    .search-filter-section {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 16px 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        flex-wrap: wrap;
+    }
+
+    .search-box {
+        flex: 1;
+        position: relative;
+        min-width: 250px;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 10px 12px 10px 38px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #374151;
+        background: #fafafa;
+        transition: all 0.2s;
+    }
+
+    .search-box input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background: white;
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        font-size: 14px;
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .filter-dropdown {
+        position: relative;
+    }
+
+    .filter-dropdown select {
+        padding: 10px 16px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: white;
+        font-size: 14px;
+        color: #374151;
+        cursor: pointer;
+        font-weight: 500;
+        min-width: 180px;
+        transition: all 0.2s;
+    }
+
+    .filter-dropdown select:hover {
+        border-color: #d1d5db;
+        background: #f9fafb;
+    }
+
+    .filter-dropdown select:focus {
+        outline: none;
+        border-color: #3b82f6;
+    }
+
+    /* Modern Table Design */
+    .table-container {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+    }
+
+    .products-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        color: #374151;
+    }
+
+    .products-table thead th {
+        background: #f9fafb;
+        text-align: left;
+        padding: 14px 16px;
+        font-weight: 600;
+        color: #6b7280;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .products-table tbody tr {
+        border-bottom: 1px solid #f3f4f6;
+        transition: background-color 0.15s;
+    }
+
+    .products-table tbody tr:hover {
+        background: #f9fafb;
+    }
+
+    .products-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .products-table tbody td {
+        padding: 16px;
+        color: #1f2937;
+        font-size: 14px;
+        vertical-align: top;
+    }
+
+    .product-name-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .product-name {
+        font-weight: 600;
+        color: #111827;
+        font-size: 14px;
+    }
+
+    .product-sku {
+        font-size: 12px;
+        color: #6b7280;
+        font-family: 'Courier New', monospace;
+    }
+
+    .specs-container {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        max-width: 250px;
+    }
+
+    .spec-item {
+        font-size: 13px;
+        color: #4b5563;
+    }
+
+    .spec-item strong {
+        color: #1f2937;
+        font-weight: 600;
+    }
+
+    .no-specs {
+        color: #9ca3af;
+        font-style: italic;
+        font-size: 13px;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .status-active {
+        background-color: #ecfdf5;
+        color: #059669;
+    }
+
+    .status-inactive {
+        background-color: #fef2f2;
+        color: #dc2626;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        padding: 7px 14px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        border: 1px solid;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .btn-edit {
+        background: #eff6ff;
+        color: #2563eb;
+        border-color: #dbeafe;
+    }
+
+    .btn-edit:hover {
+        background: #dbeafe;
+        border-color: #bfdbfe;
+    }
+
+    .btn-deactivate {
+        background: #fef2f2;
+        color: #dc2626;
+        border-color: #fecaca;
+    }
+
+    .btn-deactivate:hover {
+        background: #fecaca;
+        border-color: #fca5a5;
+    }
+
+    .btn-reactivate {
+        background: #ecfdf5;
+        color: #059669;
+        border-color: #d1fae5;
+    }
+
+    .btn-reactivate:hover {
+        background: #d1fae5;
+        border-color: #a7f3d0;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #9ca3af;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.3;
+    }
+
+    .empty-state p {
+        font-size: 15px;
+        margin: 0;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.25);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 999;
+    }
+
+    .modal-container {
+        width: 520px;
+        max-width: 90%;
+        background: #fff;
+        border-radius: 18px;
+        padding: 25px 30px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        animation: fadeIn 0.25s ease;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .modal-header h2 {
+        font-size: 20px;
+        margin: 0;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #6b7280;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+
+    .close-btn:hover {
+        background: #f3f4f6;
+        color: #374151;
+    }
+
+    .modal-body {
+        margin-top: 18px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        font-size: 14px;
+        color: #374151;
+        font-weight: 500;
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        background: #fafafa;
+        font-size: 14px;
+        font-family: 'Inter', sans-serif;
+        color: #374151;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background: white;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 15px;
+    }
+
+    .form-row .half {
+        flex: 1;
+    }
+
+    .specification-group {
+        margin-bottom: 10px;
+    }
+
+    .spec-row {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+        margin-bottom: 10px;
+    }
+
+    .spec-input-group {
+        flex: 1;
+    }
+
+    .spec-input-group label {
+        font-size: 12px;
+        margin-bottom: 3px;
+    }
+
+    .spec-input-group input {
+        margin-bottom: 0;
+    }
+
+    .remove-spec-btn {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        height: fit-content;
+        margin-bottom: 10px;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .remove-spec-btn:hover {
+        background: #fecaca;
+    }
+
+    .add-spec-btn {
+        background: #ecfdf5;
+        color: #059669;
+        border: 1px solid #d1fae5;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    .add-spec-btn:hover {
+        background: #d1fae5;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .btn-cancel {
+        padding: 10px 18px;
+        background: #f3f4f6;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        color: #374151;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .btn-cancel:hover {
+        background: #e5e7eb;
+    }
+
+    .btn-save {
+        padding: 10px 20px;
+        background: #2563eb;
+        color: #fff;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .btn-save:hover {
+        background: #1d4ed8;
+    }
+
+    @keyframes fadeIn {
+        from { 
+            opacity: 0; 
+            transform: translateY(10px); 
+        }
+        to { 
+            opacity: 1; 
+            transform: translateY(0); 
+        }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .search-filter-section {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .search-box {
+            width: 100%;
+        }
+
+        .filter-group {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .filter-dropdown select {
+            width: 100%;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .action-btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<div class="page-header">
+    <div class="page-title">
+        <h1>Product Management</h1>
+        <p class="page-description">Manage all products across the system.</p>
+    </div>
+
+    <div class="header-actions">
+        <button class="create-btn" onclick="openAddProductModal()">
+            <i class="fa-solid fa-plus"></i>
+            Add Product
+        </button>
+    </div>
+</div>
+
+<!-- Search and Filter Section -->
+<div class="search-filter-section">
+    <div class="search-box">
+        <i class="fa-solid fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search by product name or SKU...">
+    </div>
+    
+    <div class="filter-group">
+        <div class="filter-dropdown">
+            <select id="categoryFilter">
+                <option value="all">All Categories</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.prod_cat_name }}">{{ cat.prod_cat_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="filter-dropdown">
+            <select id="statusFilter">
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Table Container -->
+<div class="table-container">
+    <table class="products-table">
+        <thead>
+            <tr>
+                <th>Product Name</th>
+                <th>Specifications</th>
+                <th>Category</th>
+                <th>Unit</th>
+                <th>Current Cost</th>
+                <th>Retail Price</th>
+                <th>Reorder Threshold</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="productsTableBody">
+        {% if products %}
+            {% for product in products %}
+                <tr data-category="{{ product.category.prod_cat_name }}" 
+                    data-status="{% if product.prod_is_active %}active{% else %}inactive{% endif %}"
+                    data-product-id="{{ product.prod_id }}">
+                    <td>
+                        <div class="product-name-cell">
+                            <span class="product-name">{{ product.prod_name }}</span>
+                            <span class="product-sku">SKU: {{ product.prod_sku }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        {% if product.product_specification_set.all %}
+                            <div class="specs-container">
+                                {% for spec in product.product_specification_set.all %}
+                                    <div class="spec-item">
+                                        <strong>{{ spec.spec_name }}:</strong> {{ spec.spec_value }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <span class="no-specs">No specifications</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ product.category.prod_cat_name }}</td>
+                    <td>{{ product.prod_unit_of_measure }}</td>
+                    <td>₱{{ product.prod_current_cost }}</td>
+                    <td>₱{{ product.prod_retail_price }}</td>
+                    <td>{{ product.prod_reorder_threshold }}</td>
+                    <td>
+                        <span class="status-badge {% if product.prod_is_active %}status-active{% else %}status-inactive{% endif %}">
+                            {% if product.prod_is_active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn btn-edit" onclick="editProduct('{{ product.prod_id }}')">
+                                <i class="fa-solid fa-edit"></i> Edit
+                            </button>
+                            {% if product.prod_is_active %}
+                            <button class="action-btn btn-deactivate" onclick="deactivateProduct('{{ product.prod_id }}')">
+                                <i class="fa-solid fa-ban"></i> Deactivate
+                            </button>
+                            {% else %}
+                            <button class="action-btn btn-reactivate" onclick="reactivateProduct('{{ product.prod_id }}')">
+                                <i class="fa-solid fa-check"></i> Reactivate
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="9">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-box-open"></i>
+                        <p>No products found. Click "Add Product" to add new products.</p>
+                    </div>
+                </td>
+            </tr>
+        {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Add Product Modal -->
+<div id="addProductModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2>Add Product</h2>
+            <button type="button" class="close-btn" onclick="closeAddProductModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Product Name</label>
+                <input type="text" id="addProductName" placeholder="Enter product name">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group half">
+                    <label>SKU</label>
+                    <input type="text" id="addProductSku" placeholder="Enter SKU">
+                </div>
+                <div class="form-group half">
+                    <label>Unit of Measure</label>
+                    <input type="text" id="addProductUnit" placeholder="e.g., pcs, kg, m">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Product Description</label>
+                <input type="text" id="addProductDesc" placeholder="Enter description">
+            </div>
+
+            <!-- Product Specifications -->
+            <div id="addSpecificationsContainer">
+                <div class="specification-group">
+                    <div class="spec-row">
+                        <div class="spec-input-group">
+                            <label>Specification Name</label>
+                            <input type="text" class="add-spec-name" placeholder="e.g., Grade">
+                        </div>
+                        <div class="spec-input-group">
+                            <label>Specification Value</label>
+                            <input type="text" class="add-spec-value" placeholder="e.g., Fine">
+                        </div>
+                        <button type="button" class="remove-spec-btn" style="display:none;">Remove</button>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="button" class="add-spec-btn" onclick="addSpecification('add')">
+                <i class="fa-solid fa-plus"></i> Add Another Specification
+            </button>
+
+            <div class="form-row">
+                <div class="form-group half">
+                    <label>Unit Cost</label>
+                    <input type="number" id="addProductCost" min="0" step="0.01" placeholder="0.00">
+                </div>
+                <div class="form-group half">
+                    <label>Retail Price</label>
+                    <input type="number" id="addProductPrice" min="0" step="0.01" placeholder="0.00">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Reorder Threshold</label>
+                <input type="number" id="addProductReorder" min="0" placeholder="Minimum quantity before reorder">
+            </div>
+
+            <div class="form-group">
+                <label>Category</label>
+                <select id="addProductCategory">
+                    <option value="" disabled selected>Select category</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.prod_cat_id }}">{{ cat.prod_cat_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn-cancel" onclick="closeAddProductModal()">Cancel</button>
+            <button type="button" class="btn-save" onclick="saveAddProduct()">Add Product</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Product Modal -->
+<div id="editProductModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2>Edit Product</h2>
+            <button type="button" class="close-btn" onclick="closeEditProductModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <input type="hidden" id="editProductId">
+            
+            <div class="form-group">
+                <label>Product Name</label>
+                <input type="text" id="editProductName" placeholder="Enter product name">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group half">
+                    <label>SKU</label>
+                    <input type="text" id="editProductSku" placeholder="Enter SKU">
+                </div>
+                <div class="form-group half">
+                    <label>Unit of Measure</label>
+                    <input type="text" id="editProductUnit" placeholder="e.g., pcs, kg, m">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Product Description</label>
+                <input type="text" id="editProductDesc" placeholder="Enter description">
+            </div>
+
+            <!-- Product Specifications -->
+            <div id="editSpecificationsContainer">
+                <!-- Specifications will be loaded here -->
+            </div>
+            
+            <button type="button" class="add-spec-btn" onclick="addSpecification('edit')">
+                <i class="fa-solid fa-plus"></i> Add Another Specification
+            </button>
+
+            <div class="form-row">
+                <div class="form-group half">
+                    <label>Unit Cost</label>
+                    <input type="number" id="editProductCost" min="0" step="0.01" placeholder="0.00">
+                </div>
+                <div class="form-group half">
+                    <label>Retail Price</label>
+                    <input type="number" id="editProductPrice" min="0" step="0.01" placeholder="0.00">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Reorder Threshold</label>
+                <input type="number" id="editProductReorder" min="0" placeholder="Minimum quantity before reorder">
+            </div>
+
+            <div class="form-group">
+                <label>Category</label>
+                <select id="editProductCategory">
+                    <option value="" disabled>Select category</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.prod_cat_id }}">{{ cat.prod_cat_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <select id="editProductStatus">
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn-cancel" onclick="closeEditProductModal()">Cancel</button>
+            <button type="button" class="btn-save" onclick="saveEditProduct()">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const userId = "{{ user_id }}";
+    let currentEditProductId = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        filterTable();
+        
+        // Close modals when clicking outside
+        document.getElementById('addProductModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeAddProductModal();
+            }
+        });
+        
+        document.getElementById('editProductModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditProductModal();
+            }
+        });
+    });
+
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('input', filterTable);
+    
+    // Filter functionality
+    document.getElementById('categoryFilter').addEventListener('change', filterTable);
+    document.getElementById('statusFilter').addEventListener('change', filterTable);
+
+    function filterTable() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const categoryFilter = document.getElementById('categoryFilter').value;
+        const statusFilter = document.getElementById('statusFilter').value;
+
+        const rows = document.querySelectorAll('#productsTableBody tr');
+        let hasVisibleRows = false;
+
+        rows.forEach(row => {
+            if (row.children.length < 2) return; // Skip empty state row
+
+            const productName = row.querySelector('.product-name')?.textContent.toLowerCase() || '';
+            const productSku = row.querySelector('.product-sku')?.textContent.toLowerCase() || '';
+            const rowCategory = row.getAttribute('data-category');
+            const rowStatus = row.getAttribute('data-status');
+
+            const searchMatch = searchTerm === '' || productName.includes(searchTerm) || productSku.includes(searchTerm);
+            const categoryMatch = categoryFilter === 'all' || rowCategory === categoryFilter;
+            const statusMatch = statusFilter === 'all' || rowStatus === statusFilter;
+
+            if (searchMatch && categoryMatch && statusMatch) {
+                row.style.display = '';
+                hasVisibleRows = true;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    // Add Product Modal Functions
+    function openAddProductModal() {
+        // Clear all fields
+        document.getElementById('addProductName').value = '';
+        document.getElementById('addProductDesc').value = '';
+        document.getElementById('addProductUnit').value = '';
+        document.getElementById('addProductSku').value = '';
+        document.getElementById('addProductCost').value = '';
+        document.getElementById('addProductPrice').value = '';
+        document.getElementById('addProductReorder').value = '';
+        document.getElementById('addProductCategory').value = '';
+        
+        // Clear specifications and add one empty one
+        document.getElementById('addSpecificationsContainer').innerHTML = `
+            <div class="specification-group">
+                <div class="spec-row">
+                    <div class="spec-input-group">
+                        <label>Specification Name</label>
+                        <input type="text" class="add-spec-name" placeholder="e.g., Grade">
+                    </div>
+                    <div class="spec-input-group">
+                        <label>Specification Value</label>
+                        <input type="text" class="add-spec-value" placeholder="e.g., Fine">
+                    </div>
+                    <button type="button" class="remove-spec-btn" style="display:none;">Remove</button>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('addProductModal').style.display = 'flex';
+    }
+
+    function closeAddProductModal() {
+        document.getElementById('addProductModal').style.display = 'none';
+    }
+
+    // Edit Product Modal Functions
+    async function editProduct(productId) {
+        currentEditProductId = productId;
+        
+        try {
+            const response = await fetch(`/inventory/get_product/?product_id=${productId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                const product = data.product;
+                
+                // Fill form fields
+                document.getElementById('editProductId').value = product.prod_id;
+                document.getElementById('editProductName').value = product.prod_name;
+                document.getElementById('editProductDesc').value = product.prod_desc;
+                document.getElementById('editProductUnit').value = product.prod_unit_of_measure;
+                document.getElementById('editProductSku').value = product.prod_sku;
+                document.getElementById('editProductCost').value = product.prod_current_cost;
+                document.getElementById('editProductPrice').value = product.prod_retail_price;
+                document.getElementById('editProductReorder').value = product.prod_reorder_threshold;
+                document.getElementById('editProductCategory').value = product.category.prod_cat_id;
+                document.getElementById('editProductStatus').value = product.prod_is_active.toString();
+                
+                // Load specifications
+                const specsContainer = document.getElementById('editSpecificationsContainer');
+                specsContainer.innerHTML = '';
+                
+                if (data.specifications && data.specifications.length > 0) {
+                    data.specifications.forEach(spec => {
+                        const specGroup = document.createElement('div');
+                        specGroup.className = 'specification-group';
+                        specGroup.innerHTML = `
+                            <div class="spec-row">
+                                <div class="spec-input-group">
+                                    <label>Specification Name</label>
+                                    <input type="text" class="edit-spec-name" value="${spec.spec_name}" placeholder="e.g., Grade">
+                                </div>
+                                <div class="spec-input-group">
+                                    <label>Specification Value</label>
+                                    <input type="text" class="edit-spec-value" value="${spec.spec_value}" placeholder="e.g., Fine">
+                                </div>
+                                <button type="button" class="remove-spec-btn" onclick="removeSpecificationRow(this)">Remove</button>
+                            </div>
+                        `;
+                        specsContainer.appendChild(specGroup);
+                    });
+                } else {
+                    // Add one empty specification row
+                    const specGroup = document.createElement('div');
+                    specGroup.className = 'specification-group';
+                    specGroup.innerHTML = `
+                        <div class="spec-row">
+                            <div class="spec-input-group">
+                                <label>Specification Name</label>
+                                <input type="text" class="edit-spec-name" placeholder="e.g., Grade">
+                            </div>
+                            <div class="spec-input-group">
+                                <label>Specification Value</label>
+                                <input type="text" class="edit-spec-value" placeholder="e.g., Fine">
+                            </div>
+                            <button type="button" class="remove-spec-btn" onclick="removeSpecificationRow(this)" style="display:none;">Remove</button>
+                        </div>
+                    `;
+                    specsContainer.appendChild(specGroup);
+                }
+                
+                document.getElementById('editProductModal').style.display = 'flex';
+            } else {
+                alert('Error: ' + (data.error || 'Failed to load product'));
+            }
+        } catch (err) {
+            alert('Failed to load product: ' + err.message);
+            console.error('Load product error:', err);
+        }
+    }
+
+    function closeEditProductModal() {
+        document.getElementById('editProductModal').style.display = 'none';
+        currentEditProductId = null;
+    }
+
+    // Specification Functions
+    function addSpecification(mode) {
+        const containerId = mode === 'add' ? 'addSpecificationsContainer' : 'editSpecificationsContainer';
+        const specClass = mode === 'add' ? 'add' : 'edit';
+        const container = document.getElementById(containerId);
+        
+        const specGroup = document.createElement('div');
+        specGroup.className = 'specification-group';
+        
+        specGroup.innerHTML = `
+            <div class="spec-row">
+                <div class="spec-input-group">
+                    <label>Specification Name</label>
+                    <input type="text" class="${specClass}-spec-name" placeholder="e.g., Grade">
+                </div>
+                <div class="spec-input-group">
+                    <label>Specification Value</label>
+                    <input type="text" class="${specClass}-spec-value" placeholder="e.g., Fine">
+                </div>
+                <button type="button" class="remove-spec-btn" onclick="removeSpecificationRow(this)">Remove</button>
+            </div>
+        `;
+        
+        container.appendChild(specGroup);
+        
+        // Update remove buttons visibility
+        updateRemoveButtonsVisibility(container);
+    }
+
+    function removeSpecificationRow(button) {
+        const container = button.closest('#addSpecificationsContainer') || 
+                         button.closest('#editSpecificationsContainer');
+        const specRows = container.querySelectorAll('.specification-group');
+        
+        if (specRows.length > 1) {
+            button.closest('.specification-group').remove();
+        }
+        
+        updateRemoveButtonsVisibility(container);
+    }
+
+    function updateRemoveButtonsVisibility(container) {
+        const specRows = container.querySelectorAll('.specification-group');
+        const removeButtons = container.querySelectorAll('.remove-spec-btn');
+        
+        // Show remove button only if there's more than one row
+        removeButtons.forEach(btn => {
+            btn.style.display = specRows.length > 1 ? '' : 'none';
+        });
+    }
+
+    // Save Add Product
+    async function saveAddProduct() {
+        // Collect specifications
+        const specifications = [];
+        const specGroups = document.querySelectorAll('#addSpecificationsContainer .specification-group');
+        
+        specGroups.forEach(group => {
+            const specName = group.querySelector('.add-spec-name').value.trim();
+            const specValue = group.querySelector('.add-spec-value').value.trim();
+            
+            if (specName && specValue) {
+                specifications.push({
+                    name: specName,
+                    value: specValue
+                });
+            }
+        });
+
+        // Validate required fields
+        const data = {
+            prod_name: document.getElementById('addProductName').value.trim(),
+            prod_desc: document.getElementById('addProductDesc').value.trim(),
+            prod_unit_of_measure: document.getElementById('addProductUnit').value.trim(),
+            prod_current_cost: document.getElementById('addProductCost').value,
+            prod_retail_price: document.getElementById('addProductPrice').value,
+            prod_reorder_threshold: document.getElementById('addProductReorder').value,
+            prod_sku: document.getElementById('addProductSku').value.trim(),
+            category_id: document.getElementById('addProductCategory').value,
+            branch_id: "{{ user.branch.branch_id }}", // Default to user's branch
+            specifications: specifications,
+            user_id: userId
+        };
+
+        if (!data.prod_name || !data.prod_current_cost || !data.prod_retail_price || 
+            !data.prod_reorder_threshold || !data.prod_sku || !data.category_id) {
+            alert("Please fill in all required fields!");
+            return;
+        }
+        
+        if (data.prod_current_cost < 0 || data.prod_retail_price < 0 || data.prod_reorder_threshold < 0) {
+            alert("Values cannot be negative!");
+            return;
+        }
+        
+        try {
+            const response = await fetch("/inventory/add_product/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok && result.success) {
+                alert(result.message);
+                closeAddProductModal();
+                location.reload();
+            } else {
+                alert("Error: " + (result.error || "Failed to add product"));
+            }
+        } catch (err) {
+            alert("Failed to add product: " + err.message);
+            console.error("Add product error:", err);
+        }
+    }
+
+    // Save Edit Product
+    async function saveEditProduct() {
+        // Collect specifications
+        const specifications = [];
+        const specGroups = document.querySelectorAll('#editSpecificationsContainer .specification-group');
+        
+        specGroups.forEach(group => {
+            const specName = group.querySelector('.edit-spec-name').value.trim();
+            const specValue = group.querySelector('.edit-spec-value').value.trim();
+            
+            if (specName && specValue) {
+                specifications.push({
+                    name: specName,
+                    value: specValue
+                });
+            }
+        });
+
+        const data = {
+            product_id: document.getElementById('editProductId').value,
+            prod_name: document.getElementById('editProductName').value.trim(),
+            prod_desc: document.getElementById('editProductDesc').value.trim(),
+            prod_unit_of_measure: document.getElementById('editProductUnit').value.trim(),
+            prod_current_cost: document.getElementById('editProductCost').value,
+            prod_retail_price: document.getElementById('editProductPrice').value,
+            prod_reorder_threshold: document.getElementById('editProductReorder').value,
+            prod_is_active: document.getElementById('editProductStatus').value === 'true',
+            specifications: specifications,
+            user_id: userId
+        };
+
+        if (!data.prod_name || !data.prod_current_cost || !data.prod_retail_price || 
+            !data.prod_reorder_threshold) {
+            alert("Please fill in all required fields!");
+            return;
+        }
+        
+        if (data.prod_current_cost < 0 || data.prod_retail_price < 0 || data.prod_reorder_threshold < 0) {
+            alert("Values cannot be negative!");
+            return;
+        }
+        
+        try {
+            const response = await fetch("/inventory/edit_product/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok && result.success) {
+                alert(result.message);
+                closeEditProductModal();
+                location.reload();
+            } else {
+                alert("Error: " + (result.error || "Failed to update product"));
+            }
+        } catch (err) {
+            alert("Failed to update product: " + err.message);
+            console.error("Update product error:", err);
+        }
+    }
+
+    // Deactivate Product
+    async function deactivateProduct(productId) {
+        if (!confirm('Are you sure you want to deactivate this product?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/inventory/edit_product/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    prod_is_active: false,
+                    user_id: userId
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert('Product deactivated successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + result.error);
+            }
+        } catch (error) {
+            alert('Error deactivating product: ' + error.message);
+        }
+    }
+
+    // Reactivate Product
+    async function reactivateProduct(productId) {
+        if (!confirm('Are you sure you want to reactivate this product?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/inventory/reactivate_product/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    user_id: userId
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert('Product reactivated successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + result.error);
+            }
+        } catch (error) {
+            alert('Error reactivating product: ' + error.message);
+        }
+    }
+</script>
+
+{% endblock %}

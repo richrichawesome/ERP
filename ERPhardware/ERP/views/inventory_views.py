@@ -600,3 +600,295 @@ def reactivate_product(request):
             "success": False,
             "error": str(e)
         })
+    
+
+@csrf_exempt
+def get_movement_history(request):
+    """Get inventory movement history with date range filter"""
+    try:
+        from_date = request.GET.get('from_date')
+        to_date = request.GET.get('to_date')
+        
+        if not from_date or not to_date:
+            return JsonResponse({
+                "success": False,
+                "error": "Both from_date and to_date are required"
+            })
+        
+        # Parse dates
+        from datetime import datetime
+        try:
+            from_date_obj = datetime.strptime(from_date, '%Y-%m-%d').date()
+            to_date_obj = datetime.strptime(to_date, '%Y-%m-%d').date()
+        except ValueError:
+            return JsonResponse({
+                "success": False,
+                "error": "Invalid date format. Use YYYY-MM-DD"
+            })
+        
+        # Get user role to filter by branch if needed
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return JsonResponse({
+                "success": False,
+                "error": "User not authenticated"
+            })
+        
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return JsonResponse({
+                "success": False,
+                "error": "User not found"
+            })
+        
+        # Build query
+        transactions_query = Inventory_Transaction.objects.select_related(
+            'inventory__product',
+            'inventory__branch',
+            'user'
+        ).filter(
+            created_at__date__gte=from_date_obj,
+            created_at__date__lte=to_date_obj
+        )
+        
+        # If user is branch manager (role_id = 2), filter by their branch
+        if user.role.role_id == 2:
+            transactions_query = transactions_query.filter(
+                inventory__branch=user.branch
+            )
+        
+        transactions_query = transactions_query.order_by('-created_at')
+        
+        # Format transaction data
+        transactions = []
+        for trans in transactions_query:
+            transactions.append({
+                'trans_id': trans.trans_id,
+                'created_at': trans.created_at.strftime('%Y-%m-%d %H:%M'),
+                'product_name': trans.inventory.product.prod_name,
+                'product_sku': trans.inventory.product.prod_sku,
+                'trans_type': trans.trans_type,
+                'quantity': trans.quantity,
+                'unit_cost': str(trans.unit_cost),
+                'user_name': f"{trans.user.user_fname} {trans.user.user_lname}",
+                'branch_name': trans.inventory.branch.branch_name
+            })
+        
+        return JsonResponse({
+            "success": True,
+            "transactions": transactions,
+            "count": len(transactions)
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        })
+    
+def product_management(request):
+    user_id = request.session.get('user_id')
+    
+    if not user_id:
+        return redirect('login')
+    
+    user = User.objects.get(pk=user_id)
+    
+    categories = Product_Category.objects.all()
+    products = Product.objects.all()
+    
+    return render(request, "main/product_management.html", {
+        "section": "product_management",
+        "categories": categories,
+        "user_id": user_id,
+        "active_page": "product_management",
+        "user": user,
+        "products": products
+    })
+
+@csrf_exempt
+def get_product(request):
+    """Get product details including specifications for editing"""
+    try:
+        product_id = request.GET.get('product_id')
+        
+        if not product_id:
+            return JsonResponse({
+                "success": False,
+                "error": "Product ID is required"
+            })
+        
+        # Get product with related data
+        product = Product.objects.select_related('category').get(pk=product_id)
+        
+        # Get specifications
+        specifications = []
+        for spec in product.product_specification_set.all():
+            specifications.append({
+                'spec_name': spec.spec_name,
+                'spec_value': spec.spec_value
+            })
+        
+        return JsonResponse({
+            "success": True,
+            "product": {
+                "prod_id": product.prod_id,
+                "prod_name": product.prod_name,
+                "prod_desc": product.prod_desc,
+                "prod_unit_of_measure": product.prod_unit_of_measure,
+                "prod_current_cost": str(product.prod_current_cost),
+                "prod_retail_price": str(product.prod_retail_price),
+                "prod_reorder_threshold": product.prod_reorder_threshold,
+                "prod_sku": product.prod_sku,
+                "prod_is_active": product.prod_is_active,
+                "category": {
+                    "prod_cat_id": product.category.prod_cat_id,
+                    "prod_cat_name": product.category.prod_cat_name
+                }
+            },
+            "specifications": specifications
+        })
+        
+    except Product.DoesNotExist:
+        return JsonResponse({
+            "success": False,
+            "error": "Product not found"
+        })
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        })
+    
+@csrf_exempt
+def get_products_not_in_inventory(request):
+    """Get products that are not in inventory for a specific branch"""
+    try:
+        branch_id = request.GET.get('branch_id')
+        
+        if not branch_id:
+            return JsonResponse({
+                "success": False,
+                "error": "Branch ID is required"
+            })
+        
+        # Get all products
+        all_products = Product.objects.filter(prod_is_active=True)
+        
+        # Get products already in inventory for this branch
+        existing_inventory = Inventory.objects.filter(
+            branch_id=branch_id,
+            product__prod_is_active=True
+        ).values_list('product_id', flat=True)
+        
+        # Filter out products already in inventory
+        available_products = all_products.exclude(prod_id__in=existing_inventory)
+        
+        # Format product data
+        products_list = []
+        for product in available_products:
+            products_list.append({
+                'prod_id': product.prod_id,
+                'prod_name': product.prod_name,
+                'prod_sku': product.prod_sku,
+                'prod_unit_of_measure': product.prod_unit_of_measure,
+                'prod_current_cost': str(product.prod_current_cost),
+                'prod_retail_price': str(product.prod_retail_price),
+                'category': product.category.prod_cat_name if product.category else 'Uncategorized'
+            })
+        
+        return JsonResponse({
+            "success": True,
+            "products": products_list
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        })
+    
+@csrf_exempt
+def add_product_to_inventory(request):
+    """Add an existing product to a branch's inventory"""
+    try:
+        data = json.loads(request.body)
+        
+        branch_id = data.get("branch_id")
+        product_id = data.get("product_id")
+        user_id = data.get("user_id")
+        
+        if not all([branch_id, product_id]):
+            return JsonResponse({
+                "success": False,
+                "error": "Branch ID and Product ID are required"
+            })
+        
+        # Get user
+        if not user_id:
+            user_id = request.session.get('user_id')
+        
+        if not user_id:
+            return JsonResponse({
+                "success": False,
+                "error": "User not authenticated"
+            })
+        
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return JsonResponse({
+                "success": False,
+                "error": "User not found"
+            })
+        
+        # Get branch and product
+        try:
+            branch = Branch.objects.get(pk=branch_id)
+        except Branch.DoesNotExist:
+            return JsonResponse({
+                "success": False,
+                "error": "Branch not found"
+            })
+        
+        try:
+            product = Product.objects.get(pk=product_id)
+        except Product.DoesNotExist:
+            return JsonResponse({
+                "success": False,
+                "error": "Product not found"
+            })
+        
+        # Check if product is already in inventory for this branch
+        if Inventory.objects.filter(product=product, branch=branch).exists():
+            return JsonResponse({
+                "success": False,
+                "error": "This product is already in this branch's inventory"
+            })
+        
+        # Create inventory record with quantity 0
+        inventory = Inventory.objects.create(
+            product=product,
+            branch=branch,
+            user=user,
+            quantity_on_hand=0,
+            last_updated_at=timezone.now().date()
+        )
+        
+        return JsonResponse({
+            "success": True,
+            "message": f"'{product.prod_name}' has been added to {branch.branch_name} inventory",
+            "inventory_id": inventory.inventory_id
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            "success": False,
+            "error": "Invalid JSON"
+        })
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        })

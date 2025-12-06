@@ -88,7 +88,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'ERP2',         # Database name
         'USER': 'postgres',        # PostgreSQL username
-        'PASSWORD': 'chenchen25',      # PostgreSQL password
+        'PASSWORD': 'Danesse2005',      # PostgreSQL password
         'HOST': 'localhost',           # Use '127.0.0.1' if needed
         'PORT': '5432',                # Default PostgreSQL port
     }

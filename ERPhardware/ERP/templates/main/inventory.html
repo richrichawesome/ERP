@@ -1,353 +1,449 @@
 {% extends "main/base.html" %}
 {% block page_content %}
-<style> 
-    .overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(3, 2, 19, 0.8);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    * {
+        font-family: 'Inter', sans-serif;
     }
 
-    .overlay-content {
-        background: #ffffff;
-        padding: 25px;
-        border-radius: 8px;
-        width: 350px;
-        text-align: center;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        box-shadow: 0 4px 6px rgba(3, 2, 19, 0.1);
-        max-height: 90vh; /* Limit height to 90% of viewport */
-        overflow-y: auto; /* Enable vertical scrolling */
+    /* Page Header */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 20px;
     }
 
-    .search-bar {
-        margin-bottom: 15px;
+    .page-title h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0 0 4px 0;
+    }
+
+    .page-description {
+        font-size: 14px;
+        color: #6b7280;
+        margin: 0;
+    }
+
+    .header-actions {
         display: flex;
-        align-items: center;
         gap: 10px;
     }
 
-    .search-bar label {
-        font-weight: bold;
-        color: #030213;
-    }
-
-    .search-bar-textbox {
-        padding: 8px 12px;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 4px;
-        flex: 1;
-        max-width: 300px;
+    .create-btn, .history-btn {
+        border: none;
+        padding: 10px 18px;
         font-size: 14px;
-        background: #f3f3f5;
-        color: #030213;
-    }
-
-    .search-bar-textbox:focus {
-        outline: none;
-        border-color: #2563eb;
-        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
-    }
-
-    h1 {
-        color: #030213;
-        margin-bottom: 20px;
-    }
-
-    .branch-tabs {
-        margin-bottom: 15px;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
         display: flex;
         gap: 8px;
-    }
-
-    .branch-btn {
-        padding: 8px 16px;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 4px;
-        background: #ffffff;
-        color: #030213;
-        cursor: pointer;
+        align-items: center;
         transition: all 0.2s ease;
     }
 
-    .branch-btn:hover {
-        background: #e9ebef;
-        border-color: #2563eb;
+    .create-btn {
+        background-color: #1a2332;
+        color: white;
     }
 
-    .branch-btn.active {
-        background: #2563eb;
-        color: #ffffff;
-        border-color: #2563eb;
+    .create-btn:hover {
+        background-color: #060607;
     }
 
-    .category-navbar {
-        margin-bottom: 20px;
+    .history-btn {
+        background-color: #eff6ff;
+        color: #2563eb;
+        border: 1px solid #dbeafe;
+    }
+
+    .history-btn:hover {
+        background-color: #dbeafe;
+    }
+
+    /* Search and Filter Section */
+    .search-filter-section {
         display: flex;
-        gap: 8px;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 16px 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         flex-wrap: wrap;
     }
 
-    .category-btn {
-        padding: 8px 16px;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 4px;
-        background: #ffffff;
-        color: #030213;
-        cursor: pointer;
-        transition: all 0.2s ease;
+    .search-box {
+        flex: 1;
+        position: relative;
+        min-width: 250px;
     }
 
-    .category-btn:hover {
-        background: #e9ebef;
-        border-color: #2563eb;
+    .search-box input {
+        width: 100%;
+        padding: 10px 12px 10px 38px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #374151;
+        background: #fafafa;
+        transition: all 0.2s;
     }
 
-    .category-btn.active {
-        background: #2563eb;
-        color: #ffffff;
-        border-color: #2563eb;
+    .search-box input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background: white;
     }
 
-    .add-remove-btn {
+    .search-box i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        font-size: 14px;
+    }
+
+    .filter-group {
         display: flex;
         gap: 10px;
-        margin-bottom: 20px;
+        align-items: center;
     }
 
-    .add-product-btn, .remove-product-btn, .inactive-product-btn {
+    .filter-dropdown {
+        position: relative;
+    }
+
+    .filter-dropdown select {
         padding: 10px 16px;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 4px;
-        background: #2563eb;
-        color: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: white;
+        font-size: 14px;
+        color: #374151;
         cursor: pointer;
         font-weight: 500;
-        transition: all 0.2s ease;
+        min-width: 180px;
+        transition: all 0.2s;
     }
 
-    .add-product-btn:hover, .remove-product-btn:hover, .inactive-product-btn:hover {
-        background: #1d4ed8;
-        transform: translateY(-1px);
+    .filter-dropdown select:hover {
+        border-color: #d1d5db;
+        background: #f9fafb;
     }
 
-    table {
+    .filter-dropdown select:focus {
+        outline: none;
+        border-color: #3b82f6;
+    }
+
+    /* Modern Table Design */
+    .table-container {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+    }
+
+    .inventory-table {
         width: 100%;
         border-collapse: collapse;
-        border: 1px solid rgba(0, 0, 0, 0.1);
+        font-size: 14px;
+        color: #374151;
     }
 
-    thead {
-        background: #030213;
-        color: #ffffff;
-    }
-
-    th {
-        padding: 12px;
+    .inventory-table thead th {
+        background: #f9fafb;
         text-align: left;
+        padding: 14px 16px;
         font-weight: 600;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #6b7280;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+        border-bottom: 1px solid #e5e7eb;
     }
 
-    td {
-        padding: 12px;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        background: #ffffff;
+    .inventory-table tbody tr {
+        border-bottom: 1px solid #f3f4f6;
+        transition: background-color 0.15s;
     }
 
-    tbody tr:hover {
-        background: #f8fafc;
+    .inventory-table tbody tr:hover {
+        background: #f9fafb;
     }
 
-    tbody tr:nth-child(even) {
-        background: #f8fafc;
+    .inventory-table tbody tr:last-child {
+        border-bottom: none;
     }
 
-    tbody tr:nth-child(even):hover {
-        background: #e9ebef;
+    .inventory-table tbody td {
+        padding: 16px;
+        color: #1f2937;
+        font-size: 14px;
+        vertical-align: top;
     }
 
-    .stock-in, .stock-out, .edit {
-        padding: 6px 12px;
-        margin: 2px;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 4px;
-        background: #ffffff;
-        color: #030213;
-        cursor: pointer;
-        transition: all 0.2s ease;
+    .product-name-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .product-name {
+        font-weight: 600;
+        color: #111827;
+        font-size: 14px;
+    }
+
+    .product-sku {
         font-size: 12px;
-    }
-
-    .stock-in:hover {
-        background: #2563eb;
-        color: #ffffff;
-        border-color: #2563eb;
-    }
-
-    .stock-out:hover {
-        background: #d4183d;
-        color: #ffffff;
-        border-color: #d4183d;
-    }
-
-    .edit:hover {
-        background: #94a3b8;
-        color: #ffffff;
-        border-color: #94a3b8;
-    }
-
-    button {
-        padding: 8px 16px;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 4px;
-        background: #2563eb;
-        color: #ffffff;
-        cursor: pointer;
-        font-weight: 500;
-        transition: all 0.2s ease;
-    }
-
-    button:hover {
-        background: #1d4ed8;
-        transform: translateY(-1px);
-    }
-
-    button:disabled {
-        background: #94a3b8;
-        cursor: not-allowed;
-        transform: none;
-    }
-
-    input[type="text"], input[type="number"], select {
-        padding: 8px 12px;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 4px;
-        background: #f3f3f5;
-        color: #030213;
-        width: 100%;
-        margin-bottom: 10px;
-    }
-
-    input[type="text"]:focus, input[type="number"]:focus, select:focus {
-        outline: none;
-        border-color: #2563eb;
-        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
-    }
-
-    input[type="checkbox"] {
-        margin-right: 8px;
-        accent-color: #2563eb;
-    }
-
-    label {
-        color: #030213;
-        font-weight: 500;
-        display: block;
-        margin-bottom: 5px;
-        text-align: left;
-    }
-
-    .reactivate-product {
-        background: #2563eb;
-        color: #ffffff;
-        border: none;
-        padding: 6px 12px;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .reactivate-product:hover {
-        background: #1d4ed8;
-    }
-
-    /* Inactive products overlay specific styles */
-    #overlay-inactive .overlay-content {
-        width: 80%;
-        max-width: 1000px;
-    }
-
-    #inactive-products-body tr:hover {
-        background: #f8fafc;
-    }
-
-    /* Error states */
-    .error {
-        color: #d4183d;
-        background: #fff5f5;
-        border: 1px solid #fed7d7;
-        padding: 8px;
-        border-radius: 4px;
-        margin: 10px 0;
-    }
-
-    /* Success states */
-    .success {
-        color: #22543d;
-        background: #f0fff4;
-        border: 1px solid #c6f6d5;
-        padding: 8px;
-        border-radius: 4px;
-        margin: 10px 0;
-    }
-
-    /* Loading states */
-    .loading {
-        opacity: 0.6;
-        pointer-events: none;
-    }
-
-
-    /* ari chen */
-
-    /* Specification Styles */
-
-
-    .specs-cell {
-        max-width: 200px;
-        word-wrap: break-word;
+        color: #6b7280;
+        font-family: 'Courier New', monospace;
     }
 
     .specs-container {
         display: flex;
         flex-direction: column;
         gap: 4px;
+        max-width: 200px;
     }
 
     .spec-item {
-        padding: 2px 0;
-        /* border-bottom: 1px solid #f1f1f1; */
-    }
-
-    .spec-item:last-child {
-        border-bottom: none;
+        font-size: 13px;
+        color: #4b5563;
     }
 
     .spec-item strong {
-        color: #030213;
+        color: #1f2937;
         font-weight: 600;
     }
 
     .no-specs {
-        color: #94a3b8;
+        color: #9ca3af;
         font-style: italic;
+        font-size: 13px;
     }
 
-    /* Ensure table cells have proper spacing */
-    td {
-        padding: 12px;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        background: #ffffff;
-        vertical-align: top; /* Align content to top for better appearance */
+    .quantity-cell {
+        font-weight: 600;
+        color: #111827;
     }
 
+    .quantity-cell .unit {
+        font-weight: 400;
+        color: #6b7280;
+        font-size: 13px;
+    }
+
+    .price-cell {
+        font-weight: 600;
+        color: #059669;
+    }
+
+    .branch-cell {
+        font-weight: 500;
+        color: #4b5563;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        padding: 7px 14px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        border: 1px solid;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .btn-stock-in {
+        background: #ecfdf5;
+        color: #059669;
+        border-color: #d1fae5;
+    }
+
+    .btn-stock-in:hover {
+        background: #d1fae5;
+        border-color: #a7f3d0;
+    }
+
+    .btn-stock-out {
+        background: #fef2f2;
+        color: #dc2626;
+        border-color: #fecaca;
+    }
+
+    .btn-stock-out:hover {
+        background: #fecaca;
+        border-color: #fca5a5;
+    }
+
+    .btn-remove {
+        background: #f3f4f6;
+        color: #6b7280;
+        border-color: #e5e7eb;
+    }
+
+    .btn-remove:hover {
+        background: #e5e7eb;
+        border-color: #d1d5db;
+        color: #374151;
+    }
+
+    /* Disabled Action Buttons */
+    .action-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background: #f3f4f6;
+        color: #9ca3af;
+        border-color: #e5e7eb;
+    }
+
+    .action-btn:disabled:hover {
+        background: #f3f4f6;
+        border-color: #e5e7eb;
+        color: #9ca3af;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #9ca3af;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.3;
+    }
+
+    .empty-state p {
+        font-size: 15px;
+        margin: 0;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.25);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 999;
+    }
+
+    .modal-container {
+        width: 520px;
+        max-width: 90%;
+        background: #fff;
+        border-radius: 18px;
+        padding: 25px 30px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        animation: fadeIn 0.25s ease;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .modal-header h2 {
+        font-size: 20px;
+        margin: 0;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #6b7280;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+
+    .close-btn:hover {
+        background: #f3f4f6;
+        color: #374151;
+    }
+
+    .modal-body {
+        margin-top: 18px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        font-size: 14px;
+        color: #374151;
+        font-weight: 500;
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        background: #fafafa;
+        font-size: 14px;
+        font-family: 'Inter', sans-serif;
+        color: #374151;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background: white;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 15px;
+    }
+
+    .form-row .half {
+        flex: 1;
+    }
 
     .specification-group {
         margin-bottom: 10px;
@@ -374,457 +470,618 @@
     }
 
     .remove-spec-btn {
-        background: #d4183d;
-        color: white;
-        border: none;
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
         padding: 8px 12px;
-        border-radius: 4px;
+        border-radius: 6px;
         cursor: pointer;
         height: fit-content;
         margin-bottom: 10px;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s;
     }
 
     .remove-spec-btn:hover {
-        background: #b31533;
+        background: #fecaca;
     }
 
-    #add-spec-btn {
-        background: #10b981;
-        color: white;
-        border: none;
+    .add-spec-btn {
+        background: #ecfdf5;
+        color: #059669;
+        border: 1px solid #d1fae5;
         padding: 8px 16px;
-        border-radius: 4px;
+        border-radius: 6px;
         cursor: pointer;
         font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+        width: 100%;
+        margin-bottom: 15px;
     }
 
-    #add-spec-btn:hover {
-        background: #0da271;
+    .add-spec-btn:hover {
+        background: #d1fae5;
     }
 
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+    }
 
+    .btn-cancel {
+        padding: 10px 18px;
+        background: #f3f4f6;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        color: #374151;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
 
+    .btn-cancel:hover {
+        background: #e5e7eb;
+    }
 
+    .btn-save {
+        padding: 10px 20px;
+        background: #2563eb;
+        color: #fff;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
 
-    /* Responsive design */
+    .btn-save:hover {
+        background: #1d4ed8;
+    }
+
+    /* History Modal Specific Styles */
+    .history-modal .modal-container {
+        width: 900px;
+        max-width: 95%;
+    }
+
+    .date-filter {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        align-items: flex-end;
+    }
+
+    .date-filter .form-group {
+        flex: 1;
+        margin-bottom: 0;
+    }
+
+    .date-filter button {
+        padding: 10px 18px;
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .date-filter button:hover {
+        background: #1d4ed8;
+    }
+
+    .history-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+
+    .history-table thead th {
+        background: #f9fafb;
+        text-align: left;
+        padding: 12px;
+        font-weight: 600;
+        color: #6b7280;
+        font-size: 12px;
+        text-transform: uppercase;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .history-table tbody td {
+        padding: 12px;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 13px;
+        color: #374151;
+    }
+
+    .history-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .transaction-type {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .transaction-type.stockin {
+        background: #ecfdf5;
+        color: #059669;
+    }
+
+    .transaction-type.stockout {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+
+    @keyframes fadeIn {
+        from { 
+            opacity: 0; 
+            transform: translateY(10px); 
+        }
+        to { 
+            opacity: 1; 
+            transform: translateY(0); 
+        }
+    }
+
+    /* Responsive Design */
     @media (max-width: 768px) {
-        .overlay-content {
-            width: 90%;
-            margin: 20px;
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
         }
-        
-        .branch-tabs, .category-navbar {
-            flex-wrap: wrap;
+
+        .search-filter-section {
+            flex-direction: column;
+            align-items: stretch;
         }
-        
-        .add-remove-btn {
+
+        .search-box {
+            width: 100%;
+        }
+
+        .filter-group {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .filter-dropdown select {
+            width: 100%;
+        }
+
+        .action-buttons {
             flex-direction: column;
         }
-        
-        table {
-            font-size: 14px;
-        }
-        
-        th, td {
-            padding: 8px;
+
+        .action-btn {
+            width: 100%;
+            justify-content: center;
         }
     }
 </style>
-    <h1>Inventory</h1>
-            <div class="branch-tabs" style="margin-bottom: 15px;">
-                <button class="branch-btn active" data-branch="all">All Branches</button>
-                <button class="branch-btn" data-branch="1">Branch 1</button>
-                <button class="branch-btn" data-branch="2">Branch 2</button>
-            </div>
 
-            <div class="search-bar">
-                <label> Search:</label>
-                <input type="text" class="search-bar-textbox" name="search-bar-textbox">
-            </div>
-
-            <div class="category-navbar" style="margin-bottom: 20px;">
-                <button class="category-btn" data-category="all">All</button>
-                {% for cat in categories %}
-                    <button class="category-btn" data-category="{{ cat.prod_cat_name }}">{{ cat.prod_cat_name }}</button>
-                {% endfor %}
-            </div>
-
-            <div class="add-remove-btn">
-                <button type="button" class="add-product-btn" name="add-product-btn">Add Product</button>
-                <button type="button" class="remove-product-btn" name="remove-product-btn">Remove Product</button>
-                <button type="button" class="inactive-product-btn" name="inactive-product-btn">Inactive Products</button>
-            </div><br>
-
-            <table border="1" cellpadding="10" cellspacing="0" style="width: 100%; border-collapse: collapse;">
-                <thead style="background: #222; color: white;">
-                    <tr>
-                        <th>Name</th>
-                        <th>SKU</th>
-                        <th>Quantity on hand</th>
-                        <th>Unit of Measure</th>
-                        <th>Retail Price</th>
-                        <th>Reorder Quantity Threshold</th>
-                        <th>Last Updated</th>
-                        <th>Unit Cost</th>
-                        <th>Specification</th>
-                        <th>Active</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for p in products %}
-                        <tr data-category="{{ p.product.category.prod_cat_name }}" 
-                            data-branch="{{ p.branch.branch_id }}" 
-                            data-inventory-id="{{ p.inventory_id }}"
-                            data-product-id="{{ p.product.prod_id }}">
-                            <td>{{ p.product.prod_name }}</td>
-                            <td>{{ p.product.prod_sku}}
-                            <td>{{ p.quantity_on_hand }}</td>
-                            <td>{{ p.product.prod_unit_of_measure }}</td>
-                            <td>₱{{ p.product.prod_retail_price }}</td>
-                            <td>{{ p.product.prod_reorder_threshold }}</td> 
-                            <td>{{ p.last_updated_at }}</td>
-                            <td>₱{{ p.product.prod_current_cost }}</td>
-
-                            <td class="specs-cell">
-                                {% if p.product.product_specification_set.all %}
-                                    <div class="specs-container">
-                                        {% for spec in p.product.product_specification_set.all %}
-                                            <div class="spec-item">
-                                                <strong>{{ spec.spec_name }}:</strong> {{ spec.spec_value }}
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                {% else %}
-                                    <span class="no-specs">No specifications available</span>
-                                {% endif %}
-                            </td>
-
-
-                            <td>{{ p.product.prod_is_active }}</td>
-                            <td>
-                                <button type="button" class="stock-in">Stock in</button>
-                                <button type="button" class="stock-out">Stock out</button>
-                                <button type="button" class="edit">Edit</button>
-                            </td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="10" style="text-align:center; color:red;">No products found</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-
-    <!-- overlay for stock in / stock out-->
-    <div id="overlay-stock" class="overlay" style="display:none;">
-        <div class="overlay-content">
-            <h2 id="overlay-stock-title"></h2>
-
-            <label>Quantity:</label>
-            <input type="number" id="overlay-stock-qty" min="1"><br><br>
-
-            <button id="overlay-stock-save">Save</button>
-            <button id="overlay-stock-close">Cancel</button>
-        </div>
+<div class="page-header">
+    <div class="page-title">
+        <h1>Inventory Management</h1>
+        <p class="page-description">Track and manage product stock levels across all branches.</p>
     </div>
 
-    <!-- overlay for edit product -->
-    <div id="overlay-edit" class="overlay" style="display:none;">
-        <div class="overlay-content">
-            <h2 id="overlay-edit-title">Edit Product</h2>
-
-            <label>Edit Product Name:</label>
-            <input type="text" id="edit-name"><br>
-
-            <label>Edit Description:</label>
-            <input type="text" id="edit-desc"><br>
-
-            <label>Edit Unit of Measure:</label>
-            <input type="text" id="edit-unit"><br>
-
-            <label>Edit Product Specific Name:</label>
-            <input type="text" id="edit-specific-name"><br>
-
-            <label>Edit Product Specific value:</label>
-            <input type="text" id="edit-specific-value"><br>
-
-            <label>Edit Unit Cost:</label>
-            <input type="number" id="edit-cost" min="0" step="0.01"><br>
-
-            <label>Edit Retail Price:</label>
-            <input type="number" id="edit-price" min="0" step="0.01"><br>
-
-            <label>Edit Reorder Threshold:</label>
-            <input type="number" id="edit-reorder" min="0"><br><br>
-
-            <label>Product still active?</label>
-            <input type="checkbox" id="edit-active" checked><br>
-
-            <button id="overlay-edit-save">Save</button>
-            <button id="overlay-edit-close">Cancel</button>
-        </div>
-    </div>
-
-
-    <!-- Ari chen-->
-
-    <!-- overlay for add product -->
-    <div id="overlay-add" class="overlay" style="display:none;">
-    <div class="overlay-content">
-        <h2 id="overlay-add-title">Add Product</h2>
-
-        <label>Product Name:</label>
-        <input type="text" id="add-name"><br>
-
-        <label>Product Description:</label>
-        <input type="text" id="add-desc"><br>
-
-        <label>Product Unit of Measure:</label>
-        <input type="text" id="add-unit"><br>
-
-        <!-- Product Specifications Container -->
-        <div id="specifications-container">
-            <div class="specification-group">
-                <div class="spec-row">
-                    <div class="spec-input-group">
-                        <label>Product Specific Name:</label>
-                        <input type="text" class="add-specific-name" placeholder="e.g., Grade">
-                    </div>
-                    <div class="spec-input-group">
-                        <label>Product Specific Value:</label>
-                        <input type="text" class="add-specific-value" placeholder="e.g., Fine">
-                    </div>
-                    <button type="button" class="remove-spec-btn" style="display:none;">Remove</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Add Specification Button -->
-        <button type="button" id="add-spec-btn" style="margin-bottom: 15px;">
-            + Add Another Specification
+    <div class="header-actions">
+        <button class="history-btn" onclick="openHistoryModal()">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            Movement History
         </button>
-
-        <label>Product Unit Cost:</label>
-        <input type="number" id="add-cost" min="0" step="0.01"><br>
-
-        <label>Product Retail Price:</label>
-        <input type="number" id="add-price" min="0" step="0.01"><br>
-
-        <label>Product Reorder Threshold:</label>
-        <input type="number" id="add-reorder" min="0"><br>
-
-        <label>Product SKU:</label>
-        <input type="text" id="add-sku"><br>
-
-        <label>Product Category:</label>
-        <select name="category" id="add-category" required>
-            <option value="" selected disabled>--select--</option>
-            {% for cat in categories %}
-                <option value="{{ cat.prod_cat_id }}">{{ cat.prod_cat_name }}</option>
-            {% endfor %}
-        </select><br>
-
-        <label>Branch:</label>
-        <select name="branch" id="add-branch" required>
-            <option value="" selected disabled>---select---</option>
-            {% for branch in branches %}
-                <option value="{{ branch.branch_id }}">{{ branch.branch_name }}</option>
-            {% empty %}
-                <option value="">No branches available</option>
-            {% endfor %}
-        </select><br><br>
-
-        <button id="overlay-add-btn">Add</button>
-        <button type="button" id="overlay-add-close">Cancel</button> 
+        <button class="create-btn" onclick="openAddProductModal()">
+            <i class="fa-solid fa-plus"></i>
+            Add Product
+        </button>
     </div>
 </div>
 
-
-
-
-
-
-
-
-    <!-- overlay for remove product -->
-    <div id="overlay-remove" class="overlay" style="display:none;">
-        <div class="overlay-content">
-            <h2 id="overlay-add-title">Remove Product</h2>
-            
-            <label>Product:</label>
-            <select name="product" id="remove-product">
-                <option value="" selected disabled>---select---</option>
-                {% for p in products %}
-                    <option value="{{ p.product.prod_id }}">{{ p.product.prod_name }} ({{ p.branch.branch_name }})</option>
-                {% empty %}
-                <option value="">No Products available</option>
+<!-- Search and Filter Section -->
+<div class="search-filter-section">
+    <div class="search-box">
+        <i class="fa-solid fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search by product name or SKU...">
+    </div>
+    
+    <div class="filter-group">
+        <!-- Always show branch filter for everyone -->
+        <div class="filter-dropdown">
+            <select id="branchFilter">
+                <option value="all">All Branches</option>
+                {% for branch in branches %}
+                    <option value="{{ branch.branch_id }}" {% if user.role.role_id == 2 and user.branch.branch_id == branch.branch_id %}selected{% endif %}>
+                        {{ branch.branch_name }}
+                    </option>
                 {% endfor %}
-            </select><br><br>
-
-            <button id="overlay-remove-btn">Remove</button>
-            <button type="button" id="overlay-remove-close">Cancel</button>
+            </select>
+        </div>
+        
+        <div class="filter-dropdown">
+            <select id="categoryFilter">
+                <option value="all">All Categories</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.prod_cat_name }}">{{ cat.prod_cat_name }}</option>
+                {% endfor %}
+            </select>
         </div>
     </div>
+</div>
 
-    <!-- Add this overlay for inactive products -->
-    <div id="overlay-inactive" class="overlay" style="display:none;">
-        <div class="overlay-content" style="width: 80%; max-width: 1000px;">
-            <h2>Inactive Products</h2>
-            
-            <div class="search-bar">
-                <label>Search:</label>
-                <input type="text" class="inactive-search-textbox" placeholder="Search inactive products...">
+<!-- Table Container -->
+<div class="table-container">
+    <table class="inventory-table">
+        <thead>
+            <tr>
+                <th>Product Name</th>
+                <th>Specification</th>
+                <th>Branch</th>
+                <th>Quantity on Hand</th>
+                <th>Retail Price</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="inventoryTableBody">
+        {% if products %}
+            {% for p in products %}
+                <tr data-category="{{ p.product.category.prod_cat_name }}" 
+                    data-branch="{{ p.branch.branch_id }}"
+                    data-inventory-id="{{ p.inventory_id }}"
+                    data-product-id="{{ p.product.prod_id }}"
+                    data-branch-name="{{ p.branch.branch_name }}">
+                    <td>
+                        <div class="product-name-cell">
+                            <span class="product-name">{{ p.product.prod_name }}</span>
+                            <span class="product-sku">SKU: {{ p.product.prod_sku }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        {% if p.product.product_specification_set.all %}
+                            <div class="specs-container">
+                                {% for spec in p.product.product_specification_set.all %}
+                                    <div class="spec-item">
+                                        <strong>{{ spec.spec_name }}:</strong> {{ spec.spec_value }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <span class="no-specs">No specifications</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="branch-cell">{{ p.branch.branch_name }}</div>
+                    </td>
+                    <td>
+                        <div class="quantity-cell">
+                            {{ p.quantity_on_hand }} <span class="unit">{{ p.product.prod_unit_of_measure }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="price-cell">₱{{ p.product.prod_retail_price }}</div>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn btn-stock-in" 
+                                    onclick="openStockModal(this, 'in')"
+                                    data-branch="{{ p.branch.branch_id }}">
+                                <i class="fa-solid fa-arrow-down"></i> Stock In
+                            </button>
+                            <button class="action-btn btn-stock-out" 
+                                    onclick="openStockModal(this, 'out')"
+                                    data-branch="{{ p.branch.branch_id }}">
+                                <i class="fa-solid fa-arrow-up"></i> Stock Out
+                            </button>
+                            <button class="action-btn btn-remove" 
+                                    onclick="removeProduct(this)"
+                                    data-branch="{{ p.branch.branch_id }}">
+                                <i class="fa-solid fa-xmark"></i> Remove
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="6">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-box-open"></i>
+                        <p>No products found. Click "Add Product" to add inventory items.</p>
+                    </div>
+                </td>
+            </tr>
+        {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Stock In/Out Modal -->
+<div id="stockModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 id="stockModalTitle">Stock In</h2>
+            <button type="button" class="close-btn" onclick="closeStockModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Product Name</label>
+                <input type="text" id="stockProductName" readonly style="background: #f3f4f6; cursor: not-allowed;">
             </div>
-            
-            <table border="1" cellpadding="10" cellspacing="0" style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-                <thead style="background: #222; color: white;">
+
+            <div class="form-group">
+                <label>Branch</label>
+                <input type="text" id="stockProductBranch" readonly style="background: #f3f4f6; cursor: not-allowed;">
+            </div>
+
+            <div class="form-group">
+                <label>Quantity</label>
+                <input type="number" id="stockQuantity" min="1" placeholder="Enter quantity">
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn-cancel" onclick="closeStockModal()">Cancel</button>
+            <button type="button" class="btn-save" onclick="saveStockAction()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Add Product to Inventory Modal -->
+<div id="addProductModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2>Add Product to Inventory</h2>
+            <button type="button" class="close-btn" onclick="closeAddProductModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Branch</label>
+                <select id="addProductBranch"
+                        onchange="loadAvailableProducts()"
+                        {% if user.role_id == 2 %}disabled{% endif %}>
+                    <option value="" disabled selected>Select branch</option>
+                    {% for branch in branches %}
+                        <option value="{{ branch.branch_id }}">{{ branch.branch_name }}</option>
+                    {% endfor %}
+                </select>
+
+            </div>
+
+            <div class="form-group">
+                <label>Select Product</label>
+                <select id="addProductSelect" disabled>
+                    <option value="" disabled selected>Select a product</option>
+                </select>
+                <small style="color: #6b7280; font-size: 12px; margin-top: 4px; display: block;">
+                    Only shows products not already in this branch's inventory
+                </small>
+            </div>
+
+            <div id="selectedProductDetails" style="display: none; margin-top: 20px; padding: 15px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+                <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 16px; color: #1f2937;">Product Details</h4>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label style="font-size: 12px; color: #6b7280;">SKU</label>
+                        <div id="selectedProductSku" style="font-weight: 600; color: #1f2937;"></div>
+                    </div>
+                    <div class="form-group half">
+                        <label style="font-size: 12px; color: #6b7280;">Unit of Measure</label>
+                        <div id="selectedProductUnit" style="font-weight: 600; color: #1f2937;"></div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label style="font-size: 12px; color: #6b7280;">Cost Price</label>
+                        <div id="selectedProductCost" style="font-weight: 600; color: #1f2937;"></div>
+                    </div>
+                    <div class="form-group half">
+                        <label style="font-size: 12px; color: #6b7280;">Retail Price</label>
+                        <div id="selectedProductPrice" style="font-weight: 600; color: #059669;"></div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label style="font-size: 12px; color: #6b7280;">Category</label>
+                        <div id="selectedProductCategory" style="font-weight: 600; color: #1f2937;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn-cancel" onclick="closeAddProductModal()">Cancel</button>
+            <button type="button" class="btn-save" onclick="addProductToInventory()" disabled id="addProductBtn">Add to Inventory</button>
+        </div>
+    </div>
+</div>
+
+<!-- Movement History Modal -->
+<div id="historyModal" class="modal-overlay history-modal">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2>Inventory Movement History</h2>
+            <button type="button" class="close-btn" onclick="closeHistoryModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="date-filter">
+                <div class="form-group">
+                    <label>From Date</label>
+                    <input type="date" id="historyFromDate">
+                </div>
+                <div class="form-group">
+                    <label>To Date</label>
+                    <input type="date" id="historyToDate">
+                </div>
+                <button onclick="filterHistory()">Filter</button>
+            </div>
+
+            <table class="history-table">
+                <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>SKU</th>
+                        <th>Date</th>
+                        <th>Product</th>
+                        <th>Type</th>
+                        <th>Quantity</th>
+                        <th>Unit Cost</th>
+                        <th>User</th>
                         <th>Branch</th>
-                        <th>Last Updated</th>
-                        <th>Action</th>
                     </tr>
                 </thead>
-                <tbody id="inactive-products-body">
-                    <!-- Inactive products will be loaded here -->
+                <tbody id="historyTableBody">
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px;">
+                            <span style="color: #9ca3af;">Select date range and click filter to view history</span>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
-            
-            <br>
-            <button id="overlay-inactive-close">Close</button>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn-cancel" onclick="closeHistoryModal()">Close</button>
         </div>
     </div>
+</div>
 
 <script>
-    /** category and branch tab pane functionality **/
-    const categoryButtons = document.querySelectorAll('.category-btn');
-    const branchButtons = document.querySelectorAll('.branch-btn');
-    const rows = document.querySelectorAll('tbody tr');
-    const searchInput = document.querySelector('.search-bar-textbox');
+    const userId = "{{ user_id }}";
+    const userRoleId = parseInt("{{ user.role.role_id|safe }}");
+    const userBranchId = "{{ user.branch.branch_id|safe }}";
+    let currentStockRow = null;
+    let currentStockMode = "";
 
-    let selectedCategory = 'all';
-    let selectedBranch = 'all';
-    let searchTerm = '';
-
-    searchInput.addEventListener('input', (e) => {
-        searchTerm = e.target.value.toLowerCase().trim();
-        filterRows();
+    document.addEventListener('DOMContentLoaded', function() {
+        // For branch managers (role 2), set default branch filter to their branch
+        if (userRoleId === 2) {
+            document.getElementById('branchFilter').value = userBranchId;
+        }
+        filterTable();
     });
 
-    // search logic
-    function filterRows() {
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('input', filterTable);
+
+    // Filter functionality
+    document.getElementById('branchFilter').addEventListener('change', filterTable);
+    document.getElementById('categoryFilter').addEventListener('change', filterTable);
+
+    function filterTable() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const branchFilter = document.getElementById('branchFilter').value;
+        const categoryFilter = document.getElementById('categoryFilter').value;
+
+        const rows = document.querySelectorAll('#inventoryTableBody tr');
         let hasVisibleRows = false;
-        
+
         rows.forEach(row => {
-            if (row.children.length < 11) return;
-            
-            const rowCategory = row.getAttribute('data-category');
+            if (row.children.length < 6) return;
+
+            const productName = row.querySelector('.product-name')?.textContent.toLowerCase() || '';
+            const productSku = row.querySelector('.product-sku')?.textContent.toLowerCase() || '';
             const rowBranch = row.getAttribute('data-branch');
-            const productName = row.children[0].innerText.toLowerCase(); // Name column
-            const productSKU = row.children[1].innerText.toLowerCase();  // SKU column
+            const rowCategory = row.getAttribute('data-category');
 
-            const categoryMatch = (selectedCategory === 'all' || rowCategory === selectedCategory);
-            const branchMatch = (selectedBranch === 'all' || rowBranch === selectedBranch);
-            const searchMatch = searchTerm === '' || 
-                            productName.includes(searchTerm) || 
-                            productSKU.includes(searchTerm);
+            const searchMatch = searchTerm === '' || productName.includes(searchTerm) || productSku.includes(searchTerm);
+            const branchMatch = branchFilter === 'all' || rowBranch === branchFilter;
+            const categoryMatch = categoryFilter === 'all' || rowCategory === categoryFilter;
 
-            if (categoryMatch && branchMatch && searchMatch) {
+            if (searchMatch && branchMatch && categoryMatch) {
                 row.style.display = '';
                 hasVisibleRows = true;
             } else {
                 row.style.display = 'none';
             }
         });
-        const noProductsRow = document.querySelector('tbody tr:only-child');
-        if (noProductsRow && noProductsRow.children.length === 1) {
-            noProductsRow.style.display = hasVisibleRows ? 'none' : '';
-        }
+
+        updateActionButtons(branchFilter);
     }
 
-    categoryButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            selectedCategory = btn.getAttribute('data-category');
-            categoryButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            filterRows();
+    function updateActionButtons(selectedBranch) {
+        const rows = document.querySelectorAll('#inventoryTableBody tr');
+
+        rows.forEach(row => {
+            const actionCol = row.querySelector('.action-buttons');
+            if (!actionCol) return;
+
+            if (userRoleId === 1) {
+                // Admin: always show buttons
+                actionCol.style.display = '';
+                actionCol.querySelectorAll('.action-btn').forEach(btn => {
+                    btn.disabled = false;
+                    btn.title = '';
+                });
+            } else if (userRoleId === 2) {
+                const rowBranch = row.getAttribute('data-branch');
+                const isUserBranch = rowBranch === userBranchId && (selectedBranch === userBranchId || selectedBranch === userBranchId.toString());
+
+                // Show action column only if branch matches user's branch and branch filter matches
+                actionCol.style.display = isUserBranch ? 'flex' : 'none';
+                actionCol.querySelectorAll('.action-btn').forEach(btn => {
+                    btn.disabled = !isUserBranch;
+                    btn.title = !isUserBranch ? 'Action not allowed for this branch' : '';
+                });
+            }
         });
-    });
+    }
 
-    branchButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            selectedBranch = btn.getAttribute('data-branch');
-            branchButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            filterRows();
-        });
-    });
+    // Stock In/Out Modal Functions
+    function openStockModal(button, mode) {
+        if (button.disabled) {
+            alert("You don't have permission to perform this action on this branch's inventory.");
+            return;
+        }
 
-    /** Search bar functionality **/
-    searchInput.addEventListener('input', (e) => {
-        searchTerm = e.target.value.toLowerCase().trim();
-        filterRows();
-    });
+        currentStockRow = button.closest('tr');
+        currentStockMode = mode;
 
-    /** action button functionalities **/
-    const overlayStock = document.getElementById('overlay-stock');
-    const stockTitle = document.getElementById('overlay-stock-title');
-    const stockQty = document.getElementById('overlay-stock-qty');
-    const stockSave = document.getElementById('overlay-stock-save');
-    const stockClose = document.getElementById('overlay-stock-close');
+        const productName = currentStockRow.querySelector('.product-name').textContent;
+        const branchName = currentStockRow.getAttribute('data-branch-name');
 
-    let currentStockMode = "";
-    let currentRow = null;
-    const userId = "{{ user_id }}";
+        document.getElementById('stockModalTitle').textContent = mode === 'in' ? 'Stock In' : 'Stock Out';
+        document.getElementById('stockProductName').value = productName;
+        document.getElementById('stockProductBranch').value = branchName;
+        document.getElementById('stockQuantity').value = '';
+        document.getElementById('stockModal').style.display = 'flex';
+    }
 
-    document.querySelectorAll('.stock-in').forEach(btn => {
-        btn.addEventListener('click', () => {
-            currentRow = btn.closest('tr');
-            const productName = currentRow.children[0].innerText;
+    function closeStockModal() {
+        document.getElementById('stockModal').style.display = 'none';
+        currentStockRow = null;
+        currentStockMode = '';
+    }
 
-            currentStockMode = "in";
-            stockTitle.innerText = "Stock In: " + productName;
-            stockQty.value = "";
+    async function saveStockAction() {
+        const quantity = Number(document.getElementById('stockQuantity').value);
 
-            overlayStock.style.display = "flex";
-        });
-    });
-
-    document.querySelectorAll('.stock-out').forEach(btn => {
-        btn.addEventListener('click', () => {
-            currentRow = btn.closest('tr');
-            const productName = currentRow.children[0].innerText;
-
-            currentStockMode = "out";
-            stockTitle.innerText = "Stock Out: " + productName;
-            stockQty.value = "";
-
-            overlayStock.style.display = "flex";
-        });
-    });
-
-    stockSave.addEventListener('click', async () => {
-        const qty = Number(stockQty.value);
-
-        if (qty <= 0 || isNaN(qty)) {
+        if (quantity <= 0 || isNaN(quantity)) {
             alert("Quantity must be a positive number");
             return;
         }
 
-        const inventoryId = currentRow.getAttribute("data-inventory-id");
-        const qtyCell = currentRow.children[2]; // Quantity on hand cell
+        const inventoryId = currentStockRow.getAttribute("data-inventory-id");
 
         try {
             const response = await fetch("/inventory/stock_action/", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     inventory_id: inventoryId,
-                    quantity: qty,
+                    quantity: quantity,
                     action_type: currentStockMode,
                     user_id: userId
                 })
@@ -834,15 +1091,10 @@
 
             if (response.ok && data.success) {
                 alert(data.message || "Stock updated successfully!");
-                
-                // Update the quantity in the table
-                qtyCell.innerText = data.new_quantity;
-                
-                // Update last updated cell (index 8)
-                const now = new Date();
-                currentRow.children[8].innerText = now.toISOString().split('T')[0];
-                
-                overlayStock.style.display = "none";
+                const quantityCell = currentStockRow.querySelector('.quantity-cell');
+                const unit = currentStockRow.querySelector('.unit').textContent;
+                quantityCell.innerHTML = `${data.new_quantity} <span class="unit">${unit}</span>`;
+                closeStockModal();
             } else {
                 alert("Error: " + (data.error || "Failed to update stock"));
             }
@@ -850,383 +1102,47 @@
             alert("Failed to update stock: " + err.message);
             console.error("Stock update error:", err);
         }
-    });
+    }
 
-    stockClose.addEventListener('click', () => {
-        overlayStock.style.display = "none";
-    });
-
-    // Edit overlay functionality
-    const overlayEdit = document.getElementById('overlay-edit');
-    const editName = document.getElementById('edit-name');
-    const editDesc = document.getElementById('edit-desc');
-    const editUnit = document.getElementById('edit-unit');
-    const editSpecificName = document.getElementById('edit-specific-name');
-    const editSpecificValue = document.getElementById('edit-specific-value');
-    const editCost = document.getElementById('edit-cost');
-    const editPrice = document.getElementById('edit-price');
-    const editReorder = document.getElementById('edit-reorder');
-    const editActive = document.getElementById('edit-active');
-    const editSave = document.getElementById('overlay-edit-save');
-    const editClose = document.getElementById('overlay-edit-close');
-
-    let currentEditRow = null;
-
-    document.querySelectorAll('.edit').forEach(btn => {
-        btn.addEventListener('click', () => {
-            currentEditRow = btn.closest('tr');
-            const row = btn.closest('tr');
-            
-            const specText = row.children[8].innerText;
-            let specName = '';
-            let specValue = '';
-
-            if (specText !== 'None') {
-                const specParts = specText.split(':');
-                if (specParts.length === 2) {
-                    specName = specParts[0].trim();
-                    specValue = specParts[1].trim();
-                }
-            }
-
-            editName.value = row.children[0].innerText;
-            editUnit.value = row.children[3].innerText;
-            editCost.value = Number(row.children[7].innerText.replace("₱", "").trim());
-            editPrice.value = Number(row.children[4].innerText.replace("₱", "").trim());
-            editReorder.value = row.children[5].innerText;
-            editSpecificName.value = specName;
-            editSpecificValue.value = specValue;
-
-            let activeValue = row.children[9].innerText.trim().toLowerCase();
-            editActive.checked = activeValue === "true" || activeValue === "1" || activeValue === "yes";
-
-            overlayEdit.style.display = "flex";
-        });
-    });
-
-    editSave.addEventListener('click', async () => {
-        if (editCost.value < 0 || editPrice.value < 0 || editReorder.value < 0) {
-            alert("Values cannot be negative!");
-            return;
-        }
-        const inventoryId = currentEditRow.getAttribute('data-inventory-id');
-        const productId = currentEditRow.getAttribute('data-product-id');
-        
-        if (!productId) {
-            alert("Error: Product ID not found. Please add data-product-id to your table rows.");
+    // Remove Product Function
+    async function removeProduct(button) {
+        if (button.disabled) {
+            alert("You don't have permission to remove products from this branch.");
             return;
         }
 
-        const oldActiveStatus = currentEditRow.children[9].innerText.trim().toLowerCase() === "true";
-        const newActiveStatus = editActive.checked;
+        const row = button.closest('tr');
+        const productName = row.querySelector('.product-name').textContent;
+        const productId = row.getAttribute('data-product-id');
+
+        if (!confirm(`Are you sure you want to remove "${productName}"? This will make the product inactive.`)) return;
 
         try {
             const response = await fetch("/inventory/edit_product/", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    product_id: productId,
-                    prod_name: editName.value,
-                    prod_desc: editDesc.value,
-                    prod_unit_of_measure: editUnit.value,
-                    prod_current_cost: editCost.value,
-                    prod_retail_price: editPrice.value,
-                    prod_reorder_threshold: editReorder.value,
-                    prod_is_active: editActive.checked,
-                    spec_name: editSpecificName.value,
-                    spec_value: editSpecificValue.value,
-                    user_id: userId
-                })
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ product_id: productId, prod_is_active: false, user_id: userId })
             });
 
             const data = await response.json();
 
             if (response.ok && data.success) {
-                let message = data.message;
-                if (data.price_changed) {
-                    message += "\n\nPrice change has been recorded in price history.";
-                }
-                alert(message);
+                alert("Product has been removed successfully!");
+                row.remove();
 
-                // update the table row with new values
-                currentEditRow.children[0].innerText = editName.value;
-                currentEditRow.children[3].innerText = editUnit.value;
-                currentEditRow.children[4].innerText = "₱" + parseFloat(editPrice.value).toFixed(2);
-                currentEditRow.children[5].innerText = editReorder.value;
-                currentEditRow.children[7].innerText = "₱" + parseFloat(editCost.value).toFixed(2);
-                
-                // Update spec name and value
-                if (editSpecificName.value && editSpecificValue.value) {
-                    currentEditRow.children[8].innerText = editSpecificName.value + ": " + editSpecificValue.value;
-                } else {
-                    currentEditRow.children[8].innerText = "None";
-                }
-                currentEditRow.children[9].innerText = editActive.checked ? "True" : "False";
-
-                if (oldActiveStatus === true && newActiveStatus === false) {
-                    currentEditRow.remove();
-                    const visibleRows = document.querySelectorAll('tbody tr[data-product-id]');
-                     if (visibleRows.length === 0) {
-                    const tbody = document.querySelector('tbody');
-                    tbody.innerHTML = `
+                const visibleRows = document.querySelectorAll('#inventoryTableBody tr[data-product-id]');
+                if (visibleRows.length === 0) {
+                    document.getElementById('inventoryTableBody').innerHTML = `
                         <tr>
-                            <td colspan="11" style="text-align:center; color:red;">No products found</td>
+                            <td colspan="6">
+                                <div class="empty-state">
+                                    <i class="fa-solid fa-box-open"></i>
+                                    <p>No products found. Click "Add Product" to add inventory items.</p>
+                                </div>
+                            </td>
                         </tr>
                     `;
                 }
-            }
-                overlayEdit.style.display = "none";
-            } else {
-                alert("Error: " + (data.error || "Failed to update product"));
-            }
-        } catch (err) {
-            alert("Failed to update product: " + err.message);
-            console.error("Product update error:", err);
-        }
-    });
-
-    editClose.addEventListener('click', () => {
-        overlayEdit.style.display = "none";
-    });
-
-    overlayStock.addEventListener('click', (e) => {
-        if (e.target === overlayStock) {
-            overlayStock.style.display = "none";
-        }
-    });
-
-    overlayEdit.addEventListener('click', (e) => {
-        if (e.target === overlayEdit) {
-            overlayEdit.style.display = "none";
-        }
-    });
-
-
-    // ari chen
-
-    // add product functionality
-    // Add product functionality with multiple specifications
-    const addProductBtn = document.querySelector('.add-product-btn');
-    const overlayAddClose = document.getElementById('overlay-add-close');
-    const overlayAdd = document.getElementById('overlay-add');
-    const addName = document.getElementById('add-name');
-    const addDesc = document.getElementById('add-desc');
-    const addUnit = document.getElementById('add-unit');
-    const addCost = document.getElementById('add-cost');
-    const addPrice = document.getElementById('add-price');
-    const addReorder = document.getElementById('add-reorder');
-    const addSku = document.getElementById('add-sku');
-    const addCategory = document.getElementById('add-category');
-    const addBranch = document.getElementById('add-branch');
-    const addBtn = document.getElementById('overlay-add-btn');
-    const specificationsContainer = document.getElementById('specifications-container');
-    const addSpecBtn = document.getElementById('add-spec-btn');
-
-    // Add specification functionality
-    addSpecBtn.addEventListener('click', () => {
-        addSpecification();
-    });
-
-    function addSpecification(specName = '', specValue = '') {
-        const specGroup = document.createElement('div');
-        specGroup.className = 'specification-group';
-        
-        specGroup.innerHTML = `
-            <div class="spec-row">
-                <div class="spec-input-group">
-                    <label>Product Specific Name:</label>
-                    <input type="text" class="add-specific-name" placeholder="e.g., Grade" value="${specName}">
-                </div>
-                <div class="spec-input-group">
-                    <label>Product Specific Value:</label>
-                    <input type="text" class="add-specific-value" placeholder="e.g., Fine" value="${specValue}">
-                </div>
-                <button type="button" class="remove-spec-btn">Remove</button>
-            </div>
-        `;
-        
-        specificationsContainer.appendChild(specGroup);
-        
-        // Add event listener to remove button
-        const removeBtn = specGroup.querySelector('.remove-spec-btn');
-        removeBtn.addEventListener('click', () => {
-            specGroup.remove();
-            updateRemoveButtonsVisibility();
-        });
-        
-        updateRemoveButtonsVisibility();
-    }
-
-    function updateRemoveButtonsVisibility() {
-        const specGroups = specificationsContainer.querySelectorAll('.specification-group');
-        const removeButtons = specificationsContainer.querySelectorAll('.remove-spec-btn');
-        
-        // Show remove buttons only if there's more than one specification
-        if (specGroups.length > 1) {
-            removeButtons.forEach(btn => {
-                btn.style.display = 'block';
-            });
-        } else {
-            removeButtons.forEach(btn => {
-                btn.style.display = 'none';
-            });
-        }
-    }
-
-    // Initialize with one specification when opening the overlay
-    addProductBtn.addEventListener('click', () => {
-        // Clear all fields
-        addName.value = '';
-        addDesc.value = '';
-        addUnit.value = '';
-        addCost.value = '';
-        addPrice.value = '';
-        addReorder.value = '';
-        addSku.value = '';
-        addCategory.value = '';
-        addBranch.value = '';
-        
-        // Clear specifications and add one empty one
-        specificationsContainer.innerHTML = '';
-        addSpecification();
-        
-        overlayAdd.style.display = 'flex';
-    });
-
-    addBtn.addEventListener('click', async () => {
-        // Collect specifications
-        const specifications = [];
-        const specGroups = specificationsContainer.querySelectorAll('.specification-group');
-        
-        specGroups.forEach(group => {
-            const specName = group.querySelector('.add-specific-name').value.trim();
-            const specValue = group.querySelector('.add-specific-value').value.trim();
-            
-            if (specName && specValue) {
-                specifications.push({
-                    name: specName,
-                    value: specValue
-                });
-            }
-        });
-
-        // Validate required fields
-        if (!addName.value || !addCost.value || !addPrice.value || !addReorder.value || !addSku.value || !addCategory.value || !addBranch.value) {
-            alert("Please fill in all required fields!");
-            return;
-        }
-        
-        if (addCost.value < 0 || addPrice.value < 0 || addReorder.value < 0) {
-            alert("Values cannot be negative!");
-            return;
-        }
-        
-        try {
-            const response = await fetch("/inventory/add_product/", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    prod_name: addName.value,
-                    prod_desc: addDesc.value,
-                    prod_unit_of_measure: addUnit.value,
-                    prod_current_cost: addCost.value,
-                    prod_retail_price: addPrice.value,
-                    prod_reorder_threshold: addReorder.value,
-                    prod_sku: addSku.value,
-                    category_id: addCategory.value,
-                    branch_id: addBranch.value,
-                    specifications: specifications, // Send as array
-                    user_id: userId
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (response.ok && data.success) {
-                alert(data.message + "\n\nPlease refresh the page to see the new product.");
-                overlayAdd.style.display = 'none';
-                // Optionally reload the page
-                location.reload();
-            } else {
-                alert("Error: " + (data.error || "Failed to add product"));
-            }
-        } catch (err) {
-            alert("Failed to add product: " + err.message);
-            console.error("Add product error:", err);
-        }
-    });
-
-    // Close overlay when clicking outside
-    overlayAdd.addEventListener('click', (e) => {
-        if (e.target === overlayAdd) {
-            overlayAdd.style.display = 'none';
-        }
-    });
-
-    overlayAddClose.addEventListener('click', () => {
-        overlayAdd.style.display = 'none';
-    });
-    
-
-
-
-
-
-
-
-
-
-    // remove product functionality
-    const removeProductBtn = document.querySelector('.remove-product-btn');
-    const overlayRemoveClose = document.getElementById('overlay-remove-close');
-    const overlayRemove = document.getElementById('overlay-remove');
-    const removeProductSelect = document.getElementById('remove-product');
-    const removeBtn = document.getElementById('overlay-remove-btn');
-
-    removeProductBtn.addEventListener('click', () => {
-        overlayRemove.style.display = 'flex';
-    });
-
-    removeBtn.addEventListener('click', async () => {
-        const productId = removeProductSelect.value;
-        
-        if (!productId) {
-            alert("Please select a product to remove!");
-            return;
-        }
-        
-        if (!confirm("Are you sure you want to remove this product? This action cannot be undone.")) {
-            return;
-        }
-        
-        try {
-            const response = await fetch("/inventory/remove_product/", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    product_id: productId,
-                    user_id: userId
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (response.ok && data.success) {
-                alert(data.message);
-                overlayRemove.style.display = 'none';
-                // remove the product row from the table
-                const rowToRemove = document.querySelector(`tr[data-product-id="${productId}"]`);
-                if (rowToRemove) {
-                    rowToRemove.remove();
-                }
-                // reload the page to refresh product list
-                location.reload();
             } else {
                 alert("Error: " + (data.error || "Failed to remove product"));
             }
@@ -1234,30 +1150,36 @@
             alert("Failed to remove product: " + err.message);
             console.error("Remove product error:", err);
         }
-    });
+    }
 
-    // remove overlay
-    overlayRemoveClose.addEventListener('click', () => {
-        overlayRemove.style.display = 'none';
-    });
+    // Movement History Modal Functions
+    function openHistoryModal() {
+        document.getElementById('historyModal').style.display = 'flex';
+        
+        // Set default dates (last 30 days)
+        const toDate = new Date();
+        const fromDate = new Date();
+        fromDate.setDate(fromDate.getDate() - 30);
+        
+        document.getElementById('historyToDate').valueAsDate = toDate;
+        document.getElementById('historyFromDate').valueAsDate = fromDate;
+    }
 
-    // exit overlay when clicking outside the box
-    overlayRemove.addEventListener('click', (e) => {
-        if (e.target === overlayRemove) {
-            overlayRemove.style.display = 'none';
+    function closeHistoryModal() {
+        document.getElementById('historyModal').style.display = 'none';
+    }
+
+    async function filterHistory() {
+        const fromDate = document.getElementById('historyFromDate').value;
+        const toDate = document.getElementById('historyToDate').value;
+
+        if (!fromDate || !toDate) {
+            alert("Please select both start and end dates");
+            return;
         }
-    });
 
-    // inactive Products functionality
-    const inactiveProductBtn = document.querySelector('.inactive-product-btn');
-    const overlayInactive = document.getElementById('overlay-inactive');
-    const overlayInactiveClose = document.getElementById('overlay-inactive-close');
-    const inactiveProductsBody = document.getElementById('inactive-products-body');
-    const inactiveSearchInput = document.querySelector('.inactive-search-textbox');
-
-    inactiveProductBtn.addEventListener('click', async () => {
         try {
-            const response = await fetch("/inventory/get_inactive_products/", {
+            const response = await fetch(`/inventory/get_movement_history/?from_date=${fromDate}&to_date=${toDate}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json"
@@ -1267,125 +1189,200 @@
             const data = await response.json();
 
             if (response.ok && data.success) {
-                displayInactiveProducts(data.inactive_products);
-                overlayInactive.style.display = 'flex';
+                displayHistory(data.transactions);
             } else {
-                alert("Error loading inactive products: " + (data.error || "Unknown error"));
+                alert("Error: " + (data.error || "Failed to load history"));
             }
         } catch (err) {
-            alert("Failed to load inactive products: " + err.message);
-            console.error("Inactive products error:", err);
+            alert("Failed to load history: " + err.message);
+            console.error("History error:", err);
         }
-    });
+    }
 
-    function displayInactiveProducts(products) {
-        inactiveProductsBody.innerHTML = '';
-        
-        if (products.length === 0) {
-            inactiveProductsBody.innerHTML = `
+    function displayHistory(transactions) {
+        const tbody = document.getElementById('historyTableBody');
+        tbody.innerHTML = '';
+
+        if (transactions.length === 0) {
+            tbody.innerHTML = `
                 <tr>
-                    <td colspan="5" style="text-align:center; color:red;">No inactive products found</td>
+                    <td colspan="7" style="text-align: center; padding: 40px;">
+                        <span style="color: #9ca3af;">No transactions found for the selected date range</span>
+                    </td>
                 </tr>
             `;
             return;
         }
-        
-        products.forEach(product => {
+
+        transactions.forEach(trans => {
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>${product.prod_name}</td>
-                <td>${product.prod_sku}</td>
-                <td>${product.branch_name}</td>
-                <td>${product.last_updated}</td>
+                <td>${trans.created_at}</td>
+                <td>${trans.product_name}</td>
                 <td>
-                    <button type="button" class="reactivate-product" data-product-id="${product.prod_id}">Reactivate</button>
+                    <span class="transaction-type ${trans.trans_type}">
+                        ${trans.trans_type === 'stockin' ? 'Stock In' : 'Stock Out'}
+                    </span>
                 </td>
+                <td>${trans.quantity}</td>
+                <td>₱${trans.unit_cost}</td>
+                <td>${trans.user_name}</td>
+                <td>${trans.branch_name}</td>
             `;
-            inactiveProductsBody.appendChild(row);
+            tbody.appendChild(row);
+        });
+    }
+
+    // Close modals when clicking outside
+    document.getElementById('stockModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeStockModal();
+        }
+    });
+
+    document.getElementById('addProductModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeAddProductModal();
+        }
+    });
+
+    document.getElementById('historyModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeHistoryModal();
+        }
+    });
+
+    function openAddProductModal() {
+    // Reset fields
+    document.getElementById('addProductBranch').value = '';
+    document.getElementById('addProductSelect').innerHTML = '<option value="" disabled selected>Select a product</option>';
+    document.getElementById('addProductSelect').disabled = true;
+    document.getElementById('selectedProductDetails').style.display = 'none';
+    document.getElementById('addProductBtn').disabled = true;
+    
+    // For branch managers, set default branch to their branch
+    if (userRoleId === 2) {
+        document.getElementById('addProductBranch').value = userBranchId;
+        loadAvailableProducts();
+    }
+    
+    document.getElementById('addProductModal').style.display = 'flex';
+}
+
+function closeAddProductModal() {
+    document.getElementById('addProductModal').style.display = 'none';
+}
+
+async function loadAvailableProducts() {
+    const branchId = document.getElementById('addProductBranch').value;
+    
+    if (!branchId) {
+        document.getElementById('addProductSelect').disabled = true;
+        document.getElementById('addProductSelect').innerHTML = '<option value="" disabled selected>Select a product</option>';
+        document.getElementById('selectedProductDetails').style.display = 'none';
+        document.getElementById('addProductBtn').disabled = true;
+        return;
+    }
+    
+    try {
+        // Show loading state
+        document.getElementById('addProductSelect').innerHTML = '<option value="" disabled>Loading products...</option>';
+        
+        const response = await fetch(`/inventory/get_products_not_in_inventory/?branch_id=${branchId}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
         });
         
-        // Add event listeners to reactivate buttons
-        document.querySelectorAll('.reactivate-product').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const productId = btn.getAttribute('data-product-id');
-                const productName = btn.closest('tr').children[0].innerText;
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            const select = document.getElementById('addProductSelect');
+            select.innerHTML = '<option value="" disabled selected>Select a product</option>';
+            
+            if (data.products.length === 0) {
+                select.innerHTML = '<option value="" disabled>No products available to add</option>';
+                select.disabled = true;
+            } else {
+                data.products.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.prod_id;
+                    option.textContent = `${product.prod_name} (${product.prod_sku})`;
+                    option.setAttribute('data-product', JSON.stringify(product));
+                    select.appendChild(option);
+                });
+                select.disabled = false;
                 
-                if (confirm(`Are you sure you want to reactivate "${productName}"?`)) {
-                    await reactivateProduct(productId, productName);
-                }
-            });
-        });
-    }
-
-    async function reactivateProduct(productId, productName) {
-        try {
-            const response = await fetch("/inventory/reactivate_product/", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    product_id: productId,
-                    user_id: userId
-                })
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                alert(data.message);
-
-                const inactiveRow = document.querySelector(`.reactivate-product[data-product-id="${productId}"]`).closest('tr');
-                inactiveRow.remove();
-
-                const inactiveRows = inactiveProductsBody.querySelectorAll('tr[data-product-id]');
-                if (inactiveRows.length === 0) {
-                inactiveProductsBody.innerHTML = `
-                    <tr>
-                        <td colspan="5" style="text-align:center; color:red;">No inactive products found</td>
-                    </tr>
-                `;
+                // Add event listener to show product details when selected
+                select.addEventListener('change', function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    if (selectedOption.value) {
+                        const productData = JSON.parse(selectedOption.getAttribute('data-product'));
+                        showProductDetails(productData);
+                        document.getElementById('addProductBtn').disabled = false;
+                    } else {
+                        document.getElementById('selectedProductDetails').style.display = 'none';
+                        document.getElementById('addProductBtn').disabled = true;
+                    }
+                });
             }
-            location.reload();
-                       
-            } else {
-                alert("Error: " + (data.error || "Failed to reactivate product"));
-            }
-        } catch (err) {
-            alert("Failed to reactivate product: " + err.message);
-            console.error("Reactivate product error:", err);
+        } else {
+            alert("Error: " + (data.error || "Failed to load products"));
+            document.getElementById('addProductSelect').innerHTML = '<option value="" disabled>Error loading products</option>';
         }
+    } catch (err) {
+        console.error("Error loading products:", err);
+        alert("Failed to load products: " + err.message);
     }
+}
 
-    // search functionality for inactive products
-    inactiveSearchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase().trim();
-        const rows = inactiveProductsBody.querySelectorAll('tr');
+function showProductDetails(product) {
+    document.getElementById('selectedProductSku').textContent = product.prod_sku;
+    document.getElementById('selectedProductUnit').textContent = product.prod_unit_of_measure;
+    document.getElementById('selectedProductCost').textContent = '₱' + product.prod_current_cost;
+    document.getElementById('selectedProductPrice').textContent = '₱' + product.prod_retail_price;
+    document.getElementById('selectedProductCategory').textContent = product.category;
+    
+    document.getElementById('selectedProductDetails').style.display = 'block';
+}
+
+async function addProductToInventory() {
+    const branchId = document.getElementById('addProductBranch').value;
+    const productId = document.getElementById('addProductSelect').value;
+    
+    if (!branchId || !productId) {
+        alert("Please select both branch and product");
+        return;
+    }
+    
+    try {
+        const response = await fetch("/inventory/add_product_to_inventory/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                branch_id: branchId,
+                product_id: productId,
+                user_id: userId
+            })
+        });
         
-        rows.forEach(row => {
-            if (row.children.length < 5) return; // Skip the "no products" row
-            
-            const productName = row.children[0].innerText.toLowerCase();
-            const productSKU = row.children[1].innerText.toLowerCase();
-            
-            if (productName.includes(searchTerm) || productSKU.includes(searchTerm)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
-    });
-
-    // close inactive products overlay
-    overlayInactiveClose.addEventListener('click', () => {
-        overlayInactive.style.display = 'none';
-    });
-
-    overlayInactive.addEventListener('click', (e) => {
-        if (e.target === overlayInactive) {
-            overlayInactive.style.display = 'none';
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            alert(data.message || "Product added to inventory successfully!");
+            closeAddProductModal();
+            location.reload(); // Refresh to show the new inventory item
+        } else {
+            alert("Error: " + (data.error || "Failed to add product to inventory"));
         }
-    });
+    } catch (err) {
+        alert("Failed to add product: " + err.message);
+        console.error("Add product to inventory error:", err);
+    }
+}    
+
 </script>
-</div>
 {% endblock %}
