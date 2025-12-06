@@ -108,7 +108,7 @@ class RequisitionStatusTimeline(models.Model):
     changed_at = models.DateTimeField(auto_now_add=True)
 
     comment = models.CharField(
-        max_length=100,
+        max_length=500,
         # choices=TIMELINE_COMMENT_CHOICES,
         null=True,
         blank=True

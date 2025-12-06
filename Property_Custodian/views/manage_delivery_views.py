@@ -21,96 +21,126 @@ def manage_delivery(request, po_id=None):
     if po_id:
         purchase_order = get_object_or_404(Purchase_Order, po_id=po_id)
         
+        # Get all requisitions linked to this PO
+        all_requisitions = purchase_order.requisitions.all()
+        
+        if not all_requisitions.exists():
+            return render(request, 'main/manage_delivery.html', {
+                'user': user,
+                'active_page': 'manage_delivery',
+                'error': 'No requisitions found for this purchase order.',
+                'single_po': True,
+            })
+        
+        # Get the main/first requisition for display purposes
+        main_requisition = all_requisitions.first()
+        
         # Get only GOOD condition discrepancies for this PO
         good_discrepancies = Discrepancy.objects.filter(
             purchase_order=purchase_order,
             disc_condition='good'
         ).select_related('product', 'po_item', 'po_item__product', 'inspected_by')
         
-        # Get the requisition for this PO (main requisition)
-        main_requisition = purchase_order.requisition
-        
         # Get all PO items for this purchase order
         po_items = Purchase_Order_Item.objects.filter(
             purchase_order=purchase_order
-        ).select_related(
-            'requisition_item', 
-            'requisition_item__requisition',
-            'requisition_item__requisition__requested_by',
-            'requisition_item__requisition__requested_by__branch',
-            'product'
-        )
+        ).select_related('product')
+        
+        # Get all requisition items from all linked requisitions
+        all_requisition_items = RequisitionItem.objects.filter(
+            requisition__in=all_requisitions
+        ).select_related('requisition', 'product')
+        
+        # Create a mapping of product to requisition items
+        product_to_requisition = {}
+        for req_item in all_requisition_items:
+            product_to_requisition[req_item.product.prod_id] = {
+                'requisition': req_item.requisition,
+                'requisition_item': req_item
+            }
+        
+        # DEBUG: Print what we found
+        print(f"DEBUG: PO has {po_items.count()} PO items")
+        print(f"DEBUG: Found {all_requisition_items.count()} requisition items")
+        print(f"DEBUG: Product mapping has {len(product_to_requisition)} products")
         
         # Group PO items by their associated requisition
         requisition_items_dict = defaultdict(list)
-        all_requisitions = []
         
-        # Add main requisition
-        all_requisitions.append(main_requisition)
-        
-        # Group items by requisition
+        # Group items by requisition using product mapping
         for po_item in po_items:
-            if po_item.requisition_item:
-                req = po_item.requisition_item.requisition
-                requisition_items_dict[req.req_id].append(po_item)
-                
-                # Add to all_requisitions if not already there
-                if req not in all_requisitions:
-                    all_requisitions.append(req)
+            product_info = product_to_requisition.get(po_item.product.prod_id)
+            
+            if product_info:
+                # This PO item belongs to a specific requisition
+                req = product_info['requisition']
+                requisition_items_dict[req.req_id].append({
+                    'po_item': po_item,
+                    'requisition_item': product_info['requisition_item']
+                })
+                print(f"DEBUG: PO item {po_item.product.prod_name} assigned to REQ-{req.req_id}")
             else:
-                # If no requisition_item link, assume it belongs to main requisition
-                requisition_items_dict[main_requisition.req_id].append(po_item)
+                # If we can't find a matching requisition item, assign to main requisition
+                requisition_items_dict[main_requisition.req_id].append({
+                    'po_item': po_item,
+                    'requisition_item': None
+                })
+                print(f"DEBUG: PO item {po_item.product.prod_name} assigned to main REQ-{main_requisition.req_id} (no matching requisition item)")
         
-        # Get requisition items for each requisition
+        # Get requisition items for each requisition (simplified version)
         requisition_items_data = []
         for req in all_requisitions:
-            # Get requisition items for this requisition
-            req_items = RequisitionItem.objects.filter(
-                requisition=req
-            ).select_related('product')
+            items_info = requisition_items_dict.get(req.req_id, [])
             
-            # Get PO items for this requisition
-            po_items_for_req = requisition_items_dict.get(req.req_id, [])
-            
-            # Match requisition items with PO items
             items_with_po_info = []
-            for req_item in req_items:
-                # Find matching PO item
-                po_item_match = None
-                for po_item in po_items_for_req:
-                    if po_item.product.prod_id == req_item.product.prod_id:
-                        po_item_match = po_item
-                        break
+            for item_info in items_info:
+                po_item = item_info['po_item']
+                req_item = item_info['requisition_item']
                 
                 # Get requisition item quantity
-                req_quantity = 0
-                if hasattr(req_item, 'ri_quantity'):
-                    req_quantity = req_item.ri_quantity
-                elif hasattr(req_item, 'quantity'):
-                    req_quantity = req_item.quantity
-                elif hasattr(req_item, 'req_quantity'):
-                    req_quantity = req_item.req_quantity
-                elif hasattr(req_item, 'item_quantity'):
-                    req_quantity = req_item.item_quantity
+                req_quantity = req_item.quantity if req_item else 0
                 
                 items_with_po_info.append({
                     'requisition_item': req_item,
-                    'po_item': po_item_match,
-                    'po_quantity': po_item_match.po_item_ordered_quantity if po_item_match else 0,
-                    'req_quantity': req_quantity
+                    'po_item': po_item,
+                    'po_quantity': po_item.po_item_ordered_quantity,
+                    'req_quantity': req_quantity,
+                    'product': po_item.product  # Add product for easier template access
                 })
+            
+            # Also include original requisition items even if not in PO
+            if req == main_requisition:
+                # For main requisition, also show items that might not be in PO yet
+                original_req_items = RequisitionItem.objects.filter(requisition=req).select_related('product')
+                for req_item in original_req_items:
+                    # Check if this item is already in items_with_po_info
+                    already_exists = any(
+                        item['requisition_item'] and item['requisition_item'].req_item_id == req_item.req_item_id 
+                        for item in items_with_po_info
+                    )
+                    
+                    if not already_exists:
+                        items_with_po_info.append({
+                            'requisition_item': req_item,
+                            'po_item': None,
+                            'po_quantity': 0,
+                            'req_quantity': req_item.quantity,
+                            'product': req_item.product
+                        })
             
             requisition_items_data.append({
                 'requisition': req,
                 'items': items_with_po_info,
-                'is_main': req.req_id == main_requisition.req_id
+                'is_main': req.req_id == main_requisition.req_id,
+                'item_count': len(items_with_po_info)
             })
         
         # Organize good discrepancies by product and requisition
         product_requisition_map = {}
         for po_item in po_items:
-            if po_item.requisition_item:
-                product_requisition_map[po_item.product.prod_id] = po_item.requisition_item.requisition
+            product_info = product_to_requisition.get(po_item.product.prod_id)
+            if product_info:
+                product_requisition_map[po_item.product.prod_id] = product_info['requisition']
             else:
                 product_requisition_map[po_item.product.prod_id] = main_requisition
         
@@ -130,12 +160,16 @@ def manage_delivery(request, po_id=None):
             
             total_good_qty = sum(item['disc'].disc_quantity for item in good_items_for_req)
             
+            # Get total items count for this requisition
+            items_info = requisition_items_dict.get(req.req_id, [])
+            
             requisition_summary.append({
                 'requisition': req,
                 'good_discrepancies': good_items_for_req,
                 'good_item_count': len(good_items_for_req),
                 'total_good_qty': total_good_qty,
-                'is_main': req.req_id == main_requisition.req_id
+                'is_main': req.req_id == main_requisition.req_id,
+                'total_items': len(items_info)
             })
         
         # Check if a delivery already exists for this PO
@@ -146,23 +180,23 @@ def manage_delivery(request, po_id=None):
             'active_page': 'manage_delivery',
             'purchase_order': purchase_order,
             'main_requisition': main_requisition,
-            'requisition_items_data': requisition_items_data,  # For displaying requisition items
-            'requisition_summary': requisition_summary,  # For available items
             'all_requisitions': all_requisitions,
-            'has_multiple_requisitions': len(all_requisitions) > 1,
+            'requisition_items_data': requisition_items_data,
+            'requisition_summary': requisition_summary,
+            'has_multiple_requisitions': all_requisitions.count() > 1,
             'good_discrepancies': good_discrepancies,
             'existing_delivery': existing_delivery,
             'single_po': True,
         }
         
-        return render(request, 'main/manage_delivery.html', context)  # MAKE SURE THIS LINE IS PROPERLY INDENTED
+        return render(request, 'main/manage_delivery.html', context)
         
     else:
         # Get all POs with good items for selection
         purchase_orders = Purchase_Order.objects.filter(
             discrepancy__disc_condition='good',
-            requisition__req_main_status='TO_BE_DELIVERED'
-        ).distinct().select_related('requisition', 'supplier')
+            requisitions__req_main_status='TO_BE_DELIVERED'
+        ).distinct().prefetch_related('requisitions', 'supplier')
         
         # Add good item count to each PO
         purchase_orders_with_counts = []
@@ -172,9 +206,13 @@ def manage_delivery(request, po_id=None):
                 disc_condition='good'
             ).count()
             
+            # Get requisitions count for this PO
+            requisitions_count = po.requisitions.count()
+            
             purchase_orders_with_counts.append({
                 'po': po,
-                'good_count': good_count
+                'good_count': good_count,
+                'requisitions_count': requisitions_count
             })
         
         context = {
@@ -184,7 +222,7 @@ def manage_delivery(request, po_id=None):
             'single_po': False,
         }
         
-        return render(request, 'main/manage_delivery.html', context)  # MAKE SURE THIS LINE IS PROPERLY INDENTED
+        return render(request, 'main/manage_delivery.html', context)
 
 
 @csrf_exempt
@@ -199,14 +237,19 @@ def create_delivery(request, po_id):
             user = User.objects.get(pk=user_id)
             purchase_order = get_object_or_404(Purchase_Order, po_id=po_id)
             
+            # Get the main/first requisition
+            all_requisitions = purchase_order.requisitions.all()
+            if not all_requisitions.exists():
+                return JsonResponse({'success': False, 'error': 'No requisitions found for this purchase order'})
+            
+            main_requisition = all_requisitions.first()
+            
             # Parse delivery data
             delivery_data = json.loads(request.body)
             delivery_items = delivery_data.get('items', [])
             
             if not delivery_items:
                 return JsonResponse({'success': False, 'error': 'No items selected for delivery'})
-            
-            main_requisition = purchase_order.requisition
             
             # Create delivery record
             delivery = Delivery.objects.create(
@@ -218,6 +261,16 @@ def create_delivery(request, po_id):
                 delivery_notes=delivery_data.get('notes', '')
             )
             
+            # Get all requisition items to find branches
+            all_requisition_items = RequisitionItem.objects.filter(
+                requisition__in=all_requisitions
+            ).select_related('requisition', 'product')
+            
+            # Create a mapping of product to requisition (for branch info)
+            product_to_requisition = {}
+            for req_item in all_requisition_items:
+                product_to_requisition[req_item.product.prod_id] = req_item.requisition
+            
             # Create delivery items with branch information
             for item_data in delivery_items:
                 discrepancy = get_object_or_404(Discrepancy, disc_id=item_data['disc_id'])
@@ -225,57 +278,34 @@ def create_delivery(request, po_id):
                 # Get branch for this delivery item
                 branch = None
                 
-                # Method 1: Try to get branch through requisition_item
-                if discrepancy.po_item.requisition_item:
-                    # Get requisition from requisition_item
-                    requisition = discrepancy.po_item.requisition_item.requisition
-                    branch = requisition.branch
+                # Try to find which requisition this product belongs to
+                req = product_to_requisition.get(discrepancy.product.prod_id)
+                if req:
+                    branch = req.branch
                 else:
-                    # Method 2: If no requisition_item link, use main requisition's branch
-                    branch = purchase_order.requisition.branch
+                    # If not found, use main requisition's branch
+                    branch = main_requisition.branch
                 
                 # Create DeliveryItem with branch information
                 DeliveryItem.objects.create(
                     delivery=delivery,
                     product=discrepancy.product,
                     purchase_order_item=discrepancy.po_item,
-                    branch=branch,  # Save the branch
+                    branch=branch,
                     quantity_ordered=item_data['quantity'],
                 )
             
             # Update ALL requisitions linked to this PO to IN_TRANSIT status
-            po_items = Purchase_Order_Item.objects.filter(
-                purchase_order=purchase_order
-            ).select_related('requisition_item__requisition')
-            
-            updated_requisitions = set()
-            
-            for po_item in po_items:
-                if po_item.requisition_item:
-                    requisition = po_item.requisition_item.requisition
-                    if requisition.req_id not in updated_requisitions:
-                        # UPDATE BOTH MAIN STATUS AND SUB-STATUS
-                        requisition.req_main_status = 'INSPECTION'
-                        requisition.req_substatus = 'IN_TRANSIT'
-                        requisition.save()
-                        
-                        # Create status timeline entry
-                        RequisitionStatusTimeline.objects.create(
-                            requisition=requisition,
-                            sub_status='IN_TRANSIT',
-                            user=user,
-                            comment=f'Delivery created by {user.user_fname} {user.user_lname}. Items being delivered.'
-                        )
-                        updated_requisitions.add(requisition.req_id)
-            
-            # Also update the main requisition if not already updated
-            if main_requisition.req_id not in updated_requisitions:
-                main_requisition.req_main_status = 'INSPECTION'
-                main_requisition.req_substatus = 'IN_TRANSIT'
-                main_requisition.save()
+            for req in all_requisitions:
+                # UPDATE BOTH MAIN STATUS AND SUB-STATUS
+                req.req_main_status = 'INSPECTION'
+                req.req_substatus = 'IN_TRANSIT'
+                req.save()
                 
+                # Create status timeline entry
                 RequisitionStatusTimeline.objects.create(
-                    requisition=main_requisition,
+                    requisition=req,
+                    main_status='INSPECTION',
                     sub_status='IN_TRANSIT',
                     user=user,
                     comment=f'Delivery created by {user.user_fname} {user.user_lname}. Items being delivered.'

@@ -4,7 +4,7 @@ from ERP.models import *
 from Requisition.models import *
 from Requisition.constants import *
 from decimal import *
-from Purchasing.models import *
+from Purchasing.models import Purchase_Order, Supplier, Purchase_Order_Item
     
 class Discrepancy(models.Model):
     CONDITION_CHOICES = [
@@ -16,8 +16,8 @@ class Discrepancy(models.Model):
     ]
     
     disc_id = models.AutoField(primary_key=True)
-    purchase_order = models.ForeignKey('Purchase_Order', on_delete=models.CASCADE)
-    po_item = models.ForeignKey('Purchase_Order_Item', on_delete=models.CASCADE)
+    purchase_order = models.ForeignKey(Purchase_Order, on_delete=models.CASCADE)
+    po_item = models.ForeignKey(Purchase_Order_Item, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     
     # Condition and quantities

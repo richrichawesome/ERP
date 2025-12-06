@@ -8,7 +8,6 @@ from Requisition.constants import *
 from Requisition.models import Requisition
 from decimal import Decimal
 
-
 class RFQ(models.Model):
     rfq_id = models.AutoField(primary_key=True)
     rfq_created_at = models.DateTimeField(auto_now_add=True)

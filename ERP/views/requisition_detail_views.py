@@ -33,9 +33,9 @@ def requisition_detail(request, req_id):
         
     # If status is INSPECTION, try to find the associated PO
     if requisition.req_main_status == 'INSPECTION':
-        try:
-            # Try to find if this is the main requisition of a PO
-            purchase_order = Purchase_Order.objects.get(requisition=requisition)
+        # Check if requisition has a PO
+        if requisition.po:
+            purchase_order = requisition.po
             po_info = {
                 'po_id': purchase_order.po_id,
                 'supplier': purchase_order.supplier.sup_name if purchase_order.supplier else 'Unknown'
@@ -46,24 +46,11 @@ def requisition_detail(request, req_id):
                 purchase_order=purchase_order
             ).exists()
             
-        except Purchase_Order.DoesNotExist:
-            # If not the main requisition, find through PO items
-            po_items = Purchase_Order_Item.objects.filter(
-                requisition_item__requisition=requisition
-            ).select_related('purchase_order', 'purchase_order__supplier')
-            
-            if po_items.exists():
-                purchase_order = po_items.first().purchase_order
-                po_info = {
-                    'po_id': purchase_order.po_id,
-                    'supplier': purchase_order.supplier.sup_name if purchase_order.supplier else 'Unknown'
-                }
-
-        # Create inspection message based on sub-status
-        if requisition.req_substatus == 'INSPECTING' and requisition.req_main_status == "INSPECTION":
-            inspection_message = f"Currently inspecting PO-{po_info['po_id'] if po_info else 'Unknown'}. Products are being checked for quality and quantity."
-        elif requisition.req_substatus == 'INSPECTION':
-            inspection_message = f"Items from PO-{po_info['po_id'] if po_info else 'Unknown'} are in transit for delivery."
+            # Create inspection message based on sub-status
+            if requisition.req_substatus == 'INSPECTING' and requisition.req_main_status == "INSPECTION":
+                inspection_message = f"Currently inspecting PO-{po_info['po_id'] if po_info else 'Unknown'}. Products are being checked for quality and quantity."
+            elif requisition.req_substatus == 'INSPECTION':
+                inspection_message = f"Items from PO-{po_info['po_id'] if po_info else 'Unknown'} are in transit for delivery."
     
     # Define progress steps based on your status choices
     progress_steps = [
@@ -201,52 +188,22 @@ def approve_to_be_delivered(request, req_id):
             
             user = User.objects.get(pk=user_id)
             
-            # Find the PO that contains this requisition
-            try:
-                # First, try to find if this is the main requisition of a PO
-                purchase_order = Purchase_Order.objects.get(requisition=requisition)
-                po_id = purchase_order.po_id
-                print(f"DEBUG: Found PO-{po_id} where REQ-{req_id} is the main requisition")
-                
-            except Purchase_Order.DoesNotExist:
-                # If not the main requisition, find through PO items
-                print(f"DEBUG: REQ-{req_id} is not the main requisition. Checking PO items...")
-                
-                # Find PO items that link to this requisition
-                po_items = Purchase_Order_Item.objects.filter(
-                    requisition_item__requisition=requisition
-                ).select_related('purchase_order')
-                
-                if po_items.exists():
-                    # Get the PO from the first matching PO item
-                    purchase_order = po_items.first().purchase_order
-                    po_id = purchase_order.po_id
-                    print(f"DEBUG: Found PO-{po_id} through PO items for REQ-{req_id}")
-                else:
-                    return JsonResponse({
-                        'success': False,
-                        'error': 'No purchase order found for this requisition.'
-                    })        
+            # Check if this requisition has a purchase order
+            if not requisition.po:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'This requisition has no associated purchase order.'
+                })
             
-            # Now find ALL requisitions linked to this PO
-            all_linked_requisitions = set()
+            # Get the purchase order associated with this requisition
+            purchase_order = requisition.po
+            po_id = purchase_order.po_id
+            print(f"DEBUG: Found PO-{po_id} associated with REQ-{req_id}")
             
-            # 1. Add the main requisition of the PO
-            all_linked_requisitions.add(purchase_order.requisition)
-            print(f"DEBUG: Added main requisition REQ-{purchase_order.requisition.req_id}")
-            
-            # 2. Find all other requisitions through PO items
-            all_po_items = Purchase_Order_Item.objects.filter(
-                purchase_order=purchase_order
-            ).select_related('requisition_item__requisition')
-            
-            for po_item in all_po_items:
-                if po_item.requisition_item:
-                    req = po_item.requisition_item.requisition
-                    all_linked_requisitions.add(req)
-                    print(f"DEBUG: Added requisition REQ-{req.req_id} through PO item")
-            
-            print(f"DEBUG: Total requisitions to update: {len(all_linked_requisitions)}")
+            # Now find ALL requisitions linked to this PO (through the reverse relation)
+            # Using the related_name 'requisitions' from Purchase_Order model
+            all_linked_requisitions = purchase_order.requisitions.all()
+            print(f"DEBUG: Found {all_linked_requisitions.count()} requisitions linked to PO-{po_id}")
             
             # Update ALL linked requisitions
             updated_count = 0
@@ -267,6 +224,11 @@ def approve_to_be_delivered(request, req_id):
                 )
                 
                 print(f"DEBUG: Updated REQ-{req.req_id} from {old_status} to INSPECTION")
+            
+            # Also update the purchase order status
+            purchase_order.po_main_status = 'INSPECTION'
+            purchase_order.po_substatus = 'PRODUCTS_RECEIVED'
+            purchase_order.save()
             
             return JsonResponse({
                 'success': True,
@@ -423,46 +385,19 @@ def start_inspection(request, req_id):
             
             user = User.objects.get(pk=user_id)
             
-            # Find the PO that contains this requisition
-            try:
-                # Try to find if this is the main requisition of a PO
-                purchase_order = Purchase_Order.objects.get(requisition=requisition)
-                po_id = purchase_order.po_id
-                
-            except Purchase_Order.DoesNotExist:
-                # Find through PO items
-                po_items = Purchase_Order_Item.objects.filter(
-                    requisition_item__requisition=requisition
-                ).select_related('purchase_order')
-                
-                if po_items.exists():
-                    purchase_order = po_items.first().purchase_order
-                    po_id = purchase_order.po_id
-                else:
-                    return JsonResponse({
-                        'success': False,
-                        'error': 'No purchase order found for this requisition.'
-                    })
-            
-            # Check if PO has items
-            po_items = Purchase_Order_Item.objects.filter(purchase_order=purchase_order)
-            if not po_items.exists():
+            # Check if requisition has a PO
+            if not requisition.po:
                 return JsonResponse({
                     'success': False,
-                    'error': f'Purchase order PO-{purchase_order.po_id} has no items. Cannot start inspection.'
+                    'error': 'This requisition has no associated purchase order.'
                 })
             
-            # Find ALL requisitions linked to this PO
-            all_linked_requisitions = set()
-            all_linked_requisitions.add(purchase_order.requisition)
+            # Get the purchase order
+            purchase_order = requisition.po
+            po_id = purchase_order.po_id
             
-            all_po_items = Purchase_Order_Item.objects.filter(
-                purchase_order=purchase_order
-            ).select_related('requisition_item__requisition')
-            
-            for po_item in all_po_items:
-                if po_item.requisition_item:
-                    all_linked_requisitions.add(po_item.requisition_item.requisition)
+            # Get ALL requisitions linked to this PO
+            all_linked_requisitions = purchase_order.requisitions.all()
             
             # Update ALL linked requisitions to INSPECTING sub-status
             for req in all_linked_requisitions:
@@ -478,6 +413,10 @@ def start_inspection(request, req_id):
                     user=user,
                     comment=f'Inspection started for PO-{po_id} by {user.user_fname} {user.user_lname}'
                 )
+            
+            # Update purchase order status as well
+            purchase_order.po_substatus = 'INSPECTING'
+            purchase_order.save()
             
             return JsonResponse({
                 'success': True,
@@ -516,38 +455,19 @@ def confirm_delivery_received(request, req_id):
             
             user = User.objects.get(pk=user_id)
             
-            # Find the PO that contains this requisition
-            try:
-                # First, try to find if this is the main requisition of a PO
-                purchase_order = Purchase_Order.objects.get(requisition=requisition)
-                po_id = purchase_order.po_id
-                
-            except Purchase_Order.DoesNotExist:
-                # If not the main requisition, find through PO items
-                po_items = Purchase_Order_Item.objects.filter(
-                    requisition_item__requisition=requisition
-                ).select_related('purchase_order')
-                
-                if po_items.exists():
-                    purchase_order = po_items.first().purchase_order
-                    po_id = purchase_order.po_id
-                else:
-                    return JsonResponse({
-                        'success': False,
-                        'error': 'No purchase order found for this requisition.'
-                    })
+            # Check if this requisition has a purchase order
+            if not requisition.po:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'This requisition has no associated purchase order.'
+                })
             
-            # Now find ALL requisitions linked to this PO
-            all_linked_requisitions = set()
-            all_linked_requisitions.add(purchase_order.requisition)
+            # Get the purchase order associated with this requisition
+            purchase_order = requisition.po
+            po_id = purchase_order.po_id
             
-            all_po_items = Purchase_Order_Item.objects.filter(
-                purchase_order=purchase_order
-            ).select_related('requisition_item__requisition')
-            
-            for po_item in all_po_items:
-                if po_item.requisition_item:
-                    all_linked_requisitions.add(po_item.requisition_item.requisition)
+            # Get ALL requisitions linked to this PO
+            all_linked_requisitions = purchase_order.requisitions.all()
             
             # Update ALL linked requisitions to FULFILLED status
             updated_count = 0
@@ -569,6 +489,11 @@ def confirm_delivery_received(request, req_id):
                 )
                 
                 print(f"DEBUG: Updated REQ-{req.req_id} from {old_status}/{old_substatus} to FULFILLED")
+            
+            # Update purchase order status
+            purchase_order.po_main_status = 'INSPECTION'
+            purchase_order.po_substatus = 'RECEIVED'
+            purchase_order.save()
             
             return JsonResponse({
                 'success': True,
@@ -613,26 +538,16 @@ def complete_requisition(request, req_id):
                     'error': 'Only Purchase Management can mark requisition as fulfilled'
                 })
             
-            # Find the PO that contains this requisition
-            try:
-                # First, try to find if this is the main requisition of a PO
-                purchase_order = Purchase_Order.objects.get(requisition=requisition)
-                po_id = purchase_order.po_id
-                
-            except Purchase_Order.DoesNotExist:
-                # If not the main requisition, find through PO items
-                po_items = Purchase_Order_Item.objects.filter(
-                    requisition_item__requisition=requisition
-                ).select_related('purchase_order')
-                
-                if po_items.exists():
-                    purchase_order = po_items.first().purchase_order
-                    po_id = purchase_order.po_id
-                else:
-                    return JsonResponse({
-                        'success': False,
-                        'error': 'No purchase order found for this requisition.'
-                    })
+            # Check if this requisition has a purchase order
+            if not requisition.po:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'This requisition has no associated purchase order.'
+                })
+            
+            # Get the purchase order
+            purchase_order = requisition.po
+            po_id = purchase_order.po_id
             
             # Check if delivery has been generated for this PO
             delivery_exists = Delivery.objects.filter(purchase_order=purchase_order).exists()
@@ -652,17 +567,8 @@ def complete_requisition(request, req_id):
                     'error': f'Delivery #{delivery.delivery_id} is not in transit. Current status: {delivery.delivery_status}'
                 })
             
-            # Now find ALL requisitions linked to this PO
-            all_linked_requisitions = set()
-            all_linked_requisitions.add(purchase_order.requisition)
-            
-            all_po_items = Purchase_Order_Item.objects.filter(
-                purchase_order=purchase_order
-            ).select_related('requisition_item__requisition')
-            
-            for po_item in all_po_items:
-                if po_item.requisition_item:
-                    all_linked_requisitions.add(po_item.requisition_item.requisition)
+            # Get ALL requisitions linked to this PO
+            all_linked_requisitions = purchase_order.requisitions.all()
             
             # Update ALL linked requisitions to FULFILLED status
             updated_count = 0
@@ -684,6 +590,11 @@ def complete_requisition(request, req_id):
                 )
                 
                 print(f"DEBUG: Updated REQ-{req.req_id} from {old_status}/{old_substatus} to FULFILLED")
+            
+            # Update purchase order status
+            purchase_order.po_main_status = 'FULFILLED'
+            purchase_order.po_substatus = 'NONE'
+            purchase_order.save()
             
             # Update delivery status to DELIVERED
             delivery.delivery_status = 'DELIVERED'

@@ -36,18 +36,19 @@ def inspection_page(request, req_id):
         })
     
     # Get the purchase order for this requisition
-    try:
-        purchase_order = Purchase_Order.objects.get(requisition=requisition)
-    except Purchase_Order.DoesNotExist:
+    # FIXED: Use requisition.po instead of Purchase_Order.objects.get(requisition=requisition)
+    if not requisition.po:
         return render(request, 'main/inspection_page.html', {
             'error': 'No purchase order found for this requisition. Cannot proceed with inspection.',
             'requisition': requisition
         })
     
+    purchase_order = requisition.po
+    
     # Get ALL PO items for this purchase order (including items from other requisitions)
     po_items = Purchase_Order_Item.objects.filter(
         purchase_order=purchase_order
-    ).select_related('product', 'requisition_item', 'requisition_item__requisition')
+    ).select_related('product')
     
     if not po_items.exists():
         return render(request, 'main/inspection_page.html', {
@@ -60,28 +61,54 @@ def inspection_page(request, req_id):
     requisition_items_dict = defaultdict(list)
     all_requisitions = []
     
-    # Add main requisition
-    main_requisition = purchase_order.requisition
-    all_requisitions.append(main_requisition)
+    # Get all requisitions linked to this PO
+    all_linked_requisitions = purchase_order.requisitions.all()
     
-    # Check for additional requisitions through PO items
+    # Find which requisition is the main one (the one with this inspection)
+    main_requisition = requisition  # This requisition is the one being inspected
+    
+    # Add all requisitions to our list
+    for req in all_linked_requisitions:
+        all_requisitions.append(req)
+    
+    # Get all requisition items from all linked requisitions
+    requisition_items = RequisitionItem.objects.filter(
+        requisition__in=all_linked_requisitions
+    ).select_related('requisition', 'product')
+    
+    # Create a mapping of product to requisition items
+    product_to_requisition_item = {}
+    for req_item in requisition_items:
+        product_to_requisition_item[req_item.product.prod_id] = {
+            'requisition': req_item.requisition,
+            'requisition_item': req_item,
+            'quantity': req_item.quantity
+        }
+    
+    # Now group PO items by requisition
     for po_item in po_items:
-        if po_item.requisition_item:
-            req = po_item.requisition_item.requisition
-            requisition_items_dict[req.req_id].append(po_item)
-            
-            # Add to all_requisitions if not already there
-            if req not in all_requisitions:
-                all_requisitions.append(req)
+        # Try to find which requisition this PO item belongs to
+        product_info = product_to_requisition_item.get(po_item.product.prod_id)
+        
+        if product_info:
+            # This PO item belongs to a specific requisition
+            req = product_info['requisition']
+            requisition_items_dict[req.req_id].append({
+                'po_item': po_item,
+                'requisition_item': product_info['requisition_item']
+            })
         else:
-            # If no requisition_item link, assume it belongs to main requisition
-            requisition_items_dict[main_requisition.req_id].append(po_item)
+            # If we can't find a matching requisition item, assign to main requisition
+            requisition_items_dict[main_requisition.req_id].append({
+                'po_item': po_item,
+                'requisition_item': None
+            })
     
     # Create requisition summary for the template
     requisition_summary = []
     for req in all_requisitions:
         items_for_req = requisition_items_dict.get(req.req_id, [])
-        total_qty = sum(item.po_item_ordered_quantity for item in items_for_req)
+        total_qty = sum(item['po_item'].po_item_ordered_quantity for item in items_for_req)
         
         requisition_summary.append({
             'requisition': req,
@@ -100,6 +127,7 @@ def inspection_page(request, req_id):
         'error': None,
         "user": user,
         "active_page": "requisition",
+        'requisition_items_dict': requisition_items_dict,  # Added for template use
     }
     
     return render(request, 'main/inspection_page.html', context)
@@ -121,13 +149,14 @@ def save_inspection_discrepancies(request, req_id):
             user = User.objects.get(pk=user_id)
             
             # Get the purchase order
-            try:
-                purchase_order = Purchase_Order.objects.get(requisition=requisition)
-            except Purchase_Order.DoesNotExist:
+            # FIXED: Use requisition.po instead of Purchase_Order.objects.get(requisition=requisition)
+            if not requisition.po:
                 return JsonResponse({
                     'success': False,
                     'error': 'No purchase order found'
                 })
+            
+            purchase_order = requisition.po
             
             # Parse the inspection data from request
             inspection_data = json.loads(request.body)
@@ -204,18 +233,24 @@ def save_inspection_discrepancies(request, req_id):
                     )
                     discrepancies_created += 1
             
-            # Update requisition status to IN_TRANSIT
-            old_substatus = requisition.req_substatus
-            requisition.save()
+            # Update ALL requisitions linked to this PO to IN_TRANSIT status
+            all_linked_requisitions = purchase_order.requisitions.all()
             
-            # Create status timeline entry
-            RequisitionStatusTimeline.objects.create(
-                requisition=requisition,
-                main_status='INSPECTION',
-                sub_status='IN_TRANSIT',  
-                user=user,
-                comment=f'Inspection completed by {user.user_fname} {user.user_lname}. {discrepancies_created} discrepancy records created. Products now in transit.'
-            )
+            for req in all_linked_requisitions:
+                # Update substatus to IN_TRANSIT (main status remains INSPECTION)
+                req.save()
+                
+                # Create status timeline entry for each requisition
+                RequisitionStatusTimeline.objects.create(
+                    requisition=req,
+
+                    user=user,
+                    comment=f'Inspection completed for PO-{purchase_order.po_id} by {user.user_fname} {user.user_lname}. {discrepancies_created} discrepancy records created. Products now in transit.'
+                )
+            
+            # Update purchase order status
+            purchase_order.po_substatus = 'IN_TRANSIT'
+            purchase_order.save()
             
             # Store the timestamp before creating the memo to capture only new discrepancies
             inspection_timestamp = timezone.now()
@@ -223,8 +258,8 @@ def save_inspection_discrepancies(request, req_id):
             # Create Receiving Memo
             receiving_memo = Receiving_Memo.objects.create(
                 delivery=None,  # Link to delivery if you have delivery record
-                purchase_order=purchase_order,  # Added this
-                requisition=requisition,  # Added this
+                purchase_order=purchase_order,
+                requisition=requisition,
                 generated_by=user,
                 rm_date=inspection_timestamp,
                 rm_notes=f'Inspection completed for REQ-{requisition.req_id}, PO-{purchase_order.po_id}. {discrepancies_created} discrepancy records created.'
