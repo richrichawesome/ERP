@@ -1,0 +1,852 @@
+{% extends "main/base.html" %}
+{% block page_content %}
+
+<style>
+    .content-header {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+    }
+
+    .content-header h1 {
+        color: #030213;
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .content-header p {
+        color: #717182;
+        font-size: 14px;
+    }
+
+    /* Filter and Search styles */
+    .filters-container {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 15px;
+        align-items: end;
+        flex-wrap: wrap;
+    }
+
+    .filter-item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .filter-item label {
+        color: #030213;
+        font-weight: 500;
+        font-size: 14px;
+    }
+
+    .filter-item select,
+    .filter-item input {
+        padding: 8px 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #f3f3f5;
+        color: #030213;
+        font-size: 14px;
+        min-width: 200px;
+    }
+
+    .filter-item select:focus,
+    .filter-item input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }
+
+    /* Card styles */
+    .card {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+    }
+
+    .card h2 {
+        color: #030213;
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    /* Button styles */
+    .btn {
+        padding: 8px 16px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #2563eb;
+        color: #ffffff;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 14px;
+        border: none;
+        height: fit-content;
+    }
+
+    .btn:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(3, 2, 19, 0.1);
+    }
+
+    .btn-secondary {
+        background: #ffffff;
+        color: #030213;
+        border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-secondary:hover {
+        background: #f3f3f5;
+    }
+
+    .btn-small {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    /* Status badges */
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-approved {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-rejected {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* Table styles */
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+        margin-top: 15px;
+    }
+
+    .table th {
+        background: #030213;
+        color: #ffffff;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .table td {
+        padding: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .table tbody tr:nth-child(even) {
+        background: #f8fafc;
+    }
+
+    .table tbody tr:hover {
+        background: #e9ebef;
+    }
+
+    /* Checkbox styles */
+    .checkbox-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .checkbox-container input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+    }
+
+    .checkbox-container label {
+        font-weight: 500;
+        color: #030213;
+        cursor: pointer;
+    }
+
+    /* Hidden elements */
+    .hidden {
+        display: none !important;
+    }
+
+
+
+    /* Modal/Popup Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 800px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+        padding: 20px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        color: #030213;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #717182;
+    }
+
+    .close-btn:hover {
+        color: #030213;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .modal-footer {
+        padding: 20px;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    /* Preview Content Styles */
+    .preview-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .preview-header h2 {
+        color: #030213;
+        font-size: 24px;
+        margin-bottom: 10px;
+    }
+
+    .preview-info {
+        background: #f8fafc;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        border-left: 4px solid #2563eb;
+    }
+
+    .preview-info p {
+        margin: 5px 0;
+        color: #030213;
+    }
+
+    .preview-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+    }
+
+    .preview-table th {
+        background: #030213;
+        color: white;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+    }
+
+    .preview-table td {
+        padding: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .preview-table tr:nth-child(even) {
+        background: #f8fafc;
+    }
+
+    .preview-notes {
+        background: #fff7ed;
+        padding: 15px;
+        border-radius: 6px;
+        margin-top: 20px;
+        border-left: 4px solid #f59e0b;
+    }
+
+    .preview-notes h4 {
+        margin-top: 0;
+        color: #92400e;
+    }
+
+    .preview-notes ul {
+        margin: 10px 0;
+        padding-left: 20px;
+    }
+
+    .preview-notes li {
+        margin-bottom: 5px;
+        color: #030213;
+    }
+
+
+
+
+
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .filter-group {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .filter-item {
+            width: 100%;
+        }
+        
+        .filter-item select,
+        .filter-item input {
+            min-width: 100%;
+        }
+        
+        .table {
+            font-size: 14px;
+        }
+        
+        .table th,
+        .table td {
+            padding: 8px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .content-header {
+            padding: 15px;
+        }
+        
+        .filters-container {
+            padding: 15px;
+        }
+        
+        .card {
+            padding: 15px;
+        }
+        
+        .table {
+            display: block;
+            overflow-x: auto;
+        }
+    }
+</style>
+<div class="card">
+    <h2>Requisition Management</h2>
+    <p>Manage and track requisition requests.</p>
+    
+    <!-- Filters and Search -->
+    <div class="filters-container">
+        <div class="filter-group">
+           
+            
+            <div class="filter-item">
+                <label>Status:</label>
+                <select name="requisition-status" id="requisition-status">
+                    <option value="all">All Status</option>
+                    <option value="PENDING_CUSTODIAN">Pending Custodian</option>
+                    <option value="PENDING_TOP_MGMT">Pending Top Management</option>
+                    <option value="APPROVED_REQUISITION" selected>Approved Requisition</option>
+                    <option value="PO_APPROVAL">PO Approval</option>
+                    <option value="TO_BE_DELIVERED">To be Delivered</option>
+                    <option value="INSPECTION">Inspection</option>
+                    <option value="FULFILLED">Fulfilled</option>
+                </select>
+            </div>
+            
+            <div class="filter-item">
+                <label>Search:</label>
+                <input type="text" name="requisition-search" id="requisition-search" placeholder="Search by ID or requester...">
+            </div>
+            
+            <!-- <button class="btn" onclick="filterRequisitions()">Apply Filters</button> -->
+            <!-- <button class="btn" onclick="searchOnly()">Search</button> -->
+             <button class="btn" id="search-btn">Search</button>
+
+        </div>
+    </div>
+
+    <!-- Requisition table -->
+    <div style="margin-top: 20px;">
+        <h3>Requisitions</h3>
+        
+        <!-- Select All Checkbox - Initially hidden -->
+        <div class="checkbox-container hidden" id="select-all-container">
+            <input type="checkbox" id="select-all-checkbox">
+            <label for="select-all-checkbox">Select All</label>
+
+
+             <!-- Create RFQ button - initially hidden -->
+            <button class="btn" id="create-rfq-btn" style="margin-left: 10px; display: none;">
+                Create RFQ
+            </button>
+        </div>
+        
+        <table class="table">
+            <thead>
+                <tr>
+                    <!-- Select column header - Initially hidden -->
+                    <th class="hidden" id="select-header">Select</th>
+                    <th>Req. ID</th>
+                    <th>Type</th>
+                    <th>Date Requested</th>
+                    <th>Requested By</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for requisition in requisitions %}
+                <tr>
+                    <!-- Select checkbox cell - Initially hidden -->
+                    <td class="hidden select-cell">
+                        <input type="checkbox" class="requisition-checkbox" data-req-id="{{ requisition.req_id }}">
+                    </td>
+                    <td>REQ-{{ requisition.req_id }}</td>
+                    <td>{{ requisition.get_req_type_display }}</td>
+                    <td>{{ requisition.req_requested_date|date:"M d, Y" }}</td>
+                    <td>{{ requisition.requested_by.user_fname }} {{ requisition.requested_by.user_lname }}</td>
+                    <td>
+                        <span class="status-badge 
+                            {% if requisition.req_main_status == 'PENDING_CUSTODIAN' %}status-pending
+                            {% elif requisition.req_main_status == 'APPROVED_REQUISITION' %}status-approved
+                            {% elif requisition.req_main_status == 'FULFILLED' %}status-approved
+                            {% elif requisition.req_main_status == 'REJECTED' %}status-rejected
+                            {% else %}status-pending{% endif %}">
+                            {{ requisition.get_req_main_status_display }} 
+                            {% if requisition.req_substatus and requisition.req_substatus != 'NONE' %}
+                                - {{ requisition.get_req_substatus_display }}
+                            {% endif %}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; color: #717182; padding: 20px;">
+                        No requisitions found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+<!-- Modal/Popup Template -->
+<div id="rfq-preview-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>RFQ Preview</h3>
+            <button class="close-btn" onclick="closePreview()">&times;</button>
+        </div>
+        <div class="modal-body" id="preview-content">
+            <!-- Preview content will be inserted here -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closePreview()">Cancel</button>
+            <button class="btn" onclick="downloadRfqPdf()" id="download-rfq-btn">Download RFQ PDF</button>
+        </div>
+    </div>
+</div>
+
+
+<script>
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- FILTER & SEARCH ---
+        const statusSelect = document.getElementById('requisition-status');
+        const searchInput = document.getElementById('requisition-search');
+        const searchBtn = document.getElementById('search-btn');
+
+        statusSelect.addEventListener('change', function () {
+            const status = this.value;
+            window.location.href = `?section=requisition&status=${status}`;
+            toggleSelectElements();
+        });
+
+        // function searchOnly() {
+        //     const searchFilter = searchInput.value;
+        //     const statusFilter = statusSelect.value;
+        //     window.location.href = `?section=requisition&status=${statusFilter}&search=${searchFilter}`;
+        // }
+
+        searchBtn.addEventListener('click', function (){
+            const searchFilter = searchInput.value;
+            const statusFilter = statusSelect.value;
+
+            window.location.href = `?section=requisition&status=${statusFilter}&search=${searchFilter}`;
+        });
+       
+
+        // Also trigger search on Enter key
+        searchInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                const searchFilter = searchInput.value;
+                const statusFilter = statusSelect.value;
+                window.location.href = `?section=requisition&status=${statusFilter}&search=${searchFilter}`;
+            }
+        });
+
+
+searchInput.addEventListener('input', function() {
+    // Remove any non-numeric characters except dashes
+    this.value = this.value.replace(/[^0-9-]/g, '');
+    
+    // If user types "REQ-", remove it to keep just the number
+    if (this.value.toLowerCase().startsWith('req-')) {
+        this.value = this.value.substring(4);
+    }
+});
+
+
+
+        // --- TOGGLE SELECT ELEMENTS ---
+        function toggleSelectElements() {
+            const statusFilter = statusSelect.value;
+            const selectAllContainer = document.getElementById('select-all-container');
+            const selectHeader = document.getElementById('select-header');
+            const selectCells = document.querySelectorAll('.select-cell');
+            
+            if (statusFilter === 'APPROVED_REQUISITION') {
+                selectAllContainer.classList.remove('hidden');
+                selectHeader.classList.remove('hidden');
+                selectCells.forEach(cell => cell.classList.remove('hidden'));
+            } else {
+                selectAllContainer.classList.add('hidden');
+                selectHeader.classList.add('hidden');
+                selectCells.forEach(cell => cell.classList.add('hidden'));
+                
+                document.getElementById('select-all-checkbox').checked = false;
+                document.querySelectorAll('.requisition-checkbox').forEach(cb => cb.checked = false);
+            }
+        }
+
+        // --- URL PARAMETERS ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const status = urlParams.get('status');
+        const search = urlParams.get('search');
+        if (status) statusSelect.value = status;
+        if (search) searchInput.value = search;
+        toggleSelectElements();
+
+        // --- CHECKBOX LOGIC ---
+        const createRfqBtn = document.getElementById('create-rfq-btn');
+        const selectAllCheckbox = document.getElementById('select-all-checkbox');
+        const requisitionCheckboxes = document.querySelectorAll('.requisition-checkbox');
+
+        function toggleCreateRfqBtn() {
+            const anyChecked = Array.from(requisitionCheckboxes).some(cb => cb.checked);
+            createRfqBtn.style.display = anyChecked ? 'inline-block' : 'none';
+        }
+
+        selectAllCheckbox.addEventListener('change', function() {
+            requisitionCheckboxes.forEach(cb => cb.checked = selectAllCheckbox.checked);
+            toggleCreateRfqBtn();
+        });
+
+        requisitionCheckboxes.forEach(cb => {
+            cb.addEventListener('change', function() {
+                toggleCreateRfqBtn();
+                selectAllCheckbox.checked = Array.from(requisitionCheckboxes).every(cb => cb.checked);
+            });
+        });
+
+
+
+        
+
+// Store selected IDs for preview/download
+        let selectedRequisitionIds = [];
+
+        // --- CREATE RFQ WITH PREVIEW MODAL ---
+        createRfqBtn.addEventListener('click', function() {
+            selectedRequisitionIds = Array.from(requisitionCheckboxes)
+                                        .filter(cb => cb.checked)
+                                        .map(cb => cb.dataset.reqId);
+
+            if (selectedRequisitionIds.length === 0) {
+                alert('Please select at least one requisition.');
+                return;
+            }
+
+            // Show loading staterfq_creation
+            createRfqBtn.disabled = true;
+            createRfqBtn.textContent = 'Loading Preview...';
+
+            // Fetch preview data
+            fetch('/purchasing/preview-rfq/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: new URLSearchParams(
+                    selectedRequisitionIds.map(id => ['req_ids[]', id])
+                )
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => { 
+                        throw new Error(data.error || 'Failed to load preview'); 
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                createRfqBtn.disabled = false;
+                createRfqBtn.textContent = 'Create RFQ';
+                
+                if (data.success) {
+                    // Display preview in modal
+                    displayRfqPreview(data);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                createRfqBtn.disabled = false;
+                createRfqBtn.textContent = 'Create RFQ';
+                alert('Error loading preview: ' + error.message);
+            });
+        });
+
+        // --- DISPLAY PREVIEW IN MODAL ---
+        function displayRfqPreview(data) {
+            const modal = document.getElementById('rfq-preview-modal');
+            const previewContent = document.getElementById('preview-content');
+            
+            // Build preview HTML
+            let html = `
+                <div class="preview-header">
+                    <h2>REQUEST FOR QUOTATION</h2>
+                    <p style="color: #666; margin-bottom: 20px;">Preview - ${data.rfq_info.requisition_count} requisition(s)</p>
+                </div>
+                
+                <div class="preview-info">
+                    <p><strong>Cagasan Enterprises</strong></p>
+                    <p>${data.branch_info.address}</p>
+                    <p><strong>Date:</strong> ${data.rfq_info.date}</p>
+                    <p><strong>Contact Number:</strong> ${data.branch_info.phone}</p>
+                    <p><strong>Created by:</strong> ${data.user_info.name}</p>
+                    <p><strong>Requisition IDs:</strong> REQ-${data.rfq_info.requisition_ids.join(', REQ-')}</p>
+                </div>
+                
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+                
+                <div style="margin: 20px 0;">
+                    <p><strong>Quote for:</strong></p>
+                    <p><strong>Supplier Name:</strong> _______________________________</p>
+                    <p><strong>Address:</strong> _____________________________________</p>
+                    <p><strong>Contact Person:</strong> ______________________________</p>
+                    <p><strong>Contact Number:</strong> _____________________________</p>
+                    <p><strong>Email:</strong> _______________________________________</p>
+                    <p style="margin-top: 10px;"><strong>Payment Terms:</strong> _____________________________</p>
+                    <p><strong>Delivery Terms:</strong> _____________________________</p>
+                    <p><strong>Quote Valid Until:</strong> _________________________</p>
+                </div>
+                
+                <table class="preview-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Product Name</th>
+                            <th>Specification</th>
+                            <th>Quantity</th>
+                            <th>Unit</th>
+                            <th>Unit Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            // Add items
+            data.items.forEach(item => {
+                html += `
+                    <tr>
+                        <td>${item.index}</td>
+                        <td>${item.product_name}</td>
+                        <td>${item.specification}</td>
+                        <td style="text-align: right;">${item.quantity}</td>
+                        <td>${item.uom}</td>
+                        <td style="text-align: right;">${item.unit_price}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+                
+
+                
+                <div style="text-align: center; margin-top: 20px; color: #666; font-size: 12px;">
+                    Generated on ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} - StockFlow Inventory System
+                </div>
+            `;
+            
+            previewContent.innerHTML = html;
+            modal.style.display = 'flex';
+        }
+
+        // --- CLOSE PREVIEW MODAL ---
+        window.closePreview = function() {
+            const modal = document.getElementById('rfq-preview-modal');
+            modal.style.display = 'none';
+        }
+
+        // --- DOWNLOAD RFQ PDF ---
+        window.downloadRfqPdf = function() {
+            const downloadBtn = document.getElementById('download-rfq-btn');
+            downloadBtn.disabled = true;
+            downloadBtn.textContent = 'Creating PDF...';
+            
+            const formData = new FormData();
+            selectedRequisitionIds.forEach(id => formData.append('req_ids[]', id));
+
+            fetch('/requisition/create-rfq-multiple/', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => { 
+                        throw new Error(data.error || 'Failed to create RFQ'); 
+                    });
+                }
+
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/pdf')) {
+                    return response.blob().then(blob => {
+                        const disposition = response.headers.get('Content-Disposition');
+                        let filename = 'RFQ.pdf';
+                        if (disposition && disposition.includes('filename=')) {
+                            const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                            if (match && match[1]) filename = match[1].replace(/['"]/g, '');
+                        }
+
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        
+                        setTimeout(() => {
+                            window.URL.revokeObjectURL(url);
+                            document.body.removeChild(a);
+                            
+                            // Close modal and reload page
+                            closePreview();
+                            alert('RFQ created successfully! PDF downloaded.');
+                            window.location.reload();
+                        }, 100);
+                    });
+                } else {
+                    throw new Error('Unexpected response type');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error creating RFQ: ' + error.message);
+                downloadBtn.disabled = false;
+                downloadBtn.textContent = 'Download RFQ PDF';
+            });
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('rfq-preview-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePreview();
+            }
+        });
+
+        // --- CSRF UTILITY ---
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                document.cookie.split(';').forEach(cookie => {
+                    const c = cookie.trim();
+                    if (c.startsWith(name + '=')) cookieValue = decodeURIComponent(c.substring(name.length + 1));
+                });
+            }
+            return cookieValue;
+        }
+
+
+
+
+
+    });
+
+
+</script>
+{% endblock %}

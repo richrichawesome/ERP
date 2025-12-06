@@ -1,0 +1,1391 @@
+{% extends "main/base.html" %}
+{% block page_content %}
+<style> 
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(3, 2, 19, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .overlay-content {
+        background: #ffffff;
+        padding: 25px;
+        border-radius: 8px;
+        width: 350px;
+        text-align: center;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 6px rgba(3, 2, 19, 0.1);
+        max-height: 90vh; /* Limit height to 90% of viewport */
+        overflow-y: auto; /* Enable vertical scrolling */
+    }
+
+    .search-bar {
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .search-bar label {
+        font-weight: bold;
+        color: #030213;
+    }
+
+    .search-bar-textbox {
+        padding: 8px 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        flex: 1;
+        max-width: 300px;
+        font-size: 14px;
+        background: #f3f3f5;
+        color: #030213;
+    }
+
+    .search-bar-textbox:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }
+
+    h1 {
+        color: #030213;
+        margin-bottom: 20px;
+    }
+
+    .branch-tabs {
+        margin-bottom: 15px;
+        display: flex;
+        gap: 8px;
+    }
+
+    .branch-btn {
+        padding: 8px 16px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #ffffff;
+        color: #030213;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .branch-btn:hover {
+        background: #e9ebef;
+        border-color: #2563eb;
+    }
+
+    .branch-btn.active {
+        background: #2563eb;
+        color: #ffffff;
+        border-color: #2563eb;
+    }
+
+    .category-navbar {
+        margin-bottom: 20px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .category-btn {
+        padding: 8px 16px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #ffffff;
+        color: #030213;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .category-btn:hover {
+        background: #e9ebef;
+        border-color: #2563eb;
+    }
+
+    .category-btn.active {
+        background: #2563eb;
+        color: #ffffff;
+        border-color: #2563eb;
+    }
+
+    .add-remove-btn {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .add-product-btn, .remove-product-btn, .inactive-product-btn {
+        padding: 10px 16px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #2563eb;
+        color: #ffffff;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .add-product-btn:hover, .remove-product-btn:hover, .inactive-product-btn:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    thead {
+        background: #030213;
+        color: #ffffff;
+    }
+
+    th {
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    td {
+        padding: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        background: #ffffff;
+    }
+
+    tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    tbody tr:nth-child(even) {
+        background: #f8fafc;
+    }
+
+    tbody tr:nth-child(even):hover {
+        background: #e9ebef;
+    }
+
+    .stock-in, .stock-out, .edit {
+        padding: 6px 12px;
+        margin: 2px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #ffffff;
+        color: #030213;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 12px;
+    }
+
+    .stock-in:hover {
+        background: #2563eb;
+        color: #ffffff;
+        border-color: #2563eb;
+    }
+
+    .stock-out:hover {
+        background: #d4183d;
+        color: #ffffff;
+        border-color: #d4183d;
+    }
+
+    .edit:hover {
+        background: #94a3b8;
+        color: #ffffff;
+        border-color: #94a3b8;
+    }
+
+    button {
+        padding: 8px 16px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #2563eb;
+        color: #ffffff;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    button:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+    }
+
+    button:disabled {
+        background: #94a3b8;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    input[type="text"], input[type="number"], select {
+        padding: 8px 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #f3f3f5;
+        color: #030213;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    input[type="text"]:focus, input[type="number"]:focus, select:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }
+
+    input[type="checkbox"] {
+        margin-right: 8px;
+        accent-color: #2563eb;
+    }
+
+    label {
+        color: #030213;
+        font-weight: 500;
+        display: block;
+        margin-bottom: 5px;
+        text-align: left;
+    }
+
+    .reactivate-product {
+        background: #2563eb;
+        color: #ffffff;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .reactivate-product:hover {
+        background: #1d4ed8;
+    }
+
+    /* Inactive products overlay specific styles */
+    #overlay-inactive .overlay-content {
+        width: 80%;
+        max-width: 1000px;
+    }
+
+    #inactive-products-body tr:hover {
+        background: #f8fafc;
+    }
+
+    /* Error states */
+    .error {
+        color: #d4183d;
+        background: #fff5f5;
+        border: 1px solid #fed7d7;
+        padding: 8px;
+        border-radius: 4px;
+        margin: 10px 0;
+    }
+
+    /* Success states */
+    .success {
+        color: #22543d;
+        background: #f0fff4;
+        border: 1px solid #c6f6d5;
+        padding: 8px;
+        border-radius: 4px;
+        margin: 10px 0;
+    }
+
+    /* Loading states */
+    .loading {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+
+    /* ari chen */
+
+    /* Specification Styles */
+
+
+    .specs-cell {
+        max-width: 200px;
+        word-wrap: break-word;
+    }
+
+    .specs-container {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .spec-item {
+        padding: 2px 0;
+        /* border-bottom: 1px solid #f1f1f1; */
+    }
+
+    .spec-item:last-child {
+        border-bottom: none;
+    }
+
+    .spec-item strong {
+        color: #030213;
+        font-weight: 600;
+    }
+
+    .no-specs {
+        color: #94a3b8;
+        font-style: italic;
+    }
+
+    /* Ensure table cells have proper spacing */
+    td {
+        padding: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        background: #ffffff;
+        vertical-align: top; /* Align content to top for better appearance */
+    }
+
+
+    .specification-group {
+        margin-bottom: 10px;
+    }
+
+    .spec-row {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+        margin-bottom: 10px;
+    }
+
+    .spec-input-group {
+        flex: 1;
+    }
+
+    .spec-input-group label {
+        font-size: 12px;
+        margin-bottom: 3px;
+    }
+
+    .spec-input-group input {
+        margin-bottom: 0;
+    }
+
+    .remove-spec-btn {
+        background: #d4183d;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        height: fit-content;
+        margin-bottom: 10px;
+    }
+
+    .remove-spec-btn:hover {
+        background: #b31533;
+    }
+
+    #add-spec-btn {
+        background: #10b981;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    #add-spec-btn:hover {
+        background: #0da271;
+    }
+
+
+
+
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .overlay-content {
+            width: 90%;
+            margin: 20px;
+        }
+        
+        .branch-tabs, .category-navbar {
+            flex-wrap: wrap;
+        }
+        
+        .add-remove-btn {
+            flex-direction: column;
+        }
+        
+        table {
+            font-size: 14px;
+        }
+        
+        th, td {
+            padding: 8px;
+        }
+    }
+</style>
+    <h1>Inventory</h1>
+            <div class="branch-tabs" style="margin-bottom: 15px;">
+                <button class="branch-btn active" data-branch="all">All Branches</button>
+                <button class="branch-btn" data-branch="1">Branch 1</button>
+                <button class="branch-btn" data-branch="2">Branch 2</button>
+            </div>
+
+            <div class="search-bar">
+                <label> Search:</label>
+                <input type="text" class="search-bar-textbox" name="search-bar-textbox">
+            </div>
+
+            <div class="category-navbar" style="margin-bottom: 20px;">
+                <button class="category-btn" data-category="all">All</button>
+                {% for cat in categories %}
+                    <button class="category-btn" data-category="{{ cat.prod_cat_name }}">{{ cat.prod_cat_name }}</button>
+                {% endfor %}
+            </div>
+
+            <div class="add-remove-btn">
+                <button type="button" class="add-product-btn" name="add-product-btn">Add Product</button>
+                <button type="button" class="remove-product-btn" name="remove-product-btn">Remove Product</button>
+                <button type="button" class="inactive-product-btn" name="inactive-product-btn">Inactive Products</button>
+            </div><br>
+
+            <table border="1" cellpadding="10" cellspacing="0" style="width: 100%; border-collapse: collapse;">
+                <thead style="background: #222; color: white;">
+                    <tr>
+                        <th>Name</th>
+                        <th>SKU</th>
+                        <th>Quantity on hand</th>
+                        <th>Unit of Measure</th>
+                        <th>Retail Price</th>
+                        <th>Reorder Quantity Threshold</th>
+                        <th>Last Updated</th>
+                        <th>Unit Cost</th>
+                        <th>Specification</th>
+                        <th>Active</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in products %}
+                        <tr data-category="{{ p.product.category.prod_cat_name }}" 
+                            data-branch="{{ p.branch.branch_id }}" 
+                            data-inventory-id="{{ p.inventory_id }}"
+                            data-product-id="{{ p.product.prod_id }}">
+                            <td>{{ p.product.prod_name }}</td>
+                            <td>{{ p.product.prod_sku}}
+                            <td>{{ p.quantity_on_hand }}</td>
+                            <td>{{ p.product.prod_unit_of_measure }}</td>
+                            <td>₱{{ p.product.prod_retail_price }}</td>
+                            <td>{{ p.product.prod_reorder_threshold }}</td> 
+                            <td>{{ p.last_updated_at }}</td>
+                            <td>₱{{ p.product.prod_current_cost }}</td>
+
+                            <td class="specs-cell">
+                                {% if p.product.product_specification_set.all %}
+                                    <div class="specs-container">
+                                        {% for spec in p.product.product_specification_set.all %}
+                                            <div class="spec-item">
+                                                <strong>{{ spec.spec_name }}:</strong> {{ spec.spec_value }}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <span class="no-specs">No specifications available</span>
+                                {% endif %}
+                            </td>
+
+
+                            <td>{{ p.product.prod_is_active }}</td>
+                            <td>
+                                <button type="button" class="stock-in">Stock in</button>
+                                <button type="button" class="stock-out">Stock out</button>
+                                <button type="button" class="edit">Edit</button>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="10" style="text-align:center; color:red;">No products found</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+    <!-- overlay for stock in / stock out-->
+    <div id="overlay-stock" class="overlay" style="display:none;">
+        <div class="overlay-content">
+            <h2 id="overlay-stock-title"></h2>
+
+            <label>Quantity:</label>
+            <input type="number" id="overlay-stock-qty" min="1"><br><br>
+
+            <button id="overlay-stock-save">Save</button>
+            <button id="overlay-stock-close">Cancel</button>
+        </div>
+    </div>
+
+    <!-- overlay for edit product -->
+    <div id="overlay-edit" class="overlay" style="display:none;">
+        <div class="overlay-content">
+            <h2 id="overlay-edit-title">Edit Product</h2>
+
+            <label>Edit Product Name:</label>
+            <input type="text" id="edit-name"><br>
+
+            <label>Edit Description:</label>
+            <input type="text" id="edit-desc"><br>
+
+            <label>Edit Unit of Measure:</label>
+            <input type="text" id="edit-unit"><br>
+
+            <label>Edit Product Specific Name:</label>
+            <input type="text" id="edit-specific-name"><br>
+
+            <label>Edit Product Specific value:</label>
+            <input type="text" id="edit-specific-value"><br>
+
+            <label>Edit Unit Cost:</label>
+            <input type="number" id="edit-cost" min="0" step="0.01"><br>
+
+            <label>Edit Retail Price:</label>
+            <input type="number" id="edit-price" min="0" step="0.01"><br>
+
+            <label>Edit Reorder Threshold:</label>
+            <input type="number" id="edit-reorder" min="0"><br><br>
+
+            <label>Product still active?</label>
+            <input type="checkbox" id="edit-active" checked><br>
+
+            <button id="overlay-edit-save">Save</button>
+            <button id="overlay-edit-close">Cancel</button>
+        </div>
+    </div>
+
+
+    <!-- Ari chen-->
+
+    <!-- overlay for add product -->
+    <div id="overlay-add" class="overlay" style="display:none;">
+    <div class="overlay-content">
+        <h2 id="overlay-add-title">Add Product</h2>
+
+        <label>Product Name:</label>
+        <input type="text" id="add-name"><br>
+
+        <label>Product Description:</label>
+        <input type="text" id="add-desc"><br>
+
+        <label>Product Unit of Measure:</label>
+        <input type="text" id="add-unit"><br>
+
+        <!-- Product Specifications Container -->
+        <div id="specifications-container">
+            <div class="specification-group">
+                <div class="spec-row">
+                    <div class="spec-input-group">
+                        <label>Product Specific Name:</label>
+                        <input type="text" class="add-specific-name" placeholder="e.g., Grade">
+                    </div>
+                    <div class="spec-input-group">
+                        <label>Product Specific Value:</label>
+                        <input type="text" class="add-specific-value" placeholder="e.g., Fine">
+                    </div>
+                    <button type="button" class="remove-spec-btn" style="display:none;">Remove</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Add Specification Button -->
+        <button type="button" id="add-spec-btn" style="margin-bottom: 15px;">
+            + Add Another Specification
+        </button>
+
+        <label>Product Unit Cost:</label>
+        <input type="number" id="add-cost" min="0" step="0.01"><br>
+
+        <label>Product Retail Price:</label>
+        <input type="number" id="add-price" min="0" step="0.01"><br>
+
+        <label>Product Reorder Threshold:</label>
+        <input type="number" id="add-reorder" min="0"><br>
+
+        <label>Product SKU:</label>
+        <input type="text" id="add-sku"><br>
+
+        <label>Product Category:</label>
+        <select name="category" id="add-category" required>
+            <option value="" selected disabled>--select--</option>
+            {% for cat in categories %}
+                <option value="{{ cat.prod_cat_id }}">{{ cat.prod_cat_name }}</option>
+            {% endfor %}
+        </select><br>
+
+        <label>Branch:</label>
+        <select name="branch" id="add-branch" required>
+            <option value="" selected disabled>---select---</option>
+            {% for branch in branches %}
+                <option value="{{ branch.branch_id }}">{{ branch.branch_name }}</option>
+            {% empty %}
+                <option value="">No branches available</option>
+            {% endfor %}
+        </select><br><br>
+
+        <button id="overlay-add-btn">Add</button>
+        <button type="button" id="overlay-add-close">Cancel</button> 
+    </div>
+</div>
+
+
+
+
+
+
+
+
+    <!-- overlay for remove product -->
+    <div id="overlay-remove" class="overlay" style="display:none;">
+        <div class="overlay-content">
+            <h2 id="overlay-add-title">Remove Product</h2>
+            
+            <label>Product:</label>
+            <select name="product" id="remove-product">
+                <option value="" selected disabled>---select---</option>
+                {% for p in products %}
+                    <option value="{{ p.product.prod_id }}">{{ p.product.prod_name }} ({{ p.branch.branch_name }})</option>
+                {% empty %}
+                <option value="">No Products available</option>
+                {% endfor %}
+            </select><br><br>
+
+            <button id="overlay-remove-btn">Remove</button>
+            <button type="button" id="overlay-remove-close">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Add this overlay for inactive products -->
+    <div id="overlay-inactive" class="overlay" style="display:none;">
+        <div class="overlay-content" style="width: 80%; max-width: 1000px;">
+            <h2>Inactive Products</h2>
+            
+            <div class="search-bar">
+                <label>Search:</label>
+                <input type="text" class="inactive-search-textbox" placeholder="Search inactive products...">
+            </div>
+            
+            <table border="1" cellpadding="10" cellspacing="0" style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                <thead style="background: #222; color: white;">
+                    <tr>
+                        <th>Name</th>
+                        <th>SKU</th>
+                        <th>Branch</th>
+                        <th>Last Updated</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="inactive-products-body">
+                    <!-- Inactive products will be loaded here -->
+                </tbody>
+            </table>
+            
+            <br>
+            <button id="overlay-inactive-close">Close</button>
+        </div>
+    </div>
+
+<script>
+    /** category and branch tab pane functionality **/
+    const categoryButtons = document.querySelectorAll('.category-btn');
+    const branchButtons = document.querySelectorAll('.branch-btn');
+    const rows = document.querySelectorAll('tbody tr');
+    const searchInput = document.querySelector('.search-bar-textbox');
+
+    let selectedCategory = 'all';
+    let selectedBranch = 'all';
+    let searchTerm = '';
+
+    searchInput.addEventListener('input', (e) => {
+        searchTerm = e.target.value.toLowerCase().trim();
+        filterRows();
+    });
+
+    // search logic
+    function filterRows() {
+        let hasVisibleRows = false;
+        
+        rows.forEach(row => {
+            if (row.children.length < 11) return;
+            
+            const rowCategory = row.getAttribute('data-category');
+            const rowBranch = row.getAttribute('data-branch');
+            const productName = row.children[0].innerText.toLowerCase(); // Name column
+            const productSKU = row.children[1].innerText.toLowerCase();  // SKU column
+
+            const categoryMatch = (selectedCategory === 'all' || rowCategory === selectedCategory);
+            const branchMatch = (selectedBranch === 'all' || rowBranch === selectedBranch);
+            const searchMatch = searchTerm === '' || 
+                            productName.includes(searchTerm) || 
+                            productSKU.includes(searchTerm);
+
+            if (categoryMatch && branchMatch && searchMatch) {
+                row.style.display = '';
+                hasVisibleRows = true;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        const noProductsRow = document.querySelector('tbody tr:only-child');
+        if (noProductsRow && noProductsRow.children.length === 1) {
+            noProductsRow.style.display = hasVisibleRows ? 'none' : '';
+        }
+    }
+
+    categoryButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            selectedCategory = btn.getAttribute('data-category');
+            categoryButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            filterRows();
+        });
+    });
+
+    branchButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            selectedBranch = btn.getAttribute('data-branch');
+            branchButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            filterRows();
+        });
+    });
+
+    /** Search bar functionality **/
+    searchInput.addEventListener('input', (e) => {
+        searchTerm = e.target.value.toLowerCase().trim();
+        filterRows();
+    });
+
+    /** action button functionalities **/
+    const overlayStock = document.getElementById('overlay-stock');
+    const stockTitle = document.getElementById('overlay-stock-title');
+    const stockQty = document.getElementById('overlay-stock-qty');
+    const stockSave = document.getElementById('overlay-stock-save');
+    const stockClose = document.getElementById('overlay-stock-close');
+
+    let currentStockMode = "";
+    let currentRow = null;
+    const userId = "{{ user_id }}";
+
+    document.querySelectorAll('.stock-in').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentRow = btn.closest('tr');
+            const productName = currentRow.children[0].innerText;
+
+            currentStockMode = "in";
+            stockTitle.innerText = "Stock In: " + productName;
+            stockQty.value = "";
+
+            overlayStock.style.display = "flex";
+        });
+    });
+
+    document.querySelectorAll('.stock-out').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentRow = btn.closest('tr');
+            const productName = currentRow.children[0].innerText;
+
+            currentStockMode = "out";
+            stockTitle.innerText = "Stock Out: " + productName;
+            stockQty.value = "";
+
+            overlayStock.style.display = "flex";
+        });
+    });
+
+    stockSave.addEventListener('click', async () => {
+        const qty = Number(stockQty.value);
+
+        if (qty <= 0 || isNaN(qty)) {
+            alert("Quantity must be a positive number");
+            return;
+        }
+
+        const inventoryId = currentRow.getAttribute("data-inventory-id");
+        const qtyCell = currentRow.children[2]; // Quantity on hand cell
+
+        try {
+            const response = await fetch("/inventory/stock_action/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    inventory_id: inventoryId,
+                    quantity: qty,
+                    action_type: currentStockMode,
+                    user_id: userId
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                alert(data.message || "Stock updated successfully!");
+                
+                // Update the quantity in the table
+                qtyCell.innerText = data.new_quantity;
+                
+                // Update last updated cell (index 8)
+                const now = new Date();
+                currentRow.children[8].innerText = now.toISOString().split('T')[0];
+                
+                overlayStock.style.display = "none";
+            } else {
+                alert("Error: " + (data.error || "Failed to update stock"));
+            }
+        } catch (err) {
+            alert("Failed to update stock: " + err.message);
+            console.error("Stock update error:", err);
+        }
+    });
+
+    stockClose.addEventListener('click', () => {
+        overlayStock.style.display = "none";
+    });
+
+    // Edit overlay functionality
+    const overlayEdit = document.getElementById('overlay-edit');
+    const editName = document.getElementById('edit-name');
+    const editDesc = document.getElementById('edit-desc');
+    const editUnit = document.getElementById('edit-unit');
+    const editSpecificName = document.getElementById('edit-specific-name');
+    const editSpecificValue = document.getElementById('edit-specific-value');
+    const editCost = document.getElementById('edit-cost');
+    const editPrice = document.getElementById('edit-price');
+    const editReorder = document.getElementById('edit-reorder');
+    const editActive = document.getElementById('edit-active');
+    const editSave = document.getElementById('overlay-edit-save');
+    const editClose = document.getElementById('overlay-edit-close');
+
+    let currentEditRow = null;
+
+    document.querySelectorAll('.edit').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentEditRow = btn.closest('tr');
+            const row = btn.closest('tr');
+            
+            const specText = row.children[8].innerText;
+            let specName = '';
+            let specValue = '';
+
+            if (specText !== 'None') {
+                const specParts = specText.split(':');
+                if (specParts.length === 2) {
+                    specName = specParts[0].trim();
+                    specValue = specParts[1].trim();
+                }
+            }
+
+            editName.value = row.children[0].innerText;
+            editUnit.value = row.children[3].innerText;
+            editCost.value = Number(row.children[7].innerText.replace("₱", "").trim());
+            editPrice.value = Number(row.children[4].innerText.replace("₱", "").trim());
+            editReorder.value = row.children[5].innerText;
+            editSpecificName.value = specName;
+            editSpecificValue.value = specValue;
+
+            let activeValue = row.children[9].innerText.trim().toLowerCase();
+            editActive.checked = activeValue === "true" || activeValue === "1" || activeValue === "yes";
+
+            overlayEdit.style.display = "flex";
+        });
+    });
+
+    editSave.addEventListener('click', async () => {
+        if (editCost.value < 0 || editPrice.value < 0 || editReorder.value < 0) {
+            alert("Values cannot be negative!");
+            return;
+        }
+        const inventoryId = currentEditRow.getAttribute('data-inventory-id');
+        const productId = currentEditRow.getAttribute('data-product-id');
+        
+        if (!productId) {
+            alert("Error: Product ID not found. Please add data-product-id to your table rows.");
+            return;
+        }
+
+        const oldActiveStatus = currentEditRow.children[9].innerText.trim().toLowerCase() === "true";
+        const newActiveStatus = editActive.checked;
+
+        try {
+            const response = await fetch("/inventory/edit_product/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    prod_name: editName.value,
+                    prod_desc: editDesc.value,
+                    prod_unit_of_measure: editUnit.value,
+                    prod_current_cost: editCost.value,
+                    prod_retail_price: editPrice.value,
+                    prod_reorder_threshold: editReorder.value,
+                    prod_is_active: editActive.checked,
+                    spec_name: editSpecificName.value,
+                    spec_value: editSpecificValue.value,
+                    user_id: userId
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                let message = data.message;
+                if (data.price_changed) {
+                    message += "\n\nPrice change has been recorded in price history.";
+                }
+                alert(message);
+
+                // update the table row with new values
+                currentEditRow.children[0].innerText = editName.value;
+                currentEditRow.children[3].innerText = editUnit.value;
+                currentEditRow.children[4].innerText = "₱" + parseFloat(editPrice.value).toFixed(2);
+                currentEditRow.children[5].innerText = editReorder.value;
+                currentEditRow.children[7].innerText = "₱" + parseFloat(editCost.value).toFixed(2);
+                
+                // Update spec name and value
+                if (editSpecificName.value && editSpecificValue.value) {
+                    currentEditRow.children[8].innerText = editSpecificName.value + ": " + editSpecificValue.value;
+                } else {
+                    currentEditRow.children[8].innerText = "None";
+                }
+                currentEditRow.children[9].innerText = editActive.checked ? "True" : "False";
+
+                if (oldActiveStatus === true && newActiveStatus === false) {
+                    currentEditRow.remove();
+                    const visibleRows = document.querySelectorAll('tbody tr[data-product-id]');
+                     if (visibleRows.length === 0) {
+                    const tbody = document.querySelector('tbody');
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="11" style="text-align:center; color:red;">No products found</td>
+                        </tr>
+                    `;
+                }
+            }
+                overlayEdit.style.display = "none";
+            } else {
+                alert("Error: " + (data.error || "Failed to update product"));
+            }
+        } catch (err) {
+            alert("Failed to update product: " + err.message);
+            console.error("Product update error:", err);
+        }
+    });
+
+    editClose.addEventListener('click', () => {
+        overlayEdit.style.display = "none";
+    });
+
+    overlayStock.addEventListener('click', (e) => {
+        if (e.target === overlayStock) {
+            overlayStock.style.display = "none";
+        }
+    });
+
+    overlayEdit.addEventListener('click', (e) => {
+        if (e.target === overlayEdit) {
+            overlayEdit.style.display = "none";
+        }
+    });
+
+
+    // ari chen
+
+    // add product functionality
+    // Add product functionality with multiple specifications
+    const addProductBtn = document.querySelector('.add-product-btn');
+    const overlayAddClose = document.getElementById('overlay-add-close');
+    const overlayAdd = document.getElementById('overlay-add');
+    const addName = document.getElementById('add-name');
+    const addDesc = document.getElementById('add-desc');
+    const addUnit = document.getElementById('add-unit');
+    const addCost = document.getElementById('add-cost');
+    const addPrice = document.getElementById('add-price');
+    const addReorder = document.getElementById('add-reorder');
+    const addSku = document.getElementById('add-sku');
+    const addCategory = document.getElementById('add-category');
+    const addBranch = document.getElementById('add-branch');
+    const addBtn = document.getElementById('overlay-add-btn');
+    const specificationsContainer = document.getElementById('specifications-container');
+    const addSpecBtn = document.getElementById('add-spec-btn');
+
+    // Add specification functionality
+    addSpecBtn.addEventListener('click', () => {
+        addSpecification();
+    });
+
+    function addSpecification(specName = '', specValue = '') {
+        const specGroup = document.createElement('div');
+        specGroup.className = 'specification-group';
+        
+        specGroup.innerHTML = `
+            <div class="spec-row">
+                <div class="spec-input-group">
+                    <label>Product Specific Name:</label>
+                    <input type="text" class="add-specific-name" placeholder="e.g., Grade" value="${specName}">
+                </div>
+                <div class="spec-input-group">
+                    <label>Product Specific Value:</label>
+                    <input type="text" class="add-specific-value" placeholder="e.g., Fine" value="${specValue}">
+                </div>
+                <button type="button" class="remove-spec-btn">Remove</button>
+            </div>
+        `;
+        
+        specificationsContainer.appendChild(specGroup);
+        
+        // Add event listener to remove button
+        const removeBtn = specGroup.querySelector('.remove-spec-btn');
+        removeBtn.addEventListener('click', () => {
+            specGroup.remove();
+            updateRemoveButtonsVisibility();
+        });
+        
+        updateRemoveButtonsVisibility();
+    }
+
+    function updateRemoveButtonsVisibility() {
+        const specGroups = specificationsContainer.querySelectorAll('.specification-group');
+        const removeButtons = specificationsContainer.querySelectorAll('.remove-spec-btn');
+        
+        // Show remove buttons only if there's more than one specification
+        if (specGroups.length > 1) {
+            removeButtons.forEach(btn => {
+                btn.style.display = 'block';
+            });
+        } else {
+            removeButtons.forEach(btn => {
+                btn.style.display = 'none';
+            });
+        }
+    }
+
+    // Initialize with one specification when opening the overlay
+    addProductBtn.addEventListener('click', () => {
+        // Clear all fields
+        addName.value = '';
+        addDesc.value = '';
+        addUnit.value = '';
+        addCost.value = '';
+        addPrice.value = '';
+        addReorder.value = '';
+        addSku.value = '';
+        addCategory.value = '';
+        addBranch.value = '';
+        
+        // Clear specifications and add one empty one
+        specificationsContainer.innerHTML = '';
+        addSpecification();
+        
+        overlayAdd.style.display = 'flex';
+    });
+
+    addBtn.addEventListener('click', async () => {
+        // Collect specifications
+        const specifications = [];
+        const specGroups = specificationsContainer.querySelectorAll('.specification-group');
+        
+        specGroups.forEach(group => {
+            const specName = group.querySelector('.add-specific-name').value.trim();
+            const specValue = group.querySelector('.add-specific-value').value.trim();
+            
+            if (specName && specValue) {
+                specifications.push({
+                    name: specName,
+                    value: specValue
+                });
+            }
+        });
+
+        // Validate required fields
+        if (!addName.value || !addCost.value || !addPrice.value || !addReorder.value || !addSku.value || !addCategory.value || !addBranch.value) {
+            alert("Please fill in all required fields!");
+            return;
+        }
+        
+        if (addCost.value < 0 || addPrice.value < 0 || addReorder.value < 0) {
+            alert("Values cannot be negative!");
+            return;
+        }
+        
+        try {
+            const response = await fetch("/inventory/add_product/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    prod_name: addName.value,
+                    prod_desc: addDesc.value,
+                    prod_unit_of_measure: addUnit.value,
+                    prod_current_cost: addCost.value,
+                    prod_retail_price: addPrice.value,
+                    prod_reorder_threshold: addReorder.value,
+                    prod_sku: addSku.value,
+                    category_id: addCategory.value,
+                    branch_id: addBranch.value,
+                    specifications: specifications, // Send as array
+                    user_id: userId
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                alert(data.message + "\n\nPlease refresh the page to see the new product.");
+                overlayAdd.style.display = 'none';
+                // Optionally reload the page
+                location.reload();
+            } else {
+                alert("Error: " + (data.error || "Failed to add product"));
+            }
+        } catch (err) {
+            alert("Failed to add product: " + err.message);
+            console.error("Add product error:", err);
+        }
+    });
+
+    // Close overlay when clicking outside
+    overlayAdd.addEventListener('click', (e) => {
+        if (e.target === overlayAdd) {
+            overlayAdd.style.display = 'none';
+        }
+    });
+
+    overlayAddClose.addEventListener('click', () => {
+        overlayAdd.style.display = 'none';
+    });
+    
+
+
+
+
+
+
+
+
+
+    // remove product functionality
+    const removeProductBtn = document.querySelector('.remove-product-btn');
+    const overlayRemoveClose = document.getElementById('overlay-remove-close');
+    const overlayRemove = document.getElementById('overlay-remove');
+    const removeProductSelect = document.getElementById('remove-product');
+    const removeBtn = document.getElementById('overlay-remove-btn');
+
+    removeProductBtn.addEventListener('click', () => {
+        overlayRemove.style.display = 'flex';
+    });
+
+    removeBtn.addEventListener('click', async () => {
+        const productId = removeProductSelect.value;
+        
+        if (!productId) {
+            alert("Please select a product to remove!");
+            return;
+        }
+        
+        if (!confirm("Are you sure you want to remove this product? This action cannot be undone.")) {
+            return;
+        }
+        
+        try {
+            const response = await fetch("/inventory/remove_product/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    user_id: userId
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                alert(data.message);
+                overlayRemove.style.display = 'none';
+                // remove the product row from the table
+                const rowToRemove = document.querySelector(`tr[data-product-id="${productId}"]`);
+                if (rowToRemove) {
+                    rowToRemove.remove();
+                }
+                // reload the page to refresh product list
+                location.reload();
+            } else {
+                alert("Error: " + (data.error || "Failed to remove product"));
+            }
+        } catch (err) {
+            alert("Failed to remove product: " + err.message);
+            console.error("Remove product error:", err);
+        }
+    });
+
+    // remove overlay
+    overlayRemoveClose.addEventListener('click', () => {
+        overlayRemove.style.display = 'none';
+    });
+
+    // exit overlay when clicking outside the box
+    overlayRemove.addEventListener('click', (e) => {
+        if (e.target === overlayRemove) {
+            overlayRemove.style.display = 'none';
+        }
+    });
+
+    // inactive Products functionality
+    const inactiveProductBtn = document.querySelector('.inactive-product-btn');
+    const overlayInactive = document.getElementById('overlay-inactive');
+    const overlayInactiveClose = document.getElementById('overlay-inactive-close');
+    const inactiveProductsBody = document.getElementById('inactive-products-body');
+    const inactiveSearchInput = document.querySelector('.inactive-search-textbox');
+
+    inactiveProductBtn.addEventListener('click', async () => {
+        try {
+            const response = await fetch("/inventory/get_inactive_products/", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                displayInactiveProducts(data.inactive_products);
+                overlayInactive.style.display = 'flex';
+            } else {
+                alert("Error loading inactive products: " + (data.error || "Unknown error"));
+            }
+        } catch (err) {
+            alert("Failed to load inactive products: " + err.message);
+            console.error("Inactive products error:", err);
+        }
+    });
+
+    function displayInactiveProducts(products) {
+        inactiveProductsBody.innerHTML = '';
+        
+        if (products.length === 0) {
+            inactiveProductsBody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align:center; color:red;">No inactive products found</td>
+                </tr>
+            `;
+            return;
+        }
+        
+        products.forEach(product => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${product.prod_name}</td>
+                <td>${product.prod_sku}</td>
+                <td>${product.branch_name}</td>
+                <td>${product.last_updated}</td>
+                <td>
+                    <button type="button" class="reactivate-product" data-product-id="${product.prod_id}">Reactivate</button>
+                </td>
+            `;
+            inactiveProductsBody.appendChild(row);
+        });
+        
+        // Add event listeners to reactivate buttons
+        document.querySelectorAll('.reactivate-product').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const productId = btn.getAttribute('data-product-id');
+                const productName = btn.closest('tr').children[0].innerText;
+                
+                if (confirm(`Are you sure you want to reactivate "${productName}"?`)) {
+                    await reactivateProduct(productId, productName);
+                }
+            });
+        });
+    }
+
+    async function reactivateProduct(productId, productName) {
+        try {
+            const response = await fetch("/inventory/reactivate_product/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    user_id: userId
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                alert(data.message);
+
+                const inactiveRow = document.querySelector(`.reactivate-product[data-product-id="${productId}"]`).closest('tr');
+                inactiveRow.remove();
+
+                const inactiveRows = inactiveProductsBody.querySelectorAll('tr[data-product-id]');
+                if (inactiveRows.length === 0) {
+                inactiveProductsBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align:center; color:red;">No inactive products found</td>
+                    </tr>
+                `;
+            }
+            location.reload();
+                       
+            } else {
+                alert("Error: " + (data.error || "Failed to reactivate product"));
+            }
+        } catch (err) {
+            alert("Failed to reactivate product: " + err.message);
+            console.error("Reactivate product error:", err);
+        }
+    }
+
+    // search functionality for inactive products
+    inactiveSearchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        const rows = inactiveProductsBody.querySelectorAll('tr');
+        
+        rows.forEach(row => {
+            if (row.children.length < 5) return; // Skip the "no products" row
+            
+            const productName = row.children[0].innerText.toLowerCase();
+            const productSKU = row.children[1].innerText.toLowerCase();
+            
+            if (productName.includes(searchTerm) || productSKU.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    // close inactive products overlay
+    overlayInactiveClose.addEventListener('click', () => {
+        overlayInactive.style.display = 'none';
+    });
+
+    overlayInactive.addEventListener('click', (e) => {
+        if (e.target === overlayInactive) {
+            overlayInactive.style.display = 'none';
+        }
+    });
+</script>
+</div>
+{% endblock %}

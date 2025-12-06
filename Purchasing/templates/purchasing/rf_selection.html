@@ -1,0 +1,394 @@
+{% extends "main/base.html" %}
+{% block page_content %}
+<style>
+    .content-header {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+    }
+
+    .content-header h1 {
+        color: #030213;
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .content-header p {
+        color: #717182;
+        font-size: 14px;
+    }
+
+    /* Card styles */
+    .card {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+    }
+
+    .card h2 {
+        color: #030213;
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    /* Button styles */
+    .btn {
+        padding: 8px 16px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #2563eb;
+        color: #ffffff;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 14px;
+        border: none;
+        height: fit-content;
+    }
+
+    .btn:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(3, 2, 19, 0.1);
+    }
+
+    .btn:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .btn-secondary {
+        background: #ffffff;
+        color: #030213;
+        border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-secondary:hover {
+        background: #f3f3f5;
+    }
+
+    .btn-small {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    /* Selection controls */
+    .selection-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f8fafc;
+        border-radius: 6px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .select-all-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        color: #030213;
+    }
+
+    .select-all-checkbox input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+    }
+
+    /* Status badges */
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+
+    .status-approved {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-rejected {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* Table styles */
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+        margin-top: 15px;
+    }
+
+    .table th {
+        background: #030213;
+        color: #ffffff;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .table td {
+        padding: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .table tbody tr:nth-child(even) {
+        background: #f8fafc;
+    }
+
+    .table tbody tr:hover {
+        background: #e9ebef;
+    }
+
+    .checkbox-cell {
+        width: 50px;
+        text-align: center;
+    }
+
+    .checkbox-cell input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .selection-controls {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .table {
+            font-size: 14px;
+        }
+        
+        .table th,
+        .table td {
+            padding: 8px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .content-header {
+            padding: 15px;
+        }
+        
+        .card {
+            padding: 15px;
+        }
+        
+        .table {
+            display: block;
+            overflow-x: auto;
+        }
+    }
+</style>
+
+<div class="content-header">
+    <h1>Purchase Order Creation</h1>
+    <p>Create purchase orders from approved requisitions with completed quotations</p>
+</div>
+
+<div class="card">
+    <h2>Available Requisitions for PO Creation</h2>
+    <p>Select requisitions to create purchase orders.</p>
+    
+    <!-- Django Form -->
+    <form method="post" action="{% url 'create_po_from_requisitions' %}" id="poCreationForm">
+        {% csrf_token %}
+        
+        <!-- Selection Controls -->
+        <div class="selection-controls">
+            <label class="select-all-checkbox">
+                <input type="checkbox" id="selectAllRequisitions">
+                <span>Select All</span>
+            </label>
+            
+            <button type="submit" class="btn" id="createPOForSelected" disabled>
+                Create PO for selected RF/s
+            </button>
+        </div>
+
+        <!-- Requisitions Table -->
+        <div style="margin-top: 20px;">
+            <h3>Approved Requisitions</h3>
+            <table class="table" id="approvedRequisitionsTable">
+                <thead>
+                    <tr>
+                        <th class="checkbox-cell">Select</th>
+                        <th>REQ_ID</th>
+                        <th>Type</th>
+                        <th>Date Requested</th>
+                        <th>Requested By</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for requisition in approved_requisitions %}
+                    <tr data-req-id="{{ requisition.req_id }}">
+                        <td class="checkbox-cell">
+                            <input type="checkbox" name="requisition_ids" value="{{ requisition.req_id }}" class="requisition-checkbox">
+                        </td>
+                        <td>REQ-{{ requisition.req_id }}</td>
+                        <td>{{ requisition.get_req_type_display }}</td>
+                        <td>{{ requisition.req_requested_date|date:"M d, Y" }}</td>
+                        <td>{{ requisition.requested_by.user_fname }} {{ requisition.requested_by.user_lname }}</td>
+                        <td>
+                            <span class="status-badge status-approved">
+                                {{ requisition.get_req_main_status_display }} ({{ requisition.get_req_substatus_display }})
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #717182; padding: 20px;">
+                            No approved requisitions with completed quotations found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </form>
+</div>
+
+<script>
+    class RequisitionSelector {
+        constructor() {
+            this.selectedRequisitions = new Set();
+            this.initEventListeners();
+        }
+
+        initEventListeners() {
+            // Select All checkbox
+            document.getElementById('selectAllRequisitions').addEventListener('change', (e) => {
+                this.toggleSelectAll(e.target.checked);
+            });
+
+            // Individual requisition checkboxes
+            document.querySelectorAll('.requisition-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    this.handleRequisitionSelection(e.target);
+                });
+            });
+
+            // Form submission
+            document.getElementById('poCreationForm').addEventListener('submit', (e) => {
+                this.handleFormSubmission(e);
+            });
+        }
+
+        handleRequisitionSelection(checkbox) {
+            const reqId = checkbox.value;
+            
+            if (checkbox.checked) {
+                this.selectedRequisitions.add(reqId);
+            } else {
+                this.selectedRequisitions.delete(reqId);
+            }
+
+            this.updateSelectAllCheckbox();
+            this.updateCreatePOButton();
+        }
+
+        toggleSelectAll(selectAll) {
+            const checkboxes = document.querySelectorAll('.requisition-checkbox');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll;
+                
+                const reqId = checkbox.value;
+                if (selectAll) {
+                    this.selectedRequisitions.add(reqId);
+                } else {
+                    this.selectedRequisitions.delete(reqId);
+                }
+            });
+
+            this.updateCreatePOButton();
+        }
+
+        updateSelectAllCheckbox() {
+            const selectAllCheckbox = document.getElementById('selectAllRequisitions');
+            const totalCheckboxes = document.querySelectorAll('.requisition-checkbox').length;
+            
+            if (totalCheckboxes === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+                return;
+            }
+
+            if (this.selectedRequisitions.size === totalCheckboxes) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+            } else if (this.selectedRequisitions.size > 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
+            } else {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            }
+        }
+
+        updateCreatePOButton() {
+            const createPOButton = document.getElementById('createPOForSelected');
+            createPOButton.disabled = this.selectedRequisitions.size === 0;
+        }
+
+        handleFormSubmission(e) {
+            if (this.selectedRequisitions.size === 0) {
+                e.preventDefault();
+                alert('Please select at least one requisition to create a PO.');
+                return;
+            }
+
+            // Confirm action
+            if (!confirm(`Create Purchase Orders for ${this.selectedRequisitions.size} selected requisition(s)?`)) {
+                e.preventDefault();
+                return;
+            }
+
+            // Show loading state
+            const createButton = document.getElementById('createPOForSelected');
+            createButton.disabled = true;
+            createButton.textContent = 'Creating...';
+        }
+    }
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        new RequisitionSelector();
+    });
+</script>
+{% endblock %}

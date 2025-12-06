@@ -1,0 +1,1297 @@
+{% extends "main/base.html" %}
+{% block page_content %}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #f8fafc;
+        color: #030213;
+    }
+
+    .container-fluid {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .back-btn {
+        padding: 10px 20px;
+        background: #2563eb;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-weight: 500;
+    }
+
+    .back-btn:hover {
+        background: #1d4ed8;
+    }
+
+    .card {
+        background: white;
+        padding: 0;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+        overflow: hidden;
+    }
+
+    .card-header {
+        background: #030213;
+        color: white;
+        padding: 20px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .card-header h4 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .card-header .text-muted {
+        color: #e2e8f0 !important;
+    }
+
+    .inspection-table-container {
+        overflow-x: auto;
+    }
+
+    .inspection-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        min-width: 1200px;
+    }
+
+    .inspection-table th {
+        background: #030213;
+        color: white;
+        padding: 16px;
+        text-align: left;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .inspection-table td {
+        padding: 16px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        vertical-align: top;
+    }
+
+    .inspection-table tbody tr:nth-child(even) {
+        background: #f8fafc;
+    }
+
+    .items-column { width: 25%; background: white; }
+    .quantity-column { width: 15%; background: white; }
+    .action-column { width: 15%; background: white; }
+    .condition-column { width: 22.5%; background: #f8fafc; }
+    .issues-column { width: 22.5%; background: #f8fafc; }
+
+    .sub-header {
+        background: #1e40af;
+        color: white;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .condition-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .condition-item {
+        text-align: center;
+        padding: 8px;
+        background: #f8fafc;
+        border-radius: 4px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .condition-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #64748b;
+        margin-bottom: 4px;
+    }
+
+    .condition-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #030213;
+    }
+
+    .issues-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .issue-item {
+        text-align: center;
+        padding: 8px;
+        background: #f8fafc;
+        border-radius: 4px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .issue-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #64748b;
+        margin-bottom: 4px;
+    }
+
+    .issue-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #030213;
+    }
+
+    .btn-group-sm {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 8px;
+    }
+
+    .btn-group-sm .btn {
+        padding: 6px 12px;
+        border: 1px solid #cbd5e1;
+        background: white;
+        cursor: pointer;
+        font-size: 0.875rem;
+    }
+
+    .btn-group-sm .btn:first-child {
+        border-radius: 4px 0 0 4px;
+    }
+
+    .btn-group-sm .btn:last-child {
+        border-radius: 0 4px 4px 0;
+    }
+
+    .btn-group-sm .btn-light {
+        background: #f8fafc;
+        cursor: default;
+        min-width: 40px;
+        text-align: center;
+        font-weight: 600;
+    }
+
+    .btn-group-sm .btn-outline-secondary:hover {
+        background: #f1f5f9;
+    }
+
+    /* Fixed Action Column Button Styles */
+    .action-column .btn {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        width: 100%;
+        justify-content: center;
+        min-height: 36px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+        justify-content: flex-end;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-success {
+        background: #16a34a;
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: #15803d;
+    }
+
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #4b5563;
+    }
+
+    .btn-primary {
+        background: #2563eb;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #1d4ed8;
+    }
+
+    .btn-warning {
+        background: #f59e0b;
+        color: white;
+    }
+
+    .btn-warning:hover {
+        background: #d97706;
+    }
+
+    .text-muted {
+        color: #717182 !important;
+    }
+
+    .empty-state {
+        padding: 40px 20px;
+        text-align: center;
+        color: #717182;
+        font-style: italic;
+    }
+
+    .alert-danger {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+        border-radius: 6px;
+        padding: 16px;
+        margin-bottom: 20px;
+    }
+
+    .item-info strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 1rem;
+    }
+
+    .item-specs {
+        margin: 8px 0;
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+
+    .item-quantity {
+        font-weight: 600;
+        margin-bottom: 12px;
+        font-size: 0.875rem;
+        text-align: center;
+    }
+
+    .quantity-info {
+        margin-bottom: 8px;
+        font-size: 0.75rem;
+        color: #64748b;
+        text-align: center;
+    }
+
+    .remaining-quantity {
+        color: #dc2626;
+        font-weight: 600;
+    }
+
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+    }
+
+    .modal-header {
+        background: #030213;
+        color: white;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        font-size: 0.875rem;
+    }
+
+    .modal-footer {
+        padding: 16px 20px;
+        background: #f8fafc;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    /* Receiving Memo Modal Styles */
+    .memo-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .memo-content {
+        background: white;
+        border-radius: 8px;
+        width: 95%;
+        max-width: 900px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .memo-document {
+        padding: 60px;
+        background: white;
+        font-family: 'Times New Roman', serif;
+    }
+
+    .memo-header {
+        text-align: center;
+        border-bottom: 3px solid #030213;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+
+    .memo-header h2 {
+        margin: 0;
+        font-size: 2rem;
+        color: #030213;
+        font-weight: bold;
+    }
+
+    .memo-header .memo-number {
+        font-size: 0.9rem;
+        color: #64748b;
+        margin-top: 5px;
+    }
+
+    .memo-to-from {
+        margin-bottom: 30px;
+        line-height: 1.8;
+    }
+
+    .memo-to-from div {
+        display: flex;
+        margin-bottom: 8px;
+    }
+
+    .memo-to-from strong {
+        min-width: 100px;
+        color: #030213;
+    }
+
+    .memo-subject {
+        margin: 30px 0;
+        padding: 15px;
+        background: #f8fafc;
+        border-left: 4px solid #2563eb;
+    }
+
+    .memo-subject strong {
+        color: #030213;
+    }
+
+    .memo-body {
+        margin: 30px 0;
+        line-height: 1.8;
+        color: #1e293b;
+    }
+
+    .memo-items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        font-size: 0.9rem;
+    }
+
+    .memo-items-table th {
+        background: #030213;
+        color: white;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+    }
+
+    .memo-items-table td {
+        padding: 12px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .memo-items-table tbody tr:nth-child(even) {
+        background: #f8fafc;
+    }
+
+    .condition-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin: 2px;
+    }
+
+    .condition-good {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .condition-damaged {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .condition-missing {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .condition-excess {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .condition-wrong {
+        background: #fce7f3;
+        color: #9f1239;
+    }
+
+    .memo-footer {
+        margin-top: 50px;
+        padding-top: 30px;
+        border-top: 2px solid #e2e8f0;
+    }
+
+    .signature-section {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 60px;
+    }
+
+    .signature-block {
+        text-align: center;
+        min-width: 200px;
+    }
+
+    .signature-line {
+        border-top: 2px solid #030213;
+        margin-top: 50px;
+        padding-top: 8px;
+        font-weight: 600;
+    }
+
+    .signature-title {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-top: 4px;
+    }
+
+    .memo-actions {
+        padding: 20px;
+        background: #f8fafc;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    @media print {
+        .memo-actions {
+            display: none !important;
+        }
+        
+        .memo-content {
+            max-width: 100%;
+            box-shadow: none;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 10px;
+        }
+        
+        .inspection-table-container {
+            margin: 0 -10px;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .action-column .btn {
+            font-size: 0.75rem;
+            padding: 6px 10px;
+        }
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="header">
+        <h1>
+            Inspection - REQ-{{ requisition.req_id }}
+            {% if purchase_order %} - PO-{{ purchase_order.po_id }}{% endif %}
+        </h1>
+        <a href="{% url 'requisition_detail' requisition.req_id %}" class="back-btn">← Back to Requisition</a>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-danger">
+        {{ error }}
+    </div>
+    <div class="action-buttons">
+        <a href="{% url 'requisition_detail' requisition.req_id %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Requisition
+        </a>
+    </div>
+    {% else %}
+    
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">Product Inspection</h4>
+            <small class="text-muted">
+                Requisition by: {{ requisition.requested_by.user_fname }} {{ requisition.requested_by.user_lname }}
+                {% if purchase_order %} | Supplier: {{ purchase_order.supplier.sup_name }}{% endif %}
+            </small>
+        </div>
+
+        {% if has_multiple_requisitions %}
+        <div class="info-box" style="border-left-color: #1e40af; margin-bottom: 20px;">
+            <h4 style="margin-top: 0;">Requisition Summary (Multiple Requisitions in this PO)</h4>
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid #e2e8f0;">Requisition ID</th>
+                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid #e2e8f0;">Requestor</th>
+                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid #e2e8f0;">Items</th>
+                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid #e2e8f0;">Total Qty</th>
+                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid #e2e8f0;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req_summary in requisition_summary %}
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">
+                            <strong>REQ-{{ req_summary.requisition.req_id }}</strong> 
+                            {% if req_summary.is_main %}(Main){% endif %}
+                        </td>
+                        <td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">
+                            {{ req_summary.requisition.requested_by.user_fname }} {{ req_summary.requisition.requested_by.user_lname }}
+                        </td>
+                        <td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">
+                            {{ req_summary.item_count }} items
+                        </td>
+                        <td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">
+                            {{ req_summary.total_quantity }}
+                        </td>
+                        <td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">
+                            <span class="status-badge 
+                                {% if req_summary.requisition.req_main_status == 'INSPECTION' %}status-to-be-delivered
+                                {% elif req_summary.requisition.req_main_status == 'IN_TRANSIT' %}status-in-transit
+                                {% elif req_summary.requisition.req_main_status == 'DELIVERED' %}status-delivered
+                                {% else %}status-pending{% endif %}">
+                                {{ req_summary.requisition.get_req_main_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+        
+        <div class="inspection-table-container">
+            <table class="inspection-table">
+                <thead>
+                    <tr>
+                        <th class="items-column">Ordered Items</th>
+                        <th class="quantity-column">Quantity</th>
+                        <th class="action-column">Action</th>
+                        <th class="condition-column">Item Condition</th>
+                        <th class="issues-column">Issues & Discrepancies</th>
+                    </tr>
+                    <tr class="sub-header">
+                        <th class="items-column">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Items</span>
+                                <span>Specification</span>
+                            </div>
+                        </th>
+                        <th class="quantity-column">
+                            <div style="text-align: center;">
+                                <span>Current</span>
+                            </div>
+                        </th>
+                        <th class="action-column">
+                            <div style="text-align: center;">
+                                <span>Actions</span>
+                            </div>
+                        </th>
+                        <th class="condition-column">
+                            <div style="display: flex; justify-content: space-around;">
+                                <span>Good</span>
+                                <span>Damaged</span>
+                                <span>Missing</span>
+                            </div>
+                        </th>
+                        <th class="issues-column">
+                            <div style="display: flex; justify-content: space-around;">
+                                <span>Excess</span>
+                                <span>Wrong Item</span>
+                            </div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in po_items %}
+                    <tr>
+                        <td class="items-column">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div style="flex: 1;">
+                                    <strong>{{ item.product.prod_name }}</strong>
+                                    <div class="item-specs">
+                                        {% if item.product.prod_desc %}
+                                            {{ item.product.prod_desc }}
+                                        {% else %}
+                                            No specifications
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        
+                        <td class="quantity-column">
+                            <div class="item-quantity">
+                                <div class="quantity-info">
+                                    Ordered: {{ item.po_item_ordered_quantity }} | 
+                                    Remaining: <span class="remaining-quantity" id="remaining-{{ item.po_item_id }}">{{ item.po_item_ordered_quantity }}</span>
+                                </div>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-secondary" onclick="decreaseQuantity({{ item.po_item_id }})">-</button>
+                                    <span class="btn btn-light" id="quantity-{{ item.po_item_id }}">{{ item.po_item_ordered_quantity }}</span>
+                                    <button class="btn btn-outline-secondary" onclick="increaseQuantity({{ item.po_item_id }})">+</button>
+                                </div>
+                            </div>
+                        </td>
+                        
+                        <td class="action-column">
+                            <div style="text-align: center; display: flex; flex-direction: column; gap: 8px;">
+                                <button class="btn btn-primary" onclick="openSaveModal({{ item.po_item_id }})">
+                                    Save
+                                </button>
+                                <button class="btn btn-warning" onclick="resetItem({{ item.po_item_id }})">
+                                    Reset
+                                </button>
+                            </div>
+                        </td>
+                        
+                        <td class="condition-column">
+                            <div class="condition-grid">
+                                <div class="condition-item">
+                                    <div class="condition-label">Good</div>
+                                    <div class="condition-value" id="good-quantity-{{ item.po_item_id }}">0</div>
+                                </div>
+                                <div class="condition-item">
+                                    <div class="condition-label">Damaged</div>
+                                    <div class="condition-value" id="damaged-quantity-{{ item.po_item_id }}">0</div>
+                                </div>
+                                <div class="condition-item">
+                                    <div class="condition-label">Missing</div>
+                                    <div class="condition-value" id="missing-quantity-{{ item.po_item_id }}">0</div>
+                                </div>
+                            </div>
+                        </td>
+                        
+                        <td class="issues-column">
+                            <div class="issues-grid">
+                                <div class="issue-item">
+                                    <div class="issue-label">Excess</div>
+                                    <div class="issue-value" id="excess-quantity-{{ item.po_item_id }}">0</div>
+                                </div>
+                                <div class="issue-item">
+                                    <div class="issue-label">Wrong Item</div>
+                                    <div class="issue-value" id="wrong-quantity-{{ item.po_item_id }}">0</div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="empty-state">No items found for inspection</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="action-buttons">
+        <button class="btn btn-success" onclick="completeInspection()">
+            <i class="fas fa-check"></i> Done Inspection
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Save Modal -->
+<div class="modal" id="saveModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Save Item Condition</h3>
+            <button class="close-btn" onclick="closeSaveModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="modal-product-name">Product</label>
+                <input type="text" id="modal-product-name" class="form-control" readonly>
+            </div>
+            <div class="form-group">
+                <label for="modal-current-quantity">Current Quantity</label>
+                <input type="text" id="modal-current-quantity" class="form-control" readonly>
+            </div>
+            <div class="form-group">
+                <label for="modal-remaining-quantity">Remaining Quantity</label>
+                <input type="text" id="modal-remaining-quantity" class="form-control" readonly>
+            </div>
+            <div class="form-group">
+                <label for="modal-condition">Assign to Condition</label>
+                <select id="modal-condition" class="form-control">
+                    <option value="">Select condition</option>
+                    <option value="good">Good</option>
+                    <option value="damaged">Damaged</option>
+                    <option value="missing">Missing</option>
+                    <option value="excess">Excess</option>
+                    <option value="wrong">Wrong Item</option>
+                </select>
+            </div>
+            <div class="form-group" id="modal-notes-group" style="display: none;">
+                <label for="modal-notes">Notes/Details</label>
+                <input type="text" id="modal-notes" class="form-control" placeholder="Enter details...">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeSaveModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveItemCondition()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Receiving Memo Modal -->
+<div class="memo-modal" id="receivingMemoModal">
+    <div class="memo-content">
+        <div class="memo-document" id="memoDocument">
+            <div class="memo-header">
+                <h2>RECEIVING MEMO</h2>
+                <div class="memo-number">RM-<span id="memo-rm-id"></span></div>
+            </div>
+
+            <div class="memo-to-from">
+                <div>
+                    <strong>TO:</strong>
+                    <span>Top Manager</span>
+                </div>
+                <div>
+                    <strong>FROM:</strong>
+                    <span id="memo-from"></span>
+                </div>
+                <div>
+                    <strong>DATE:</strong>
+                    <span id="memo-date"></span>
+                </div>
+                <div>
+                    <strong>REQ ID:</strong>
+                    <span id="memo-req-id"></span>
+                </div>
+                <div>
+                    <strong>PO ID:</strong>
+                    <span id="memo-po-id"></span>
+                </div>
+            </div>
+
+            <div class="memo-subject">
+                <strong>SUBJECT:</strong> Inventory Replenishment Product Inspection
+            </div>
+
+            <div class="memo-body">
+                <p>This memo summarizes the inspection results for the inventory replenishment delivery associated with the above-referenced requisition and purchase order.</p>
+
+                <h4 style="margin-top: 30px; color: #030213;">Inspection Summary:</h4>
+                
+                <table class="memo-items-table">
+                    <thead>
+                        <tr>
+                            <th>Product Name</th>
+                            <th>Ordered Qty</th>
+                            <th>Condition / Discrepancies</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="memo-items-body">
+                        <!-- Items will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+
+                <p style="margin-top: 30px;">
+                    <strong>Requested By:</strong> <span id="memo-requested-by"></span><br>
+                    <strong>Supplier:</strong> <span id="memo-supplier"></span><br>
+                    <strong>Inspected By:</strong> <span id="memo-inspector"></span>
+                </p>
+
+                <p style="margin-top: 20px; font-style: italic; color: #64748b;">
+                    All items have been inspected and categorized according to their condition. 
+                    Discrepancies have been documented for further action as necessary.
+                </p>
+            </div>
+
+            <div class="memo-footer">
+                <div class="signature-section">
+                    <div class="signature-block">
+                        <div class="signature-line">Inspector</div>
+                        <div class="signature-title" id="memo-inspector-sign"></div>
+                    </div>
+                    <div class="signature-block">
+                        <div class="signature-line">Date</div>
+                        <div class="signature-title" id="memo-date-sign"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="memo-actions">
+            <button class="btn btn-secondary" onclick="closeReceivingMemo()">Close</button>
+            <button class="btn btn-primary" onclick="downloadMemoPDF()">
+                <i class="fas fa-download"></i> Download PDF
+            </button>
+            <button class="btn btn-success" onclick="confirmAndRedirect()">
+                <i class="fas fa-check"></i> Confirm & Continue
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<script>
+let inspectionData = {
+    reqId: {{ requisition.req_id }},
+    poId: {% if purchase_order %}{{ purchase_order.po_id }}{% else %}null{% endif %},
+    items: {},
+    currentEditingItem: null
+};
+
+{% for item in po_items %}
+inspectionData.items[{{ item.po_item_id }}] = {
+    name: "{{ item.product.prod_name|escapejs }}",
+    specs: "{{ item.product.prod_desc|default:'No specifications'|escapejs }}",
+    ordered: {{ item.po_item_ordered_quantity }},
+    current: {{ item.po_item_ordered_quantity }},
+    remaining: {{ item.po_item_ordered_quantity }},
+    good: { quantity: 0, notes: '' },
+    damaged: { quantity: 0, type: '' },
+    missing: { quantity: 0, reason: '' },
+    excess: { quantity: 0, action: '' },
+    wrong: { quantity: 0, correctItem: '' }
+};
+{% endfor %}
+
+function increaseQuantity(itemId) {
+    const item = inspectionData.items[itemId];
+    if (item.current < item.remaining) {
+        item.current++;
+        updateQuantityDisplay(itemId);
+    }
+}
+
+function decreaseQuantity(itemId) {
+    const item = inspectionData.items[itemId];
+    if (item.current > 0) {
+        item.current--;
+        updateQuantityDisplay(itemId);
+    }
+}
+
+function updateQuantityDisplay(itemId) {
+    const item = inspectionData.items[itemId];
+    document.getElementById(`quantity-${itemId}`).textContent = item.current;
+    document.getElementById(`remaining-${itemId}`).textContent = item.remaining;
+}
+
+function resetItem(itemId) {
+    if (confirm('Are you sure you want to reset this item? This will clear all assigned conditions and reset quantities.')) {
+        const item = inspectionData.items[itemId];
+        
+        // Reset all data
+        item.current = item.ordered;
+        item.remaining = item.ordered;
+        item.good = { quantity: 0, notes: '' };
+        item.damaged = { quantity: 0, type: '' };
+        item.missing = { quantity: 0, reason: '' };
+        item.excess = { quantity: 0, action: '' };
+        item.wrong = { quantity: 0, correctItem: '' };
+        
+        // Update UI
+        updateQuantityDisplay(itemId);
+        updateConditionQuantities(itemId);
+        
+        alert('Item has been reset successfully.');
+    }
+}
+
+function openSaveModal(itemId) {
+    const item = inspectionData.items[itemId];
+    if (item.current === 0) {
+        alert('Please set a quantity first using the + and - buttons.');
+        return;
+    }
+    
+    inspectionData.currentEditingItem = itemId;
+    
+    document.getElementById('modal-product-name').value = item.name;
+    document.getElementById('modal-current-quantity').value = `${item.current} / ${item.ordered}`;
+    document.getElementById('modal-remaining-quantity').value = `${item.remaining} remaining`;
+    document.getElementById('modal-condition').value = '';
+    document.getElementById('modal-notes').value = '';
+    document.getElementById('modal-notes-group').style.display = 'none';
+    
+    document.getElementById('saveModal').style.display = 'flex';
+}
+
+function closeSaveModal() {
+    document.getElementById('saveModal').style.display = 'none';
+    inspectionData.currentEditingItem = null;
+}
+
+function saveItemCondition() {
+    const itemId = inspectionData.currentEditingItem;
+    const item = inspectionData.items[itemId];
+    const condition = document.getElementById('modal-condition').value;
+    const notes = document.getElementById('modal-notes').value;
+    const currentQty = item.current;
+    
+    if (!condition) {
+        alert('Please select a condition.');
+        return;
+    }
+    
+    // Add to the selected condition
+    item[condition].quantity += currentQty;
+    
+    // Set notes/details based on condition
+    if (condition === 'good') {
+        item.good.notes = notes || item.good.notes;
+    } else if (condition === 'damaged') {
+        item.damaged.type = notes || item.damaged.type;
+    } else if (condition === 'missing') {
+        item.missing.reason = notes || item.missing.reason;
+    } else if (condition === 'excess') {
+        item.excess.action = notes || item.excess.action;
+    } else if (condition === 'wrong') {
+        item.wrong.correctItem = notes || item.wrong.correctItem;
+    }
+    
+    // Update remaining quantity
+    item.remaining -= currentQty;
+    
+    // Update UI
+    updateConditionQuantities(itemId);
+    updateQuantityDisplay(itemId);
+    
+    // Reset current quantity for next assignment
+    item.current = 0;
+    document.getElementById(`quantity-${itemId}`).textContent = '0';
+    
+    closeSaveModal();
+    alert(`Successfully assigned ${currentQty} items to ${condition} condition.`);
+}
+
+function updateConditionQuantities(itemId) {
+    const item = inspectionData.items[itemId];
+    
+    document.getElementById(`good-quantity-${itemId}`).textContent = item.good.quantity;
+    document.getElementById(`damaged-quantity-${itemId}`).textContent = item.damaged.quantity;
+    document.getElementById(`missing-quantity-${itemId}`).textContent = item.missing.quantity;
+    document.getElementById(`excess-quantity-${itemId}`).textContent = item.excess.quantity;
+    document.getElementById(`wrong-quantity-${itemId}`).textContent = item.wrong.quantity;
+}
+
+document.getElementById('modal-condition').addEventListener('change', function() {
+    const condition = this.value;
+    const notesGroup = document.getElementById('modal-notes-group');
+    
+    if (condition) {
+        notesGroup.style.display = 'block';
+        
+        const notesInput = document.getElementById('modal-notes');
+        if (condition === 'good') {
+            notesInput.placeholder = 'Enter notes about good condition...';
+        } else if (condition === 'damaged') {
+            notesInput.placeholder = 'Enter damage type/details...';
+        } else if (condition === 'missing') {
+            notesInput.placeholder = 'Enter reason for missing...';
+        } else if (condition === 'excess') {
+            notesInput.placeholder = 'Enter action for excess items...';
+        } else if (condition === 'wrong') {
+            notesInput.placeholder = 'Enter correct item details...';
+        }
+    } else {
+        notesGroup.style.display = 'none';
+    }
+});
+
+let redirectUrl = '';
+
+function completeInspection() {
+    console.log('Completing inspection...', inspectionData);
+    
+    // Validate that all ordered quantities are accounted for
+    let totalAccounted = 0;
+    let totalOrdered = 0;
+    let unaccountedItems = [];
+    
+    for (const itemId in inspectionData.items) {
+        const item = inspectionData.items[itemId];
+        totalOrdered += item.ordered;
+        const itemTotal = item.good.quantity + item.damaged.quantity + item.missing.quantity + item.excess.quantity + item.wrong.quantity;
+        totalAccounted += itemTotal;
+        
+        if (itemTotal === 0) {
+            unaccountedItems.push(item.name);
+        }
+    }
+    
+    if (unaccountedItems.length > 0) {
+        alert(`Warning: The following items have not been inspected yet:\n\n${unaccountedItems.join('\n')}\n\nPlease inspect all items before completing.`);
+        return;
+    }
+    
+    if (totalAccounted !== totalOrdered) {
+        alert(`Warning: Total accounted items (${totalAccounted}) does not match total ordered items (${totalOrdered}). Please review your inspection.`);
+        return;
+    }
+    
+    if (!confirm('Are you sure you want to complete the inspection? This will save all discrepancy records and show the receiving memo.')) {
+        return;
+    }
+    
+    // Send data to backend
+    fetch(`/inspection/${inspectionData.reqId}/save/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            items: inspectionData.items
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.show_memo && data.memo_data) {
+                redirectUrl = data.redirect_url;
+                showReceivingMemo(data.memo_data);
+            } else {
+                alert(data.message);
+                window.location.href = data.redirect_url;
+            }
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while saving the inspection. Please try again.');
+    });
+}
+
+function showReceivingMemo(memoData) {
+    // Populate memo header
+    document.getElementById('memo-rm-id').textContent = memoData.rm_id;
+    document.getElementById('memo-from').textContent = memoData.inspector;
+    document.getElementById('memo-date').textContent = memoData.inspection_date;
+    document.getElementById('memo-req-id').textContent = `REQ-${memoData.requisition.req_id}`;
+    document.getElementById('memo-po-id').textContent = `PO-${memoData.purchase_order.po_id}`;
+    
+    // Populate memo details
+    document.getElementById('memo-requested-by').textContent = memoData.requisition.requested_by;
+    document.getElementById('memo-supplier').textContent = memoData.purchase_order.supplier;
+    document.getElementById('memo-inspector').textContent = memoData.inspector;
+    document.getElementById('memo-inspector-sign').textContent = memoData.inspector;
+    document.getElementById('memo-date-sign').textContent = memoData.inspection_date;
+    
+    // Populate items table
+    const itemsBody = document.getElementById('memo-items-body');
+    itemsBody.innerHTML = '';
+    
+    memoData.items.forEach(item => {
+        const row = document.createElement('tr');
+        
+        // Product name
+        const nameCell = document.createElement('td');
+        nameCell.innerHTML = `<strong>${item.name}</strong>`;
+        row.appendChild(nameCell);
+        
+        // Ordered quantity
+        const qtyCell = document.createElement('td');
+        qtyCell.textContent = item.ordered_qty;
+        qtyCell.style.textAlign = 'center';
+        row.appendChild(qtyCell);
+        
+        // Conditions
+        const conditionsCell = document.createElement('td');
+        let conditionsHTML = '';
+        for (const [condition, details] of Object.entries(item.conditions)) {
+            const badgeClass = `condition-${condition.toLowerCase()}`;
+            conditionsHTML += `<span class="condition-badge ${badgeClass}">${condition}: ${details.quantity}</span> `;
+        }
+        conditionsCell.innerHTML = conditionsHTML;
+        row.appendChild(conditionsCell);
+        
+        // Notes
+        const notesCell = document.createElement('td');
+        let notesHTML = '';
+        for (const [condition, details] of Object.entries(item.conditions)) {
+            if (details.notes && details.notes.length > 0) {
+                notesHTML += `<strong>${condition}:</strong> ${details.notes.join(', ')}<br>`;
+            }
+        }
+        notesCell.innerHTML = notesHTML || '<em style="color: #94a3b8;">No notes</em>';
+        row.appendChild(notesCell);
+        
+        itemsBody.appendChild(row);
+    });
+    
+    // Show modal
+    document.getElementById('receivingMemoModal').style.display = 'flex';
+}
+
+function closeReceivingMemo() {
+    document.getElementById('receivingMemoModal').style.display = 'none';
+}
+
+function downloadMemoPDF() {
+    const element = document.getElementById('memoDocument');
+    const opt = {
+        margin: 0.5,
+        filename: `Receiving_Memo_RM-${document.getElementById('memo-rm-id').textContent}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+    
+    html2pdf().set(opt).from(element).save();
+}
+
+function confirmAndRedirect() {
+    closeReceivingMemo();
+    if (redirectUrl) {
+        window.location.href = redirectUrl;
+    }
+}
+
+// Add CSRF token function (if not already present)
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    {% for item in po_items %}
+    document.getElementById(`quantity-{{ item.po_item_id }}`).textContent = '{{ item.po_item_ordered_quantity }}';
+    document.getElementById(`remaining-{{ item.po_item_id }}`).textContent = '{{ item.po_item_ordered_quantity }}';
+    {% endfor %}
+});
+</script>
+{% endblock %}

@@ -1,0 +1,611 @@
+<!-- Purchasing\templates\purchasing\purchasing_staff_sup_manage.html -->
+{% extends "purchasing/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    * {
+        font-family: 'Inter', sans-serif;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 20px;
+    }
+
+    .page-title h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0 0 4px 0;
+    }
+
+    .page-description {
+        font-size: 14px;
+        color: #6b7280;
+        margin: 0;
+    }
+
+    .create-btn {
+        background-color: #1a2332;
+        color: white;
+        border: none;
+        padding: 10px 18px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        transition: background-color 0.2s ease;
+    }
+
+    .create-btn:hover {
+        background-color: #060607;
+    }
+
+    /* Search and Filter Section */
+    .search-filter-section {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 16px 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .search-box {
+        flex: 1;
+        position: relative;
+        max-width: 400px;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 10px 12px 10px 38px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #374151;
+        background: #fafafa;
+        transition: all 0.2s;
+    }
+
+    .search-box input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background: white;
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        font-size: 14px;
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .sort-dropdown {
+        position: relative;
+    }
+
+    .sort-btn {
+        padding: 10px 16px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: white;
+        font-size: 14px;
+        color: #374151;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+        font-weight: 500;
+    }
+
+    .sort-btn:hover {
+        border-color: #d1d5db;
+        background: #f9fafb;
+    }
+
+    .sort-btn i {
+        font-size: 12px;
+        color: #6b7280;
+    }
+
+    /* Modal Background */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.25);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 999;
+    }
+
+    .modal-container {
+        width: 520px;
+        background: #fff;
+        border-radius: 18px;
+        padding: 25px 30px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        animation: fadeIn 0.25s ease;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-header h2 {
+        font-size: 20px;
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #6b7280;
+    }
+
+    .modal-body {
+        margin-top: 18px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        font-size: 14px;
+        color: #374151;
+        font-weight: 500;
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        background: #fafafa;
+        font-size: 14px;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background: white;
+    }
+
+    textarea {
+        height: 70px;
+        resize: none;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 15px;
+    }
+
+    .form-row .half {
+        flex: 1;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .btn-cancel {
+        padding: 10px 18px;
+        background: #f3f4f6;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        color: #374151;
+    }
+
+    .btn-cancel:hover {
+        background: #e5e7eb;
+    }
+
+    .btn-add {
+        padding: 10px 20px;
+        background: #2563eb;
+        color: #fff;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    .btn-add:hover {
+        background: #1d4ed8;
+    }
+
+    /* Modern Table Design */
+    .table-container {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+    }
+
+    .supplier-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        color: #374151;
+    }
+
+    .supplier-table thead th {
+        background: #f9fafb;
+        text-align: left;
+        padding: 14px 16px;
+        font-weight: 600;
+        color: #6b7280;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .supplier-table tbody tr {
+        border-bottom: 1px solid #f3f4f6;
+        transition: background-color 0.15s;
+    }
+
+    .supplier-table tbody tr:hover {
+        background: #f9fafb;
+    }
+
+    .supplier-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .supplier-table tbody td {
+        padding: 16px;
+        color: #1f2937;
+        font-size: 14px;
+    }
+
+    .supplier-table tbody td:first-child {
+        font-weight: 500;
+        color: #111827;
+    }
+
+    /* Checkbox styling */
+    .supplier-table input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+        accent-color: #2563eb;
+    }
+
+    /* Action Button */
+    .action-btn {
+        padding: 7px 14px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        text-decoration: none;
+        background: #eff6ff;
+        color: #2563eb;
+        border: 1px solid #dbeafe;
+        transition: all 0.2s;
+        display: inline-block;
+    }
+
+    .action-btn:hover {
+        background: #dbeafe;
+        border-color: #bfdbfe;
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #9ca3af;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.3;
+    }
+
+    .empty-state p {
+        font-size: 15px;
+        margin: 0;
+    }
+
+    @keyframes fadeIn {
+        from { 
+            opacity: 0; 
+            transform: translateY(10px); 
+        }
+        to { 
+            opacity: 1; 
+            transform: translateY(0); 
+        }
+    }
+</style>
+{% endblock %}
+
+{% block page_content %}
+    <div class="page-header">
+        <div class="page-title">
+            <h1>Supplier Management</h1>
+            <p class="page-description">Manage supplier information, contacts, and product catalog.</p>
+        </div>
+
+        <button class="create-btn" onclick="openAddSupplierModal()">
+            <i class="fa-solid fa-plus"></i>
+            Add supplier
+        </button>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="search-filter-section">
+        <div class="search-box">
+            <i class="fa-solid fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search suppliers...">
+        </div>
+        
+        <div class="filter-group">
+            <div class="sort-dropdown">
+                <select class="sort-btn" id="sortBy">
+                    <option value="">Sort by</option>
+                    <option value="name-asc">Name (A-Z)</option>
+                    <option value="name-desc">Name (Z-A)</option>
+                    <option value="date-newest">Newest First</option>
+                    <option value="date-oldest">Oldest First</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Supplier Modal -->
+    <div id="addSupplierModal" class="modal-overlay" style="display: none;">
+        <div class="modal-container">
+            <form method="POST" action="{% url 'create_supplier' %}">
+                <div class="modal-header">
+                    <h2>Add Supplier</h2>
+                    <button type="button" class="close-btn" id="closeSupplierModal">&times;</button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Supplier Name</label>
+                        <input type="text" id="sup_name" placeholder="Enter supplier name">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label>Phone</label>
+                            <input type="text" id="sup_phone" placeholder="e.g. 09123456789">
+                        </div>
+                        <div class="form-group half">
+                            <label>Email</label>
+                            <input type="email" id="sup_email" placeholder="supplier@email.com">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Address</label>
+                        <textarea id="sup_address" placeholder="Complete address"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Contact Person</label>
+                        <input type="text" id="sup_contact_person" placeholder="Name of contact person">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label>Payment Terms</label>
+                            <input type="text" id="sup_payment_terms" placeholder="e.g. 30 days credit">
+                        </div>
+                        <div class="form-group half">
+                            <label>Delivery Terms</label>
+                            <input type="text" id="sup_delivery_terms" placeholder="e.g. Free delivery">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" id="cancelAddSupplier">Cancel</button>
+                    <button type="button" class="btn-add" id="btnCreateSupplier">Add Supplier</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Table Container -->
+    <div class="table-container">
+        <table class="supplier-table">
+            <thead>
+                <tr>
+                    <th>Supplier Name</th>
+                    <th>Contact Person</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Address</th>
+                    <th>Payment Terms</th>
+                    <th>Delivery Terms</th>
+                    <th style="text-align: center;">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody id="supplierTableBody">
+            {% if suppliers %}
+                {% for s in suppliers %}
+                    <tr data-supplier-name="{{ s.sup_name|lower }}" data-created="{{ s.sup_created_at|date:'Y-m-d' }}">
+                        <td>{{ s.sup_name }}</td>
+                        <td>{{ s.sup_contact_person }}</td>
+                        <td>{{ s.sup_phone }}</td>
+                        <td>{{ s.sup_email|default:"—" }}</td>
+                        <td>{{ s.sup_address|default:"—" }}</td>
+                        <td>{{ s.sup_payment_terms|default:"—" }}</td>
+                        <td>{{ s.sup_delivery_terms|default:"—" }}</td>
+                        <td style="text-align: center;">
+                            <a href="{% url 'supplier_catalog' s.sup_id %}" class="action-btn">
+                                View Catalog
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="9">
+                        <div class="empty-state">
+                            <i class="fa-solid fa-inbox"></i>
+                            <p>No suppliers found. Click "Create supplier" to add your first supplier.</p>
+                        </div>
+                    </td>
+                </tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <script src="{% static 'js/jquery.js' %}"></script>
+    <script>
+        $(document).ready(function() {
+            // Modal Controls
+            console.log("jquery loaded")
+            $("#closeSupplierModal, #cancelAddSupplier").click(function(e){
+                e.preventDefault();
+                $("#addSupplierModal").hide();
+            });
+
+            // Select All Checkbox
+            $("#selectAll").change(function() {
+                $(".row-checkbox").prop('checked', $(this).prop('checked'));
+            });
+
+            // Search Functionality
+            $("#searchInput").on("keyup", function() {
+                const value = $(this).val().toLowerCase();
+                $("#supplierTableBody tr").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                });
+            });
+
+            // Sort Functionality
+            $("#sortBy").change(function() {
+                const sortType = $(this).val();
+                const tbody = $("#supplierTableBody");
+                const rows = tbody.find("tr").get();
+
+                if (!sortType) return;
+
+                rows.sort(function(a, b) {
+                    let aVal, bVal;
+
+                    switch(sortType) {
+                        case 'name-asc':
+                            aVal = $(a).data('supplier-name');
+                            bVal = $(b).data('supplier-name');
+                            return aVal.localeCompare(bVal);
+                        
+                        case 'name-desc':
+                            aVal = $(a).data('supplier-name');
+                            bVal = $(b).data('supplier-name');
+                            return bVal.localeCompare(aVal);
+                        
+                        case 'date-newest':
+                            aVal = new Date($(a).data('created'));
+                            bVal = new Date($(b).data('created'));
+                            return bVal - aVal;
+                        
+                        case 'date-oldest':
+                            aVal = new Date($(a).data('created'));
+                            bVal = new Date($(b).data('created'));
+                            return aVal - bVal;
+                    }
+                });
+
+                $.each(rows, function(index, row) {
+                    tbody.append(row);
+                });
+            });
+
+            // Form Submission
+            $("#btnCreateSupplier").click(function(e){
+                e.preventDefault();
+
+                const data = {
+                    name: $("#sup_name").val().trim(),
+                    phone: $("#sup_phone").val().trim(),
+                    email: $("#sup_email").val().trim(),
+                    address: $("#sup_address").val().trim(),
+                    contact_person: $("#sup_contact_person").val().trim(),
+                    payment_terms: $("#sup_payment_terms").val().trim(),
+                    delivery_terms: $("#sup_delivery_terms").val().trim()
+                };
+
+                if(!data.name || !data.phone || !data.contact_person){
+                    alert("Supplier Name, Phone, and Contact Person are required.");
+                    return;
+                }
+
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'create_supplier' %}",
+                    headers: { "X-CSRFToken": "{{ csrf_token }}" },
+                    contentType: "application/json",
+                    data: JSON.stringify(data),
+                    success: function(response){
+                        alert(response.message);
+                        $("#addSupplierModal").hide();
+                        window.location.href = "{% url 'purchasing_staff_sup_manage' %}";
+                    },
+                    error: function(xhr){
+                        let err = "Something went wrong!";
+                        if(xhr.responseJSON && xhr.responseJSON.error){
+                            err = xhr.responseJSON.error;
+                        }
+                        alert(err);
+                    }
+                });
+            });
+        });
+
+        function openAddSupplierModal() {
+            document.getElementById("addSupplierModal").style.display = "flex";
+        }
+    </script>
+{% endblock %}

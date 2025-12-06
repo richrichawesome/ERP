@@ -1,0 +1,1186 @@
+<!-- Purchasing/supplier_catalog.html-->
+{% extends "purchasing/base.html" %}
+{% load static %}
+
+
+{% block page_content %}
+<div class="page-header-section">
+    <a href="{% url 'purchasing_staff_sup_manage' %}" class="back-button">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Back to Suppliers</span>
+    </a>
+    
+    <div class="header-with-actions">
+        <div>
+            <h1 class="page-title">{{ supplier.sup_name }} - Product Catalog</h1>
+            <p class="page-description">Manage products offered by this supplier</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn-secondary" id="editSupplierBtn">
+                <i class="fa-solid fa-edit"></i>
+                Edit Supplier
+            </button>
+            <a href="{% url 'add_product_to_supplier' supplier.sup_id %}" class="btn-primary">
+                <i class="fa-solid fa-plus"></i>
+                Add Products
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="content-grid">
+    <!-- Left Column - Supplier Info & Categories -->
+    <div class="left-column">
+        <!-- Supplier Details Card -->
+        <div class="supplier-card">
+            <div class="card-header">
+                <h3>Supplier Details</h3>
+            </div>
+            <div class="card-body">
+                <div class="detail-row">
+                    <span class="detail-label">Name:</span>
+                    <span class="detail-value">{{ supplier.sup_name }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Phone:</span>
+                    <span class="detail-value">{{ supplier.sup_phone }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Email:</span>
+                    <span class="detail-value">{{ supplier.sup_email|default:"-" }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Address:</span>
+                    <span class="detail-value">{{ supplier.sup_address|default:"-" }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Contact Person:</span>
+                    <span class="detail-value">{{ supplier.sup_contact_person }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Payment Terms:</span>
+                    <span class="detail-value">{{ supplier.sup_payment_terms|default:"-" }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Delivery Terms:</span>
+                    <span class="detail-value">{{ supplier.sup_delivery_terms|default:"-" }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Created:</span>
+                    <span class="detail-value">{{ supplier.sup_created_at|date:"M d, Y" }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Last Updated:</span>
+                    <span class="detail-value">{{ supplier.sup_updated_at|date:"M d, Y H:i"|default:"Never" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories Card -->
+        <div class="categories-card">
+            <div class="card-header">
+                <h3>Categories Offered</h3>
+            </div>
+            <div class="card-body">
+                {% if categories %}
+                    <div class="categories-list">
+                        {% for category in categories %}
+                            <div class="category-item">
+                                <span class="category-name">{{ category.prod_cat_name }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="no-categories">
+                        <i class="fa-solid fa-folder-open"></i>
+                        <p>No categories assigned</p>
+                        <small>Categories will appear when products are added</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Catalog -->
+    <div class="catalog-section">
+        <div class="table-controls">
+            <div class="search-box">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" id="searchProduct" placeholder="Search by product name or SKU..." class="search-input">
+            </div>
+            <select id="categoryFilter" class="filter-select">
+                <option value="all">All Categories</option>
+                {% for category in categories %}
+                <option value="{{ category.prod_cat_name|lower }}">{{ category.prod_cat_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="table-container">
+            <table class="catalog-table">
+                <thead>
+                    <tr>
+                        <th>Item Name</th>
+                        <th>Product Code</th>
+                        <th>Category</th>
+                        <th>Specifications</th>
+                        <th>Unit Price</th>
+                        <th>Last Updated</th>
+                        <th width="120">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="catalogTableBody">
+                    {% for sp in supplier_products %}
+                    <tr class="catalog-row" 
+                        data-product-id="{{ sp.product.prod_id }}"
+                        data-category="{{ sp.product.category.prod_cat_name|lower }}"
+                        data-sku="{{ sp.sup_prod_code|lower }}">
+                        <td class="product-name">{{ sp.product.prod_name }}</td>
+                        <td>{{ sp.sup_prod_code }}</td>
+                        <td>
+                            <span class="category-badge">{{ sp.product.category.prod_cat_name }}</span>
+                        </td>
+                        <td class="specs-cell">
+                            {% if sp.specs_list %}
+                                <div class="specs-container">
+                                    {% for spec_name, spec_value in sp.specs_list %}
+                                        <div class="spec-item">
+                                            <strong>{{ spec_name }}:</strong> {{ spec_value }}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <span class="no-specs">No specifications</span>
+                            {% endif %}
+                        </td>
+                        <td class="price-cell">₱{{ sp.sup_prod_unit_price|floatformat:2 }}</td>
+                        <td>{{ sp.sup_prod_last_updated_price|date:"M d, Y" }}</td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="action-btn edit-price-btn" 
+                                        data-id="{{ sp.sup_prod_id }}"
+                                        data-name="{{ sp.product.prod_name }}"
+                                        data-price="{{ sp.sup_prod_unit_price }}">
+                                    Edit Price
+                                </button>
+                                <button class="view-price-history-btn" data-id="{{ sp.sup_prod_id }}">
+                                    History
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 1.5rem; color: #717182;">
+                            No products in catalog. Click "Add Products" to get started.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Supplier Modal -->
+<div id="editSupplierModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Edit Supplier</h3>
+            <button class="modal-close" onclick="closeEditSupplierModal()">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="editSupplierName">Supplier Name <span class="required">*</span></label>
+                <input type="text" id="editSupplierName" class="form-input" value="{{ supplier.sup_name }}" required>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="editSupplierPhone">Phone <span class="required">*</span></label>
+                    <input type="tel" id="editSupplierPhone" class="form-input" value="{{ supplier.sup_phone }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editSupplierEmail">Email</label>
+                    <input type="email" id="editSupplierEmail" class="form-input" value="{{ supplier.sup_email }}">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="editSupplierAddress">Address</label>
+                <textarea id="editSupplierAddress" class="form-textarea" rows="2">{{ supplier.sup_address }}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="editSupplierContactPerson">Contact Person <span class="required">*</span></label>
+                <input type="text" id="editSupplierContactPerson" class="form-input" value="{{ supplier.sup_contact_person }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="editSupplierPaymentTerms">Payment Terms</label>
+                <textarea id="editSupplierPaymentTerms" class="form-textarea" rows="2">{{ supplier.sup_payment_terms }}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="editSupplierDeliveryTerms">Delivery Terms</label>
+                <textarea id="editSupplierDeliveryTerms" class="form-textarea" rows="2">{{ supplier.sup_delivery_terms }}</textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeEditSupplierModal()">Cancel</button>
+            <button class="btn-primary" onclick="updateSupplier()">
+                <i class="fa-solid fa-save"></i>
+                Save Changes
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Price Modal -->
+<div id="editPriceModal" class="modal">
+    <div class="modal-content modal-small">
+        <div class="modal-header">
+            <h3>Edit Product Price</h3>
+            <button class="modal-close" onclick="closeEditPriceModal()">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p id="editPriceProductName" style="font-weight: 500; margin-bottom: 1rem;"></p>
+            <div class="form-group">
+                <label for="editProductPrice">Unit Price <span class="required">*</span></label>
+                <input type="number" id="editProductPrice" class="form-input" step="0.01" min="0" required>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeEditPriceModal()">Cancel</button>
+            <button class="btn-primary" onclick="savePrice()">
+                <i class="fa-solid fa-save"></i>
+                Update Price
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Price History Modal -->
+<div id="priceHistoryModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Price History</h3>
+            <button class="modal-close" onclick="closePriceHistoryModal()">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="price-history-header">
+                <h4 id="priceHistoryProductName"></h4>
+                <p id="priceHistorySupplierName" class="supplier-info"></p>
+            </div>
+            
+            <div class="current-price-section">
+                <div class="current-price-card">
+                    <span class="current-price-label">Current Price</span>
+                    <span class="current-price-value" id="currentPriceValue"></span>
+                    <span class="current-price-date" id="currentPriceDate"></span>
+                </div>
+            </div>
+            
+            <div class="price-history-section">
+                <h5>Price History</h5>
+                <div class="price-history-list" id="priceHistoryList">
+                    <!-- Price history will be loaded here -->
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closePriceHistoryModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+
+
+<style>
+.page-header-section {
+    margin-bottom: 2rem;
+}
+
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #717182;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 0.5rem 0;
+    transition: color 0.2s;
+    margin-bottom: 1rem;
+}
+
+.back-button:hover {
+    color: #030213;
+}
+
+.header-with-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-primary, .btn-secondary {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background: #2563eb;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1e40af;
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: #e9ebef;
+    color: #030213;
+}
+
+.btn-secondary:hover {
+    background: #cbced4;
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 1.5rem;
+}
+
+.left-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+@media (max-width: 1200px) {
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+    .left-column {
+        flex-direction: row;
+    }
+}
+
+@media (max-width: 768px) {
+    .left-column {
+        flex-direction: column;
+    }
+}
+
+.supplier-card, .categories-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    height: fit-content;
+}
+
+.supplier-card {
+    position: sticky;
+    top: 2rem;
+}
+
+.card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #e9ebef;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #030213;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f3f3f5;
+    gap: 1rem;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-size: 0.75rem;
+    color: #717182;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.detail-value {
+    font-size: 0.75rem;
+    color: #030213;
+    text-align: right;
+    word-break: break-word;
+}
+
+/* Categories Card Styles */
+.categories-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.category-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f3f3f5;
+}
+
+.category-item:last-child {
+    border-bottom: none;
+}
+
+.category-name {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #030213;
+}
+
+.category-count {
+    font-size: 0.7rem;
+    color: #717182;
+    background: #f8fafc;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+}
+
+.no-categories {
+    text-align: center;
+    padding: 1.5rem;
+    color: #717182;
+}
+
+.no-categories i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.5;
+}
+
+.no-categories p {
+    margin: 0 0 0.25rem 0;
+    font-size: 0.85rem;
+}
+
+.no-categories small {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.catalog-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 1.25rem;
+    overflow: hidden;
+}
+
+.table-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.search-box {
+    position: relative;
+    flex: 1;
+    max-width: 300px;
+}
+
+.search-box i {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #717182;
+    font-size: 0.8rem;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem 0.5rem 2rem;
+    border: 1px solid #e9ebef;
+    border-radius: 6px;
+    background: #f8fafc;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: white;
+}
+
+.filter-select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #e9ebef;
+    border-radius: 6px;
+    background: #f8fafc;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: white;
+}
+
+.table-container {
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+.catalog-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+.catalog-table thead {
+    background: #f8fafc;
+}
+
+.catalog-table th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #717182;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+.catalog-table td {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #e9ebef;
+    font-size: 0.8rem;
+    color: #030213;
+    vertical-align: top;
+    white-space: nowrap;
+}
+
+.catalog-row:hover {
+    background: #f8fafc;
+}
+
+.product-name {
+    font-weight: 500;
+    font-size: 0.8rem;
+}
+
+.category-badge {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    background: #dbeafe;
+    color: #1e40af;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.specs-cell {
+    max-width: 200px;
+    min-width: 150px;
+}
+
+.specs-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.spec-item {
+    font-size: 0.7rem;
+    line-height: 1.2;
+    color: #717182;
+}
+
+.spec-item strong {
+    color: #030213;
+    font-weight: 600;
+}
+
+.no-specs {
+    color: #94a3b8;
+    font-style: italic;
+    font-size: 0.7rem;
+}
+
+.price-cell {
+    font-weight: 600;
+    color: #2563eb;
+    font-size: 0.8rem;
+}
+
+.action-btns {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    background: #2563eb;
+    color: white;
+    padding: 4px 10px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.action-btn:hover {
+    background: #1e40af;
+}
+
+.view-price-history-btn {
+    background: #1a2332;
+    color: white;
+    padding: 4px 10px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.view-price-history-btn:hover {
+    background: #06080b;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(3, 2, 19, 0.6);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modal-small {
+    max-width: 400px;
+}
+
+.modal-header {
+    padding: 1.25rem;
+    border-bottom: 1px solid #e9ebef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #030213;
+}
+
+.modal-close {
+    background: transparent;
+    border: none;
+    color: #717182;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+    font-size: 1.1rem;
+}
+
+.modal-close:hover {
+    background: #f3f3f5;
+    color: #030213;
+}
+
+.modal-body {
+    padding: 1.25rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #030213;
+}
+
+.required {
+    color: #d4183d;
+}
+
+.form-input, .form-textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #e9ebef;
+    border-radius: 6px;
+    background: #f8fafc;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.form-input:focus, .form-textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: white;
+}
+
+.form-textarea {
+    resize: vertical;
+}
+
+.modal-footer {
+    padding: 1.25rem;
+    border-top: 1px solid #e9ebef;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+/* Price History Modal Styles */
+.price-history-header {
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e9ebef;
+}
+
+.price-history-header h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #030213;
+}
+
+.supplier-info {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #717182;
+}
+
+.current-price-section {
+    margin-bottom: 1.5rem;
+}
+
+.current-price-card {
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+    padding: 0.75rem;
+    text-align: center;
+}
+
+.current-price-label {
+    display: block;
+    font-size: 0.7rem;
+    color: #0369a1;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+
+.current-price-value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0369a1;
+    margin-bottom: 0.25rem;
+}
+
+.current-price-date {
+    display: block;
+    font-size: 0.7rem;
+    color: #64748b;
+}
+
+.price-history-section h5 {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #030213;
+}
+
+.price-history-list {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.price-history-item {
+    padding: 0.75rem;
+    border: 1px solid #e9ebef;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s;
+}
+
+.price-history-item:hover {
+    background: #f8fafc;
+}
+
+.price-history-item.most-recent {
+    border-left: 4px solid #10b981;
+}
+
+.price-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.history-price {
+    font-weight: 600;
+    color: #030213;
+    font-size: 0.9rem;
+}
+
+.history-date {
+    font-size: 0.7rem;
+    color: #717182;
+}
+
+.changed-by {
+    font-size: 0.7rem;
+    color: #64748b;
+}
+
+.loading-state, .error-state, .no-history {
+    text-align: center;
+    padding: 1.5rem;
+    color: #717182;
+    font-style: italic;
+    font-size: 0.8rem;
+}
+
+.error-state {
+    color: #dc2626;
+}
+
+</style>
+
+<!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
+<script src="{% static 'js/jquery.js' %}"></script>
+<script>
+let currentEditPriceId = null;
+
+$(document).ready(function() {
+    $('#searchProduct, #categoryFilter').on('input change', filterProducts);
+});
+
+let currentPriceHistoryId = null;
+
+function viewPriceHistory(supProdId) {
+    currentPriceHistoryId = supProdId;
+    
+    // Show loading state
+    $('#priceHistoryList').html('<div class="loading-state">Loading price history...</div>');
+    $('#priceHistoryModal').addClass('active');
+    
+    // Fetch price history
+    $.ajax({
+        url: `/get-price-history/${supProdId}/`,
+        method: 'GET',
+        success: function(response) {
+            console.log('Success response:', response); // Debug log
+            if (response.success) {
+                displayPriceHistory(response);
+            } else {
+                console.error('Server error:', response.error); // Debug log
+                $('#priceHistoryList').html('<div class="error-state">Error: ' + response.error + '</div>');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX error:', status, error); // Debug log
+            $('#priceHistoryList').html('<div class="error-state">Error loading price history. Please try again.</div>');
+        }
+    });
+}
+
+function filterProducts() {
+    const searchTerm = $('#searchProduct').val().toLowerCase();
+    const category = $('#categoryFilter').val();
+    
+    $('.catalog-row').each(function() {
+        const $row = $(this);
+        const productName = $row.find('.product-name').text().toLowerCase();
+        const sku = $row.data('sku');
+        const rowCategory = $row.data('category');
+        
+        let showRow = true;
+        
+        if (searchTerm && !productName.includes(searchTerm) && !sku.includes(searchTerm)) {
+            showRow = false;
+        }
+        
+        if (category !== 'all' && rowCategory !== category) {
+            showRow = false;
+        }
+        
+        $row.toggle(showRow);
+    });
+}
+
+// Edit Supplier Modal
+$('#editSupplierBtn').on('click', function() {
+    $('#editSupplierModal').addClass('active');
+});
+
+function closeEditSupplierModal() {
+    $('#editSupplierModal').removeClass('active');
+}
+
+function updateSupplier() {
+    const name = $('#editSupplierName').val().trim();
+    const phone = $('#editSupplierPhone').val().trim();
+    const contactPerson = $('#editSupplierContactPerson').val().trim();
+    
+    if (!name || !phone || !contactPerson) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    const supplierData = {
+        name: name,
+        phone: phone,
+        email: $('#editSupplierEmail').val().trim(),
+        address: $('#editSupplierAddress').val().trim(),
+        contact_person: contactPerson,
+        payment_terms: $('#editSupplierPaymentTerms').val().trim(),
+        delivery_terms: $('#editSupplierDeliveryTerms').val().trim()
+    };
+    
+    $.ajax({
+        url: '{% url "update_supplier" supplier.sup_id %}',
+        method: 'POST',
+        data: JSON.stringify(supplierData),
+        contentType: 'application/json',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        success: function(response) {
+            if (response.success) {
+                alert('✅ Supplier updated successfully!');
+                location.reload();
+            } else {
+                alert('❌ Error: ' + response.error);
+            }
+        },
+        error: function(xhr) {
+            let errorMsg = 'Error updating supplier';
+            try {
+                const response = JSON.parse(xhr.responseText);
+                errorMsg = response.error || errorMsg;
+            } catch (e) {}
+            alert('❌ ' + errorMsg);
+        }
+    });
+}
+
+// Edit Price Modal
+function editPrice(supProdId, productName, currentPrice) {
+    currentEditPriceId = supProdId;
+    $('#editPriceProductName').text(productName);
+    $('#editProductPrice').val(currentPrice);
+    $('#editPriceModal').addClass('active');
+}
+
+function closeEditPriceModal() {
+    $('#editPriceModal').removeClass('active');
+    currentEditPriceId = null;
+}
+
+function savePrice() {
+    const newPrice = $('#editProductPrice').val();
+    
+    if (!newPrice || parseFloat(newPrice) <= 0) {
+        alert('Please enter a valid price');
+        return;
+    }
+    
+    $.ajax({
+        url: `/update-product-price/${currentEditPriceId}/`,
+        method: 'POST',
+        data: JSON.stringify({ unit_price: newPrice }),
+        contentType: 'application/json',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        success: function(response) {
+            if (response.success) {
+                alert('✅ Price updated successfully!');
+                location.reload();
+            } else {
+                alert('❌ Error: ' + response.error);
+            }
+        },
+        error: function(xhr) {
+            let errorMsg = 'Error updating price';
+            try {
+                const response = JSON.parse(xhr.responseText);
+                errorMsg = response.error || errorMsg;
+            } catch (e) {}
+            alert('❌ ' + errorMsg);
+        }
+    });
+}
+
+// Close modals on outside click
+$('.modal').on('click', function(e) {
+    if ($(e.target).hasClass('modal')) {
+        closeEditSupplierModal();
+        closeEditPriceModal();
+        closePriceHistoryModal(); 
+    }
+});
+
+function displayPriceHistory(data) {
+    // Set product and supplier info
+    $('#priceHistoryProductName').text(data.product_name);
+    $('#priceHistorySupplierName').text(`Supplier: ${data.supplier_name}`);
+    
+    // Set current price
+    let currentPrice = Number(data.current_price.price);
+    if (isNaN(currentPrice)) {
+        currentPrice = 0;
+    }
+    $('#currentPriceValue').text('₱' + currentPrice.toFixed(2));
+    $('#currentPriceDate').text('Updated: ' + data.current_price.changed_at);
+    
+    // Display price history
+    const historyList = $('#priceHistoryList');
+    historyList.empty();
+    
+    if (data.history.length === 0) {
+        historyList.html('<div class="no-history">No previous price history found.</div>');
+        return;
+    }
+    
+    data.history.forEach((item, index) => {
+        let historyPrice = Number(item.price);
+        if (isNaN(historyPrice)) {
+            historyPrice = 0;
+        }
+        const historyItem = `
+            <div class="price-history-item ${index === 0 ? 'most-recent' : ''}">
+                <div class="price-info">
+                    <span class="history-price">₱${historyPrice.toFixed(2)}</span>
+                    <span class="history-date">${item.changed_at}</span>
+                </div>
+                <div class="changed-by">Changed by: ${item.changed_by}</div>
+            </div>
+        `;
+        historyList.append(historyItem);
+    });
+}
+
+function closePriceHistoryModal() {
+    $('#priceHistoryModal').removeClass('active');
+    currentPriceHistoryId = null;
+}
+
+// Add event listeners for all buttons
+document.addEventListener('DOMContentLoaded', function() {
+    // Edit price buttons
+    document.querySelectorAll('.edit-price-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const name = this.dataset.name;
+            const price = this.dataset.price;
+            editPrice(id, name, price);
+        });
+    });
+    
+    // Price history buttons
+    document.querySelectorAll('.view-price-history-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.dataset.id;
+            viewPriceHistory(id);
+        });
+    });
+});
+
+</script>
+{% endblock %}
