@@ -1,0 +1,354 @@
+{% extends "main/base.html" %}
+{% block page_content %}
+<style>
+    .supplier-quotation-form {
+        background: white;
+        padding: 25px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    .quotation-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    .quotation-table th, .quotation-table td {
+        padding: 12px;
+        border: 1px solid #ddd;
+        text-align: left;
+    }
+    .quotation-table th {
+        background: #030213;
+        color: white;
+    }
+    .price-input {
+        width: 100px;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+</style>
+
+<div class="container">
+    <div class="header">
+        <h1>Input Supplier Quotation - REQ-{{ requisition.req_id }}</h1>
+        <a href="{% url 'requisition_detail' requisition.req_id %}" class="back-btn">← Back to Requisition</a>
+    </div>
+
+    <div class="card">
+        <h2>RFQ Information</h2>
+        <div class="requisition-info">
+            <div>
+                <div class="info-group">
+                    <div class="info-label">RFQ ID</div>
+                    <div class="info-value">RFQ-{{ rfq.rfq_id }}</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Requisition ID</div>
+                    <div class="info-value">REQ-{{ requisition.req_id }}</div>
+                </div>
+            </div>
+            <div>
+                <div class="info-group">
+                    <div class="info-label">Requested By</div>
+                    <div class="info-value">{{ requisition.requested_by.user_fname }} {{ requisition.requested_by.user_lname }}</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Branch</div>
+                    <div class="info-value">{{ requisition.branch.branch_name }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="supplier-quotation-form">
+        <h2>Input Supplier Quotation</h2>
+        
+        <!-- Supplier Selection -->
+        <div style="margin-bottom: 20px;">
+            <label for="supplier-select" style="font-weight: bold; display: block; margin-bottom: 8px;">
+                Select Supplier:
+            </label>
+            <select id="supplier-select" style="padding: 10px; width: 300px; border-radius: 4px;">
+                <option value="">-- Select Supplier --</option>
+                {% for supplier in suppliers %}
+                <option value="{{ supplier.sup_id }}">{{ supplier.sup_name }}</option>
+                {% endfor %}
+            </select>
+            <button type="button" onclick="showAddSupplierModal()" style="margin-left: 10px; padding: 10px 15px;">
+                + Add New Supplier
+            </button>
+        </div>
+
+        <!-- Quotation Items Table -->
+        <table class="quotation-table">
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>Specifications</th>
+                    <th>Quantity</th>
+                    <th>Unit</th>
+                    <th>Unit Price (₱)</th>
+                    <th>Line Total (₱)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in rfq_items %}
+                <tr>
+                    <td>{{ item.product.prod_name }}</td>
+                    <td>
+                        {% for spec in item.product.product_specification_set.all %}
+                        <div><strong>{{ spec.spec_name }}:</strong> {{ spec.spec_value }}</div>
+                        {% endfor %}
+                    </td>
+                    <td>{{ item.rfq_item_req_qty }}</td>
+                    <td>{{ item.rfq_item_req_uom }}</td>
+                    <td>
+                        <input type="number" 
+                               step="0.01" 
+                               min="0" 
+                               class="price-input unit-price" 
+                               data-item-id="{{ item.rfq_item_id }}"
+                               onchange="calculateLineTotal(this)">
+                    </td>
+                    <td class="line-total" data-item-id="{{ item.rfq_item_id }}">0.00</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="5" style="text-align: right; font-weight: bold;">Grand Total:</td>
+                    <td id="grand-total" style="font-weight: bold;">0.00</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <!-- Additional Quotation Details -->
+        <div style="margin-top: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <label style="font-weight: bold; display: block; margin-bottom: 8px;">
+                        Estimated Delivery Date:
+                    </label>
+                    <input type="date" id="eta-date" style="padding: 8px; width: 100%;">
+                </div>
+                <div>
+                    <label style="font-weight: bold; display: block; margin-bottom: 8px;">
+                        Quotation Valid Until:
+                    </label>
+                    <input type="date" id="valid-until-date" style="padding: 8px; width: 100%;">
+                </div>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <label style="font-weight: bold; display: block; margin-bottom: 8px;">
+                    Additional Notes:
+                </label>
+                <textarea id="quotation-notes" style="width: 100%; padding: 10px; border-radius: 4px; min-height: 80px;" 
+                          placeholder="Any additional terms or notes..."></textarea>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="margin-top: 25px; display: flex; gap: 10px;">
+            <button type="button" onclick="saveQuotation()" style="padding: 12px 25px; background: #10b981; color: white; border: none; border-radius: 4px;">
+                Save Quotation
+            </button>
+            <button type="button" onclick="window.history.back()" style="padding: 12px 25px; background: #6b7280; color: white; border: none; border-radius: 4px;">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <!-- Existing Quotations Section -->
+    {% if existing_quotations %}
+    <div class="card">
+        <h2>Existing Quotations</h2>
+        <table class="quotation-table">
+            <thead>
+                <tr>
+                    <th>Supplier</th>
+                    <th>Total Amount</th>
+                    <th>Date Submitted</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for quotation in existing_quotations %}
+                <tr>
+                    <td>{{ quotation.rfq_supplier.supplier.sup_name }}</td>
+                    <td>₱{{ quotation.sup_qtn_total_cost }}</td>
+                    <td>{{ quotation.sup_qtn_created_at|date:"M d, Y" }}</td>
+                    <td>Submitted</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Add Supplier Modal -->
+<div id="addSupplierModal" class="modal">
+    <div class="modal-content">
+        <h3>Add New Supplier</h3>
+        <form id="addSupplierForm">
+            <div style="display: grid; gap: 15px;">
+                <div>
+                    <label>Supplier Name *</label>
+                    <input type="text" name="sup_name" required style="width: 100%; padding: 8px;">
+                </div>
+                <div>
+                    <label>Contact Person</label>
+                    <input type="text" name="sup_contact_person" style="width: 100%; padding: 8px;">
+                </div>
+                <div>
+                    <label>Phone *</label>
+                    <input type="text" name="sup_phone" required style="width: 100%; padding: 8px;">
+                </div>
+                <div>
+                    <label>Email</label>
+                    <input type="email" name="sup_email" style="width: 100%; padding: 8px;">
+                </div>
+                <div>
+                    <label>Address</label>
+                    <textarea name="sup_address" style="width: 100%; padding: 8px; min-height: 60px;"></textarea>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn modal-cancel" onclick="closeModal('addSupplierModal')">Cancel</button>
+                <button type="submit" class="btn modal-confirm">Add Supplier</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Calculate line total and grand total
+    function calculateLineTotal(input) {
+        const row = input.closest('tr');
+        const quantity = parseInt(row.querySelector('td:nth-child(3)').textContent);
+        const unitPrice = parseFloat(input.value) || 0;
+        const lineTotal = quantity * unitPrice;
+        
+        row.querySelector('.line-total').textContent = lineTotal.toFixed(2);
+        calculateGrandTotal();
+    }
+
+    function calculateGrandTotal() {
+        let grandTotal = 0;
+        document.querySelectorAll('.line-total').forEach(cell => {
+            grandTotal += parseFloat(cell.textContent) || 0;
+        });
+        document.getElementById('grand-total').textContent = grandTotal.toFixed(2);
+    }
+
+    // Modal functions
+    function showAddSupplierModal() {
+        document.getElementById('addSupplierModal').style.display = 'flex';
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    // Add Supplier Form
+    document.getElementById('addSupplierForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch('/purchasing/add-supplier/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Add new supplier to dropdown
+                const select = document.getElementById('supplier-select');
+                const option = new Option(data.supplier_name, data.supplier_id);
+                select.add(option);
+                select.value = data.supplier_id;
+                
+                closeModal('addSupplierModal');
+                this.reset();
+                alert('Supplier added successfully!');
+            } else {
+                alert('Error adding supplier: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to add supplier');
+        });
+    });
+
+    // Save Quotation
+    function saveQuotation() {
+        const supplierId = document.getElementById('supplier-select').value;
+        if (!supplierId) {
+            alert('Please select a supplier');
+            return;
+        }
+
+        // Collect quotation data
+        const quotationData = {
+            supplier_id: supplierId,
+            items: [],
+            eta: document.getElementById('eta-date').value,
+            valid_until: document.getElementById('valid-until-date').value,
+            notes: document.getElementById('quotation-notes').value
+        };
+
+        // Collect item prices
+        document.querySelectorAll('.unit-price').forEach(input => {
+            if (input.value) {
+                quotationData.items.push({
+                    rfq_item_id: input.dataset.itemId,
+                    unit_price: parseFloat(input.value)
+                });
+            }
+        });
+
+        if (quotationData.items.length === 0) {
+            alert('Please enter prices for at least one item');
+            return;
+        }
+
+        // Send data to server
+        const formData = new FormData();
+        formData.append('supplier_id', supplierId);
+        formData.append('quotation_data', JSON.stringify(quotationData));
+
+        fetch(`/purchasing/requisition/{{ requisition.req_id }}/save-quotation/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Quotation saved successfully!');
+                window.location.reload();
+            } else {
+                alert('Error saving quotation: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to save quotation');
+        });
+    }
+
+    // CSRF token helper
+    function getCookie(name) {
+        // ... your existing getCookie function ...
+    }
+</script>
+{% endblock %}

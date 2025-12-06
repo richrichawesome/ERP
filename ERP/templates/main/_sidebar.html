@@ -1,0 +1,154 @@
+<div class="sidebar" id="sidebar">
+  <div class="logo-section">
+    <div class="logo-content">
+      <div class="logo-title">OCE StockFlow</div>
+      <div class="logo-subtitle">Purchasing & Supplier Management</div>
+    </div>
+    <button class="toggle-btn" id="toggleBtn">
+      <i class="fas fa-bars"></i>
+    </button>
+  </div>
+
+  <div class="nav-menu">
+    {% if user.role_id == 1 or user.role == 'Top Management' %}
+    <!-- Top Management Menu -->
+    <a
+      href="{% url 'top_management_dashboard' %}"
+      class="nav-item {% if active_page == 'dashboard' %}active{% endif %}"
+    >
+      <div class="nav-icon"><i class="fas fa-th-large"></i></div>
+      <span>Dashboard</span>
+    </a>
+
+    <a
+      href="{% url 'add_users' %}"
+      class="nav-item {% if active_page == 'add_users' %}active{% endif %}"
+    >
+      <div class="nav-icon"><i class="fas fa-th-large"></i></div>
+      <span>Add User</span>
+    </a>
+
+    <a
+      href="{% url 'inventory' %}"
+      class="nav-item {% if active_page == 'inventory' %}active{% endif %}"
+    >
+      <div class="nav-icon"><i class="fas fa-th-large"></i></div>
+      <span>Inventory</span>
+    </a>
+
+    <a
+      href="{% url 'requisition' %}"
+      class="nav-item {% if active_page == 'requisition' %}active{% endif %}"
+    >
+      <div class="nav-icon"><i class="fas fa-th-large"></i></div>
+      <span>Requisition</span>
+    </a>
+
+    {% elif user.role_id == 4 or user.role == 'Property Custodian' %}
+    <a
+      href="{% url 'requisition' %}"
+      class="nav-item {% if active_page == 'requisition' %}active{% endif %}"
+    >
+      <div class="nav-icon"><i class="fas fa-th-large"></i></div>
+      <span>Requisition</span>
+    </a>
+
+    <a
+      href="{% url 'delivery_management' %}"
+      class="nav-item {% if active_page == 'delivery_management' %}active{% endif %}"
+    >
+      <div class="nav-icon"><i class="fas fa-th-large"></i></div>
+      <span>Delivery Management</span>
+    </a>
+
+    {% elif user.role_id == 3 or user.role == 'Purchasing Staff' %}
+    <a
+      href="{% url 'purchasing_staff_dashboard' %}"
+      class="nav-item {% if active_page == 'dashboard' %}active{% endif %}"
+    >
+      <div class="nav-icon"><i class="fas fa-th-large"></i></div>
+      <span>Dashboard</span>
+    </a>
+
+    <a
+      href="{% url 'rfq_creation' %}"
+      class="nav-item {% if active_page == 'requisitions' %}active{% endif %}"
+    >
+      <div class="nav-icon"><i class="fas fa-file-alt"></i></div>
+      <span>RFQ Creation</span>
+    </a>
+
+    <a
+      href="{% url 'quote_creation' %}"
+      class="nav-item {% if active_page == 'input_quotation' %}active{% endif %}"
+    >
+      <div class="nav-icon"><i class="fas fa-file-alt"></i></div>
+      <span>Input Supplier Quotation</span>
+    </a>
+
+    <a
+      href="{% url 'po_creation' %}"
+      class="nav-item {% if active_page == 'po' %}active{% endif %}"
+    >
+      <div class="nav-icon"><i class="fas fa-file-alt"></i></div>
+      <span>Purchase Order Creation</span>
+    </a>
+
+    <a
+      href="{% url 'purchasing_staff_sup_manage' %}"
+      class="nav-item {% if active_page == 'supplier' %}active{% endif %}"
+    >
+      <div class="nav-icon"><i class="fas fa-users"></i></div>
+      <span>Supplier Management</span>
+    </a>
+
+    <a
+      href="{% url 'inventory' %}"
+      class="nav-item {% if active_page == 'inventory' %}active{% endif %}"
+    >
+      <div class="nav-icon"><i class="fas fa-box"></i></div>
+      <span>Inventory</span>
+    </a>
+
+    {% elif user.role_id == 2 or user.role == 'Branch Manager' %}
+    <a
+      href="{% url 'track_requisition' %}"
+      class="nav-item {% if active_page in 'track_requisition inventory_replenishment internal_transfer' %}active{% endif %}"
+    >
+      <div class="nav-icon"><i class="fas fa-th-large"></i></div>
+      <span>Requisitions</span>
+    </a>
+
+    <a
+      href="{% url 'requisition' %}"
+      class="nav-item {% if active_page == 'req_main' %}active{% endif %}"
+    >
+      <div class="nav-icon"><i class="fas fa-th-large"></i></div>
+      <span>Requisition</span>
+    </a>
+
+    <a
+      href="{% url 'inventory' %}"
+      class="nav-item {% if active_page == 'inventory_management' %}active{% endif %}"
+    >
+      <div class="nav-icon"><i class="fas fa-box"></i></div>
+      <span>Inventory</span>
+    </a>
+
+    {% endif %}
+  </div>
+  <div class="user-section">
+    <div class="user-info">
+      <div class="user-avatar"><i class="fas fa-user"></i></div>
+      <div class="user-details">
+        <div class="user-name">{{ user.user_fname }} {{ user.user_lname }}</div>
+        <div class="user-role">{{ user.role }}</div>
+        <div class="user-branch">{{ user.branch }}</div>
+      </div>
+    </div>
+    <button class="logout-btn">
+      <i class="fas fa-sign-out-alt"></i>
+      <span>Log Out</span>
+    </button>
+  </div>
+</div>

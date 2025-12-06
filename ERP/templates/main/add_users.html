@@ -1,0 +1,184 @@
+{% extends "main/base.html" %} {% block page_content %}
+<style>
+  h1 {
+    color: #030213;
+    margin-bottom: 20px;
+  }
+
+  button {
+    padding: 8px 16px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    background: #2563eb;
+    color: #ffffff;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  button:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+  }
+
+  button:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  input[type="text"],
+  input[type="password"],
+  select {
+    padding: 8px 12px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    background: #f3f3f5;
+    color: #030213;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  input[type="text"]:focus,
+  input[type="password"]:focus,
+  select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+  }
+
+  input[type="checkbox"] {
+    margin-right: 8px;
+    accent-color: #2563eb;
+  }
+
+  label {
+    color: #030213;
+    font-weight: 500;
+    display: block;
+    margin-bottom: 5px;
+    text-align: left;
+  }
+
+  /* Add Users Form Specific Styles */
+  .register-container {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 30px;
+    max-width: 500px;
+    margin: 20px auto;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  }
+
+  .register-container h1 {
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 1.8em;
+    color: #030213;
+  }
+
+  .field-container {
+    margin-bottom: 18px;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 1em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .submit-btn:hover {
+    background-color: #1d4ed8;
+    transform: translateY(-1px);
+  }
+
+  /* Optional: style select placeholder */
+  select option[disabled] {
+    color: #888;
+  }
+
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .register-container {
+      width: 90%;
+      margin: 20px;
+      padding: 20px;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    select {
+      font-size: 14px;
+    }
+  }
+</style>
+
+<h1>Add Users</h1>
+<br />
+<div class="register-container">
+  <form method="POST" action="{% url 'add_users' %}" class="register-form">
+    {% csrf_token %}
+    <div class="field-container">
+      <label for="username">Username:</label>
+      <input type="text" name="username" placeholder="admin..." required />
+    </div>
+
+    <div class="field-container">
+      <label for="password">Password:</label>
+      <input
+        type="password"
+        name="password"
+        placeholder="At least 8 characters"
+        minlength="8"
+        required
+      />
+    </div>
+
+    <div class="field-container">
+      <label for="email">User Email:</label>
+      <input type="text" name="email" placeholder="juan@example.com" required />
+    </div>
+
+    <div class="field-container">
+      <label for="fname">First Name:</label>
+      <input type="text" name="fname" placeholder="Juan" required />
+    </div>
+
+    <div class="field-container">
+      <label for="lname">Last Name:</label>
+      <input type="text" name="lname" placeholder="Cruz" required />
+    </div>
+
+    <div class="field-container">
+      <label for="acc-role">Role:</label>
+      <select name="acc-role" id="acc-role" required>
+        <option value="Branch Manager">Branch Manager</option>
+        <option value="Property Custodian">Property Custodian</option>
+        <option value="Purchasing Staff">Purchasing Staff</option>
+      </select>
+    </div>
+
+    <div class="field-container">
+      <label for="branch">Branch:</label>
+      <select name="branch" id="branch">
+        <option value="">Select a branch</option>
+        {% for branch in branches %}
+        <option value="{{ branch.branch_id }}">{{ branch.branch_name }}</option>
+        {% empty %}
+        <option value="">No branches available</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit" class="submit-btn">Register</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,1064 @@
+{% extends "main/base.html" %}
+{% block page_content %}
+
+<style>
+    .content-header {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+    }
+
+    .content-header h1 {
+        color: #030213;
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .content-header p {
+        color: #717182;
+        font-size: 14px;
+    }
+
+    /* Filter and Search styles */
+    .filters-container {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 15px;
+        align-items: end;
+        flex-wrap: wrap;
+    }
+
+    .filter-item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .filter-item label {
+        color: #030213;
+        font-weight: 500;
+        font-size: 14px;
+    }
+
+    .filter-item select,
+    .filter-item input {
+        padding: 8px 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #f3f3f5;
+        color: #030213;
+        font-size: 14px;
+        min-width: 200px;
+    }
+
+    .filter-item select:focus,
+    .filter-item input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }
+
+    /* Card styles */
+    .card {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+    }
+
+    .card h2 {
+        color: #030213;
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    /* Button styles */
+    .btn {
+        padding: 8px 16px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #2563eb;
+        color: #ffffff;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 14px;
+        border: none;
+        height: fit-content;
+    }
+
+    .btn:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(3, 2, 19, 0.1);
+    }
+
+    .btn-secondary {
+        background: #ffffff;
+        color: #030213;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-secondary:hover {
+        background: #f3f3f5;
+    }
+
+    .btn-small {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    /* Status badges */
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-approved {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-rejected {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* Table styles */
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+        margin-top: 15px;
+    }
+
+    .table th {
+        background: #030213;
+        color: #ffffff;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .table td {
+        padding: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .table tbody tr:nth-child(even) {
+        background: #f8fafc;
+    }
+
+    .table tbody tr:hover {
+        background: #e9ebef;
+    }
+
+    /* Checkbox styles */
+    .checkbox-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .checkbox-container input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+    }
+
+    .checkbox-container label {
+        font-weight: 500;
+        color: #030213;
+        cursor: pointer;
+    }
+
+    /* Hidden elements */
+    .hidden {
+        display: none !important;
+    }
+
+    /* Modal/Popup Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 8px;
+        width: 95%;
+        max-width: 1200px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+        padding: 20px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8fafc;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        color: #030213;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #717182;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .close-btn:hover {
+        color: #030213;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .modal-footer {
+        padding: 20px;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        background: #f8fafc;
+    }
+
+    /* Supplier Select Styles */
+    .supplier-select {
+        padding: 8px 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #ffffff;
+        color: #030213;
+        font-size: 14px;
+        width: 100%;
+        cursor: pointer;
+    }
+
+    .supplier-select:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }
+
+    /* PO Preview Styles */
+    .po-preview {
+        background: white;
+        padding: 40px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .po-header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #030213;
+    }
+
+    .po-header h2 {
+        color: #030213;
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .po-details {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+        gap: 40px;
+    }
+
+    .po-section {
+        flex: 1;
+    }
+
+    .po-section h4 {
+        color: #030213;
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .po-info-row {
+        margin-bottom: 8px;
+        color: #030213;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .po-info-label {
+        font-weight: 600;
+        display: inline-block;
+        min-width: 120px;
+    }
+
+    .po-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+    }
+
+    .po-table th {
+        background: #030213;
+        color: white;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .po-table td {
+        padding: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        font-size: 14px;
+    }
+
+    .po-table tr:nth-child(even) {
+        background: #f8fafc;
+    }
+
+    .po-table .text-right {
+        text-align: right;
+    }
+
+    .po-summary {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 20px;
+    }
+
+    .po-summary-content {
+        min-width: 300px;
+    }
+
+    .po-summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .po-summary-row.total {
+        font-weight: 700;
+        font-size: 16px;
+        background: #f8fafc;
+        border-top: 2px solid #030213;
+        border-bottom: 2px solid #030213;
+    }
+
+    .po-summary-label {
+        font-weight: 600;
+        color: #030213;
+    }
+
+    .po-summary-value {
+        color: #030213;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .filter-group {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .filter-item {
+            width: 100%;
+        }
+        
+        .filter-item select,
+        .filter-item input {
+            min-width: 100%;
+        }
+        
+        .table {
+            font-size: 14px;
+        }
+        
+        .table th,
+        .table td {
+            padding: 8px;
+        }
+
+        .po-details {
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .po-preview {
+            padding: 20px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .content-header {
+            padding: 15px;
+        }
+        
+        .filters-container {
+            padding: 15px;
+        }
+        
+        .card {
+            padding: 15px;
+        }
+        
+        .table {
+            display: block;
+            overflow-x: auto;
+        }
+    }
+</style>
+
+<div class="card">
+    <h2>Requisition Management</h2>
+    <p>Manage and track requisition requests.</p>
+    
+    <!-- Filters and Search -->
+    <div class="filters-container">
+        <div class="filter-group">
+            <div class="filter-item">
+                <label>Status:</label>
+                <select name="requisition-status" id="requisition-status">
+                    <option value="all">All Status</option>
+                    <option value="PENDING_CUSTODIAN">Pending Custodian</option>
+                    <option value="PENDING_TOP_MGMT">Pending Top Management</option>
+                    <option value="APPROVED_REQUISITION" selected>Approved Requisition</option>
+                    <option value="PO_APPROVAL">PO Approval</option>
+                    <option value="TO_BE_DELIVERED">To be Delivered</option>
+                    <option value="INSPECTION">Inspection</option>
+                    <option value="FULFILLED">Fulfilled</option>
+                </select>
+            </div>
+            
+            <div class="filter-item">
+                <label>Search:</label>
+                <input type="text" name="requisition-search" id="requisition-search" placeholder="Search by ID...">
+            </div>
+            
+            <button class="btn" id="search-btn">Search</button>
+        </div>
+    </div>
+
+    <!-- Requisition table -->
+    <div style="margin-top: 20px;">
+        <h3>Requisitions</h3>
+        
+        <!-- Select All Checkbox - Initially hidden -->
+        <div class="checkbox-container hidden" id="select-all-container">
+            <input type="checkbox" id="select-all-checkbox">
+            <label for="select-all-checkbox">Select All</label>
+
+            <!-- Create PO button - initially hidden -->
+            <button class="btn" id="create-po-btn" style="margin-left: 10px; display: none;">
+                Create PO
+            </button>
+        </div>
+        
+        <table class="table">
+            <thead>
+                <tr>
+                    <!-- Select column header - Initially hidden -->
+                    <th class="hidden" id="select-header">Select</th>
+                    <th>Req. ID</th>
+                    <th>Type</th>
+                    <th>Date Requested</th>
+                    <th>Requested By</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for requisition in requisitions %}
+                <tr>
+                    <!-- Select checkbox cell - Initially hidden -->
+                    <td class="hidden select-cell">
+                        <input type="checkbox" class="requisition-checkbox" data-req-id="{{ requisition.req_id }}">
+                    </td>
+                    <td>REQ-{{ requisition.req_id }}</td>
+                    <td>{{ requisition.get_req_type_display }}</td>
+                    <td>{{ requisition.req_requested_date|date:"M d, Y" }}</td>
+                    <td>{{ requisition.requested_by.user_fname }} {{ requisition.requested_by.user_lname }}</td>
+                    <td>
+                        <span class="status-badge 
+                            {% if requisition.req_main_status == 'PENDING_CUSTODIAN' %}status-pending
+                            {% elif requisition.req_main_status == 'APPROVED_REQUISITION' %}status-approved
+                            {% elif requisition.req_main_status == 'FULFILLED' %}status-approved
+                            {% elif requisition.req_main_status == 'REJECTED' %}status-rejected
+                            {% else %}status-pending{% endif %}">
+                            {{ requisition.get_req_main_status_display }} 
+                            {% if requisition.req_substatus and requisition.req_substatus != 'NONE' %}
+                                - {{ requisition.get_req_substatus_display }}
+                            {% endif %}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; color: #717182; padding: 20px;">
+                        No requisitions found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- PO Creation Modal -->
+<div id="po-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Purchase Order Creation</h3>
+            <button class="close-btn" onclick="closePoModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="po-modal-content">
+            <!-- Products table will be loaded here -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closePoModal()">Cancel</button>
+            <button class="btn" id="generate-po-btn">Generate PO/s</button>
+        </div>
+    </div>
+</div>
+
+<!-- PO Preview Modal -->
+<div id="po-preview-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Purchase Order Preview</h3>
+            <button class="close-btn" onclick="closePoPreviewModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="po-preview-content">
+            <!-- PO previews will be loaded here -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closePoPreviewModal()">Cancel</button>
+            <button class="btn" id="confirm-generate-po-btn">Generate PO PDF</button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- FILTER & SEARCH ---
+    const statusSelect = document.getElementById('requisition-status');
+    const searchInput = document.getElementById('requisition-search');
+    const searchBtn = document.getElementById('search-btn');
+
+    statusSelect.addEventListener('change', function () {
+        const status = this.value;
+        window.location.href = `?section=requisition&status=${status}`;
+        toggleSelectElements();
+    });
+
+    searchBtn.addEventListener('click', function (){
+        const searchFilter = searchInput.value;
+        const statusFilter = statusSelect.value;
+        window.location.href = `?section=requisition&status=${statusFilter}&search=${searchFilter}`;
+    });
+
+    searchInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            const searchFilter = searchInput.value;
+            const statusFilter = statusSelect.value;
+            window.location.href = `?section=requisition&status=${statusFilter}&search=${searchFilter}`;
+        }
+    });
+
+    searchInput.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9-]/g, '');
+        if (this.value.toLowerCase().startsWith('req-')) {
+            this.value = this.value.substring(4);
+        }
+    });
+
+    // --- TOGGLE SELECT ELEMENTS ---
+    function toggleSelectElements() {
+        const statusFilter = statusSelect.value;
+        const selectAllContainer = document.getElementById('select-all-container');
+        const selectHeader = document.getElementById('select-header');
+        const selectCells = document.querySelectorAll('.select-cell');
+        
+        if (statusFilter === 'APPROVED_REQUISITION') {
+            selectAllContainer.classList.remove('hidden');
+            selectHeader.classList.remove('hidden');
+            selectCells.forEach(cell => cell.classList.remove('hidden'));
+        } else {
+            selectAllContainer.classList.add('hidden');
+            selectHeader.classList.add('hidden');
+            selectCells.forEach(cell => cell.classList.add('hidden'));
+            
+            document.getElementById('select-all-checkbox').checked = false;
+            document.querySelectorAll('.requisition-checkbox').forEach(cb => cb.checked = false);
+        }
+    }
+
+    // --- URL PARAMETERS ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get('status');
+    const search = urlParams.get('search');
+    if (status) statusSelect.value = status;
+    if (search) searchInput.value = search;
+    toggleSelectElements();
+
+    // --- CHECKBOX LOGIC ---
+    const createPoBtn = document.getElementById('create-po-btn');
+    const selectAllCheckbox = document.getElementById('select-all-checkbox');
+    const requisitionCheckboxes = document.querySelectorAll('.requisition-checkbox');
+
+    function toggleCreatePoBtn() {
+        const anyChecked = Array.from(requisitionCheckboxes).some(cb => cb.checked);
+        createPoBtn.style.display = anyChecked ? 'inline-block' : 'none';
+    }
+
+    selectAllCheckbox.addEventListener('change', function() {
+        requisitionCheckboxes.forEach(cb => cb.checked = selectAllCheckbox.checked);
+        toggleCreatePoBtn();
+    });
+
+    requisitionCheckboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+            toggleCreatePoBtn();
+            selectAllCheckbox.checked = Array.from(requisitionCheckboxes).every(cb => cb.checked);
+        });
+    });
+
+    // Store selected IDs
+    let selectedRequisitionIds = [];
+    let currentPoData = null;
+
+    // --- CREATE PO WITH PREVIEW MODAL ---
+    createPoBtn.addEventListener('click', function() {
+        selectedRequisitionIds = Array.from(requisitionCheckboxes)
+                                    .filter(cb => cb.checked)
+                                    .map(cb => cb.dataset.reqId);
+
+        if (selectedRequisitionIds.length === 0) {
+            alert('Please select at least one requisition.');
+            return;
+        }
+
+        // Show loading state
+        createPoBtn.disabled = true;
+        createPoBtn.textContent = 'Loading...';
+
+        // Fetch preview data
+        fetch('/purchasing/preview-po/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: new URLSearchParams(
+                selectedRequisitionIds.map(id => ['req_ids[]', id])
+            )
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => { 
+                    throw new Error(data.error || 'Failed to load preview'); 
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            createPoBtn.disabled = false;
+            createPoBtn.textContent = 'Create PO';
+            
+            if (data.success) {
+                displayPoCreationModal(data);
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            createPoBtn.disabled = false;
+            createPoBtn.textContent = 'Create PO';
+            alert('Error loading preview: ' + error.message);
+        });
+    });
+
+    // --- DISPLAY PO CREATION MODAL ---
+    function displayPoCreationModal(data) {
+        const modal = document.getElementById('po-modal');
+        const modalContent = document.getElementById('po-modal-content');
+        
+        let html = `
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>RF_ID/s</th>
+                        <th>Product Name</th>
+                        <th>Specification</th>
+                        <th>UOM</th>
+                        <th>Quantity</th>
+                        <th style="min-width: 250px;">Supplier</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        data.products.forEach((product, index) => {
+            const rfIdsStr = product.req_item_ids.join(', ');
+            
+            let suppliersOptions = '<option value="">Select Supplier</option>';
+            product.suppliers.forEach(supplier => {
+                suppliersOptions += `<option value="${supplier.supplier_id}" 
+                    data-price="${supplier.price}" 
+                    data-eta="${supplier.eta}">
+                    ${supplier.supplier_name} - ₱${supplier.price.toFixed(2)} (ETA: ${supplier.eta})
+                </option>`;
+            });
+            
+            html += `
+                <tr>
+                    <td>${rfIdsStr}</td>
+                    <td>${product.product_name}</td>
+                    <td>${product.specification}</td>
+                    <td>${product.uom}</td>
+                    <td>${product.quantity}</td>
+                    <td>
+                        <select class="supplier-select" 
+                            data-product-index="${index}" 
+                            data-product-id="${product.product_id}"
+                            data-quantity="${product.quantity}"
+                            data-product-name="${product.product_name}"
+                            data-specification="${product.specification}">
+                            ${suppliersOptions}
+                        </select>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                </tbody>
+            </table>
+        `;
+        
+        modalContent.innerHTML = html;
+        modal.style.display = 'flex';
+    }
+
+    // --- GENERATE PO PREVIEW ---
+    document.getElementById('generate-po-btn').addEventListener('click', function() {
+        const supplierSelects = document.querySelectorAll('.supplier-select');
+        const poData = [];
+        const supplierGroups = {};
+
+        let hasError = false;
+        supplierSelects.forEach(select => {
+            if (!select.value) {
+                hasError = true;
+                return;
+            }
+
+            const supplierId = select.value;
+            const selectedOption = select.options[select.selectedIndex];
+            const unitPrice = parseFloat(selectedOption.dataset.price);
+            
+            if (!supplierGroups[supplierId]) {
+                supplierGroups[supplierId] = {
+                    supplier_id: supplierId,
+                    products: []
+                };
+            }
+
+            supplierGroups[supplierId].products.push({
+                product_id: select.dataset.productId,
+                product_name: select.dataset.productName,
+                specification: select.dataset.specification,
+                quantity: parseInt(select.dataset.quantity),
+                unit_price: unitPrice
+            });
+        });
+
+        if (hasError) {
+            alert('Please select a supplier for all products');
+            return;
+        }
+
+        // Convert to array
+        for (let supplierId in supplierGroups) {
+            poData.push(supplierGroups[supplierId]);
+        }
+
+        currentPoData = poData;
+
+        // Fetch PO preview data
+        const formData = new FormData();
+        formData.append('po_data', JSON.stringify(poData));
+
+        fetch('/purchasing/generate-po-preview/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => { 
+                    throw new Error(data.error || 'Failed to generate preview'); 
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                displayPoPreview(data.po_previews);
+                closePoModal();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error generating preview: ' + error.message);
+        });
+    });
+
+    // --- DISPLAY PO PREVIEW ---
+    function displayPoPreview(poPreviews) {
+        const modal = document.getElementById('po-preview-modal');
+        const previewContent = document.getElementById('po-preview-content');
+        
+        let html = '';
+        
+        poPreviews.forEach((po, index) => {
+            let itemsHtml = '';
+            po.items.forEach(item => {
+                itemsHtml += `
+                    <tr>
+                        <td>${item.product_name}</td>
+                        <td>${item.specification}</td>
+                        <td class="text-right">${item.quantity}</td>
+                        <td class="text-right">₱${item.unit_price.toFixed(2)}</td>
+                        <td class="text-right">₱${item.total.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                <div class="po-preview">
+                    <div class="po-header">
+                        <h2>Purchase Order</h2>
+                    </div>
+                    
+                    <div class="po-details">
+                        <div class="po-section">
+                            <h4>Supplier</h4>
+                            <div class="po-info-row">
+                                <span class="po-info-label">Company Name:</span>
+                                ${po.supplier.sup_name}
+                            </div>
+                            <div class="po-info-row">
+                                <span class="po-info-label">Contact Person:</span>
+                                ${po.supplier.sup_contact_person}
+                            </div>
+                            <div class="po-info-row">
+                                <span class="po-info-label">Contact Number:</span>
+                                ${po.supplier.sup_phone}
+                            </div>
+                            <div class="po-info-row">
+                                <span class="po-info-label">Address:</span>
+                                ${po.supplier.sup_address}
+                            </div>
+                        </div>
+                        
+                        <div class="po-section">
+                            <h4>Ship To</h4>
+                            <div class="po-info-row">
+                                <strong>${po.ship_to.branch_name}</strong>
+                            </div>
+                            <div class="po-info-row">
+                                ${po.ship_to.branch_phone}
+                            </div>
+                            <div class="po-info-row">
+                                ${po.ship_to.branch_address}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <table class="po-table">
+                        <thead>
+                            <tr>
+                                <th>Product Name</th>
+                                <th>Specification</th>
+                                <th class="text-right">Quantity</th>
+                                <th class="text-right">Unit Price</th>
+                                <th class="text-right">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHtml}
+                        </tbody>
+                    </table>
+                    
+                    <div class="po-summary">
+                        <div class="po-summary-content">
+                            <div class="po-summary-row total">
+                                <span class="po-summary-label">Subtotal:</span>
+                                <span class="po-summary-value">₱${po.subtotal.toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        previewContent.innerHTML = html;
+        modal.style.display = 'flex';
+    }
+
+    // --- CONFIRM GENERATE PO PDF ---
+    document.getElementById('confirm-generate-po-btn').addEventListener('click', function() {
+        const confirmBtn = this;
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Creating POs...';
+
+        if (!currentPoData) {
+            alert('No PO data available');
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Generate PO PDF';
+            return;
+        }
+
+        const formData = new FormData();
+        selectedRequisitionIds.forEach(id => formData.append('req_ids[]', id));
+        formData.append('po_data', JSON.stringify(currentPoData));
+
+        fetch('/purchasing/create-po-multiple/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => { 
+                    throw new Error(data.error || 'Failed to create POs'); 
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                closePoPreviewModal();
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.error);
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Generate PO PDF';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error creating POs: ' + error.message);
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Generate PO PDF';
+        });
+    });
+
+    // Close modals when clicking outside
+    document.getElementById('po-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closePoModal();
+        }
+    });
+
+    document.getElementById('po-preview-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closePoPreviewModal();
+        }
+    });
+
+    // --- CSRF UTILITY ---
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            document.cookie.split(';').forEach(cookie => {
+                const c = cookie.trim();
+                if (c.startsWith(name + '=')) cookieValue = decodeURIComponent(c.substring(name.length + 1));
+            });
+        }
+        return cookieValue;
+    }
+});
+
+// --- GLOBAL MODAL FUNCTIONS ---
+function closePoModal() {
+    document.getElementById('po-modal').style.display = 'none';
+}
+
+function closePoPreviewModal() {
+    document.getElementById('po-preview-modal').style.display = 'none';
+}
+</script>
+{% endblock %}

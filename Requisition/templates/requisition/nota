@@ -1,0 +1,9 @@
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+# Replace 'your_superuser_username' with your superuser's username
+user = User.objects.get(username='dan')
+
+# Set a new password
+user.set_password('dan123')
+user.save()

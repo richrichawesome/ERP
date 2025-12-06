@@ -1,0 +1,884 @@
+{% extends "main/base.html" %}
+{% block page_content %}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    .content-header {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+    }
+
+    .content-header h1 {
+        color: #030213;
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .content-header p {
+        color: #717182;
+        font-size: 14px;
+    }
+
+    .card {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+    }
+
+    .card h2 {
+        color: #030213;
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .card h3 {
+        color: #030213;
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #2563eb;
+        color: #ffffff;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 14px;
+        border: none;
+    }
+
+    .btn:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(3, 2, 19, 0.1);
+    }
+
+    .btn-success {
+        background: #16a34a;
+    }
+
+    .btn-success:hover {
+        background: #15803d;
+    }
+
+    .btn-secondary {
+        background: #6b7280;
+    }
+
+    .btn-secondary:hover {
+        background: #4b5563;
+    }
+
+    .btn-warning {
+        background: #f59e0b;
+    }
+
+    .btn-warning:hover {
+        background: #d97706;
+    }
+
+    .btn-small {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+        display: inline-block;
+    }
+
+    .status-good {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-to-be-delivered {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .status-in-transit {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-delivered {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-pending {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    .info-box {
+        background: #f8fafc;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        border-left: 4px solid #2563eb;
+    }
+
+    .info-box strong {
+        color: #030213;
+        display: inline-block;
+        min-width: 120px;
+    }
+
+    /* Table styles */
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+        margin-top: 15px;
+    }
+
+    .table th {
+        background: #030213;
+        color: #ffffff;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .table td {
+        padding: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .table tbody tr:nth-child(even) {
+        background: #f8fafc;
+    }
+
+    .table tbody tr:hover {
+        background: #e9ebef;
+    }
+
+    .checkbox-cell {
+        width: 50px;
+        text-align: center;
+    }
+
+    .quantity-input {
+        width: 80px;
+        padding: 6px 8px;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        text-align: center;
+    }
+
+    .quantity-input:disabled {
+        background: #f1f5f9;
+        color: #94a3b8;
+    }
+
+    .empty-state {
+        text-align: center;
+        color: #717182;
+        padding: 40px 20px;
+        font-style: italic;
+    }
+
+    /* Delivery summary */
+    .delivery-summary {
+        background: #f0f9ff;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 20px;
+        border: 1px solid #bae6fd;
+    }
+
+    .delivery-summary h4 {
+        color: #0369a1;
+        margin-bottom: 15px;
+    }
+
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #e0f2fe;
+    }
+
+    .summary-item:last-child {
+        border-bottom: none;
+        font-weight: 600;
+        color: #030213;
+    }
+
+    /* Modal styles */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+    }
+
+    .modal-header {
+        background: #030213;
+        color: white;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .modal-footer {
+        padding: 16px 20px;
+        background: #f8fafc;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        font-size: 0.875rem;
+    }
+
+    textarea.form-control {
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    @media (max-width: 768px) {
+        .table {
+            font-size: 14px;
+        }
+        
+        .table th,
+        .table td {
+            padding: 8px;
+        }
+        
+        .info-box {
+            padding: 12px;
+        }
+        
+        .info-box strong {
+            min-width: 100px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .card {
+            padding: 15px;
+        }
+        
+        .table {
+            display: block;
+            overflow-x: auto;
+        }
+        
+        .btn {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="content-header">
+    <h1>Manage Delivery</h1>
+    <p>Select items in good condition for delivery to the requestor</p>
+</div>
+
+{% if single_po %}
+    <!-- MANAGE DELIVERY for specific PO -->
+    <div class="card">
+        <h2>Delivery Management - PO-{{ purchase_order.po_id }}</h2>
+        
+        <!-- Start showing requisitions with their items -->
+        <h3>Requisitions in this Purchase Order</h3>
+
+        {% for req_data in requisition_items_data %}
+        <div class="card" style="margin-top: 20px;">
+            <h4 style="color: #1e40af; border-bottom: 2px solid #1e40af; padding-bottom: 10px;">
+                Requisition: REQ-{{ req_data.requisition.req_id }}
+                {% if req_data.is_main %}(Main){% endif %}
+                <span style="float: right; font-size: 14px;">
+                    <span class="status-badge 
+                        {% if req_data.requisition.req_main_status == 'TO_BE_DELIVERED' %}status-to-be-delivered
+                        {% elif req_data.requisition.req_main_status == 'IN_TRANSIT' %}status-in-transit
+                        {% elif req_data.requisition.req_main_status == 'DELIVERED' %}status-delivered
+                        {% endif %}">
+                        {{ req_data.requisition.get_req_main_status_display }}
+                    </span>
+                </span>
+            </h4>
+            
+            <!-- Requisition Details -->
+            <div class="info-box" style="margin-bottom: 15px;">
+                <div><strong>Requestor:</strong> {{ req_data.requisition.requested_by.user_fname }} {{ req_data.requisition.requested_by.user_lname }}</div>
+                <div><strong>Branch:</strong> {{ req_data.requisition.requested_by.branch.branch_name }}</div>
+                <div><strong>Date Requested:</strong> {{ req_data.requisition.req_requested_date|date:"M d, Y" }}</div>
+                <div><strong>Total Items:</strong> {{ req_data.items|length }} items</div>
+            </div>
+            
+            <!-- Requisition Items Table -->
+            <h5>Requested Items</h5>
+            <table class="table">
+                <thead>
+                    <tr>    
+                        <th>Product</th>
+                        <th>Requested Qty</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in req_data.items %}
+                    <tr>
+                        <td>
+                            <strong>{{ item.requisition_item.product.prod_name }}</strong>
+                            <div style="font-size: 12px; color: #717182;">
+                                SKU: {{ item.requisition_item.product.prod_sku|default:"N/A" }}
+                            </div>
+                        </td>
+                        <td style="text-align: center;">
+                        {{ item.req_quantity|default:"0" }}
+                    </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #717182; font-style: italic;">
+                            No items found for this requisition
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if not forloop.last %}
+        <!-- Separator line between requisitions -->
+        <div style="text-align: center; margin: 20px 0; color: #717182; font-size: 14px;">
+            ==============
+        </div>
+        {% endif %}
+
+        {% endfor %}
+
+        <!-- PO Information Section -->
+        <div style="margin-top: 30px; margin-bottom: 20px;">
+            <h3 style="border-bottom: 2px solid #030213; padding-bottom: 10px;">Purchase Order Details</h3>
+        </div>
+
+        <div class="card">
+            <div class="info-box">
+                <h3>Purchase Order Summary</h3>
+                <div><strong>PO ID:</strong> PO-{{ purchase_order.po_id }}</div>
+                <div><strong>Supplier:</strong> {{ purchase_order.supplier.sup_name }}</div>
+                <div><strong>PO Date:</strong> {{ purchase_order.po_created_at|date:"M d, Y" }}</div>
+                <div><strong>Total Items in PO:</strong> {{ purchase_order.purchase_order_item_set.count }}</div>
+                <div><strong>Total Amount:</strong> ${{ purchase_order.po_total_amount }}</div>
+                <div><strong>Status:</strong> 
+                    <span class="status-badge 
+                        {% if purchase_order.po_main_status == 'APPROVED' %}status-good
+                        {% elif purchase_order.po_main_status == 'PENDING' %}status-warning
+                        {% else %}status-pending{% endif %}">
+                        {{ purchase_order.get_po_main_status_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Available for Delivery Section -->
+        <div style="margin-top: 30px; margin-bottom: 20px;">
+            <h3 style="border-bottom: 2px solid #16a34a; padding-bottom: 10px;">Available for Delivery (Good Condition Items)</h3>
+        </div>
+
+        {% if good_discrepancies %}
+            <!-- Display available items by requisition -->
+            {% for req_summary in requisition_summary %}
+                {% if req_summary.good_discrepancies %}
+                <div class="card" style="margin-top: 20px; border-left: 4px solid #16a34a;">
+                    <h5 style="color: #065f46; margin-bottom: 15px;">
+                        Available Items for REQ-{{ req_summary.requisition.req_id }}
+                        {% if req_summary.is_main %}(Main){% endif %}
+                        <span style="float: right; font-size: 14px;">
+                            {{ req_summary.good_item_count }} items ({{ req_summary.total_good_qty }} pcs available)
+                        </span>
+                    </h5>
+                    
+                    <!-- Items Table for Delivery -->
+                    <table class="table">
+                        <thead>
+                            <tr>    
+                                <th class="checkbox-cell">Select</th>
+                                <th>Product</th>
+                                <th>Available Qty</th>
+                                <th>Branch to Deliver</th>
+                                <th>Inspection Date</th>
+                                <th>Deliver Qty</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item_data in req_summary.good_discrepancies %}
+                            {% with disc=item_data.disc %}
+                            <tr data-disc-id="{{ disc.disc_id }}" data-requisition-id="{{ req_summary.requisition.req_id }}">
+                                <td class="checkbox-cell">
+                                    <input type="checkbox" 
+                                        class="item-checkbox" 
+                                        data-disc-id="{{ disc.disc_id }}"
+                                        data-product="{{ disc.product.prod_name }}"
+                                        data-max-qty="{{ disc.disc_quantity }}"
+                                        data-branch="{{ req_summary.requisition.requested_by.branch.branch_name }}"
+                                        data-requisition-id="{{ req_summary.requisition.req_id }}"
+                                        onchange="toggleItemSelection(this)">
+                                </td>
+                                <td>
+                                    <strong>{{ disc.product.prod_name }}</strong>
+                                    <div style="font-size: 12px; color: #717182;">
+                                        SKU: {{ disc.product.prod_sku|default:"N/A" }}
+                                    </div>
+                                </td>
+                                <td style="text-align: center;">
+                                    {{ disc.disc_quantity }}
+                                    <div class="status-badge status-good" style="margin-top: 5px;">
+                                        Good Condition
+                                    </div>
+                                </td>
+                                <td style="text-align: center;">
+                                    <strong>{{ req_summary.requisition.requested_by.branch.branch_name }}</strong>
+                                    <div style="font-size: 12px; color: #717182; margin-top: 5px;">
+                                        {{ req_summary.requisition.requested_by.branch.branch_code }}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if disc.inspection_date %}
+                                        {{ disc.inspection_date|date:"M d, Y" }}
+                                    {% else %}
+                                        Not recorded
+                                    {% endif %}
+                                    <div style="font-size: 12px; color: #717182;">
+                                        By: {{ disc.inspected_by.user_fname }} {{ disc.inspected_by.user_lname }}
+                                    </div>
+                                </td>
+                                <td style="text-align: center;">
+                                    <input type="number" 
+                                        class="quantity-input"
+                                        id="qty-{{ disc.disc_id }}"
+                                        min="0" 
+                                        max="{{ disc.disc_quantity }}"
+                                        value="0"
+                                        disabled
+                                        onchange="validateQuantity(this)">
+                                </td>
+                                <td>
+                                    <input type="text" 
+                                        class="form-control"
+                                        id="notes-{{ disc.disc_id }}"
+                                        placeholder="Optional notes"
+                                        disabled>
+                                </td>
+                            </tr>
+                            {% endwith %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            {% endfor %}
+
+            <!-- Delivery Summary -->
+            <div class="delivery-summary" id="deliverySummary" style="display: none;">
+                <h4>Delivery Summary</h4>
+                <div id="summaryItems">
+                    <!-- Summary items will be inserted here -->
+                </div>
+                <div class="summary-item">
+                    <span>Total Items:</span>
+                    <span id="totalItems">0</span>
+                </div>
+                <div class="summary-item">
+                    <span>Total Quantity:</span>
+                    <span id="totalQuantity">0</span>
+                </div>
+                <div class="summary-item">
+                    <span>Branches to Deliver:</span>
+                    <span id="totalBranches">0</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons" style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
+                <a href="{% url 'delivery_management' %}" class="btn btn-secondary">
+                    ← Back to Delivery Management
+                </a>
+                <button class="btn btn-success" onclick="createDelivery()" {% if existing_delivery %}disabled{% endif %}>
+                    {% if existing_delivery %}
+                        ⚠️ Delivery Already Created
+                    {% else %}
+                        📦 Create Delivery
+                    {% endif %}
+                </button>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <p>No good condition items available for delivery.</p>
+                <p style="margin-top: 10px;">Items may need to be inspected first.</p>
+            </div>
+        {% endif %}
+    </div>
+
+{% else %}
+    <!-- PO Selection (if no specific PO provided) -->
+    <div class="card">
+        <h2>Select Purchase Order for Delivery</h2>
+        <p>Choose a purchase order to manage delivery of good condition items.</p>
+        
+        {% if purchase_orders %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>PO ID</th>
+                        <th>Requisition ID</th>
+                        <th>Supplier</th>
+                        <th>Date</th>
+                        <th>Good Items</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                    <tbody>
+                        {% for po_data in purchase_orders %}
+                        <tr>
+                            <td><strong>PO-{{ po_data.po.po_id }}</strong></td>
+                            <td>REQ-{{ po_data.po.requisition.req_id }}</td>
+                            <td>{{ po_data.po.supplier.sup_name }}</td>
+                            <td>{{ po_data.po.po_created_at|date:"M d, Y" }}</td>
+                            <td>
+                                <span class="status-badge status-good">
+                                    {{ po_data.good_count }} items
+                                </span>
+                            </td>
+                            <td>
+                                <span class="status-badge 
+                                    {% if po_data.po.requisition.req_main_status == 'TO_BE_DELIVERED' %}status-to-be-delivered
+                                    {% elif po_data.po.requisition.req_main_status == 'IN_TRANSIT' %}status-in-transit
+                                    {% else %}status-pending{% endif %}">
+                                    {{ po_data.po.requisition.get_req_main_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'manage_delivery' po_data.po.po_id %}" class="btn btn-small">
+                                    Manage Delivery
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="empty-state">
+                                No purchase orders available for delivery management.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state">
+                <p>No purchase orders available for delivery management.</p>
+                <p style="margin-top: 10px;">All good condition items may have been delivered or no inspections completed yet.</p>
+            </div>
+        {% endif %}
+    </div>
+{% endif %}
+
+{% if existing_delivery %}
+            <!-- Existing Delivery Warning -->
+            <div class="card" style="border-left-color: #f59e0b; background: #fffbeb; margin-top: 20px;">
+                <h4>⚠️ Delivery Already Created</h4>
+                <p>A delivery for this purchase order already exists:</p>
+                <div><strong>Delivery ID:</strong> DEL-{{ existing_delivery.delivery_id }}</div>
+                <div><strong>Delivery Date:</strong> {{ existing_delivery.delivery_date|date:"M d, Y" }}</div>
+                <div><strong>Status:</strong> 
+                    <span class="status-badge 
+                        {% if existing_delivery.delivery_status == 'IN_TRANSIT' %}status-in-transit
+                        {% elif existing_delivery.delivery_status == 'DELIVERED' %}status-delivered
+                        {% else %}status-pending{% endif %}">
+                        {{ existing_delivery.get_delivery_status_display }}
+                    </span>
+                </div>
+            </div>
+        {% endif %}
+
+<!-- Delivery Notes Modal -->
+<div class="modal" id="deliveryNotesModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Delivery Notes</h3>
+            <button class="close-btn" onclick="closeNotesModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="deliveryNotes">Additional Notes (Optional)</label>
+                <textarea id="deliveryNotes" class="form-control" 
+                          placeholder="Enter any additional notes about this delivery..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeNotesModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="confirmDelivery()">Confirm Delivery</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedItems = {};
+
+function toggleItemSelection(checkbox) {
+    const discId = checkbox.dataset.discId;
+    const qtyInput = document.getElementById(`qty-${discId}`);
+    const notesInput = document.getElementById(`notes-${discId}`);
+    
+    if (checkbox.checked) {
+        qtyInput.disabled = false;
+        qtyInput.value = checkbox.dataset.maxQty;
+        notesInput.disabled = false;
+        
+        selectedItems[discId] = {
+            quantity: parseInt(checkbox.dataset.maxQty),
+            maxQuantity: parseInt(checkbox.dataset.maxQty),
+            product: checkbox.dataset.product,
+            branch: checkbox.dataset.branch,
+            requisitionId: checkbox.dataset.requisitionId,
+            notes: ''
+        };
+    } else {
+        qtyInput.disabled = true;
+        qtyInput.value = 0;
+        notesInput.disabled = true;
+        delete selectedItems[discId];
+    }
+    
+    updateDeliverySummary();
+}
+
+function validateQuantity(input) {
+    const discId = input.id.replace('qty-', '');
+    const maxQty = parseInt(document.querySelector(`input[data-disc-id="${discId}"]`).dataset.maxQty);
+    let quantity = parseInt(input.value) || 0;
+    
+    if (quantity < 0) {
+        quantity = 0;
+        input.value = 0;
+    } else if (quantity > maxQty) {
+        quantity = maxQty;
+        input.value = maxQty;
+    }
+    
+    if (selectedItems[discId]) {
+        selectedItems[discId].quantity = quantity;
+    }
+    
+    updateDeliverySummary();
+}
+
+function updateDeliverySummary() {
+    const summaryContainer = document.getElementById('summaryItems');
+    const totalItemsSpan = document.getElementById('totalItems');
+    const totalQuantitySpan = document.getElementById('totalQuantity');
+    const totalBranchesSpan = document.getElementById('totalBranches');
+    const deliverySummary = document.getElementById('deliverySummary');
+    
+    if (Object.keys(selectedItems).length === 0) {
+        deliverySummary.style.display = 'none';
+        return;
+    }
+    
+    let totalItems = 0;
+    let totalQuantity = 0;
+    let branches = new Set();
+    let summaryHTML = '';
+    
+    for (const discId in selectedItems) {
+        const item = selectedItems[discId];
+        if (item.quantity > 0) {
+            totalItems++;
+            totalQuantity += item.quantity;
+            branches.add(item.branch);
+            summaryHTML += `
+                <div class="summary-item">
+                    <span>${item.product} (${item.branch})</span>
+                    <span>${item.quantity} pcs</span>
+                </div>
+            `;
+        }
+    }
+    
+    summaryContainer.innerHTML = summaryHTML;
+    totalItemsSpan.textContent = totalItems;
+    totalQuantitySpan.textContent = totalQuantity;
+    totalBranchesSpan.textContent = branches.size;
+    deliverySummary.style.display = 'block';
+}
+
+function createDelivery() {
+    const selectedCount = Object.keys(selectedItems).length;
+    if (selectedCount === 0) {
+        alert('Please select at least one item for delivery.');
+        return;
+    }
+    
+    // Update notes from input fields
+    for (const discId in selectedItems) {
+        const notesInput = document.getElementById(`notes-${discId}`);
+        if (notesInput) {
+            selectedItems[discId].notes = notesInput.value;
+        }
+    }
+    
+    document.getElementById('deliveryNotesModal').style.display = 'flex';
+}
+
+function closeNotesModal() {
+    document.getElementById('deliveryNotesModal').style.display = 'none';
+}
+
+function confirmDelivery() {
+    const deliveryNotes = document.getElementById('deliveryNotes').value;
+    
+    // Prepare delivery items
+    const deliveryItems = [];
+    for (const discId in selectedItems) {
+        const item = selectedItems[discId];
+        if (item.quantity > 0) {
+            deliveryItems.push({
+                disc_id: discId,
+                quantity: item.quantity,
+                condition: 'good',
+                notes: item.notes
+            });
+        }
+    }
+    
+    // Send request to create delivery
+    fetch(`/create-delivery/{{ purchase_order.po_id }}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            items: deliveryItems,
+            notes: deliveryNotes
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Delivery created successfully!');
+            closeNotesModal();
+            // Redirect to delivery detail or refresh page
+            window.location.href = "{% url 'delivery_management' %}";
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while creating the delivery. Please try again.');
+    });
+}
+
+// CSRF token helper
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}
