@@ -21,5 +21,3 @@ staticfiles/
 
 # Ignore media uploads (optional)
 media/
-
-settings.py
