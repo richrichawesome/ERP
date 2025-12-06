@@ -1,4 +1,4 @@
-<div class="sidebar" id="sidebar">
+{% comment %} <div class="sidebar" id="sidebar">
     <div class="logo-section">
         <div class="logo-content">
             <div class="logo-title">OCE StockFlow</div>
@@ -13,6 +13,11 @@
         <a href="{% url 'track_requisition' %}" class="nav-item {% if active_page in 'track_requisition inventory_replenishment internal_transfer' %}active{% endif %}">
             <div class="nav-icon"><i class="fas fa-th-large"></i></div>
             <span>Requisitions</span>
+        </a>
+
+        <a href="{% url 'requisition' %}" class="nav-item {% if active_page == 'requisition' %}active{% endif %}">
+            <div class="nav-icon"><i class="fas fa-th-large"></i></div>
+            <span>Requisition</span>
         </a>
 
     </div>
@@ -34,4 +39,4 @@
        
     </div>
 
-</div>
+</div> {% endcomment %}

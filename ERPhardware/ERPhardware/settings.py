@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'ERP',
     'Requisition',
+    'Property_Custodian',
 ]
 
 MIDDLEWARE = [
@@ -84,7 +85,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'ERP',         # Database name
         'USER': 'postgres',        # PostgreSQL username
-        'PASSWORD': '220067981',      # PostgreSQL password
+        'PASSWORD': 'langging',      # PostgreSQL password
         'HOST': 'localhost',           # Use '127.0.0.1' if needed
         'PORT': '5432',                # Default PostgreSQL port
     }

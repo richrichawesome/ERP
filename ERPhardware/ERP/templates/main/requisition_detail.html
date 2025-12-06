@@ -38,6 +38,16 @@
             background: #1d4ed8;
         }
 
+        /* NEW: Inspect button styling */
+        .inspect-btn {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .inspect-btn:hover {
+            background: #d97706;
+        }
+
         .card {
             background: white;
             padding: 25px;
@@ -236,6 +246,35 @@
             background: #15803d;
         }
 
+        /* NEW: Received button styling */
+        .received-btn {
+            background: #16a34a;
+            color: white;
+        }
+
+        .received-btn:hover {
+            background: #15803d;
+        }
+
+        /* NEW: Received button styling */
+        .delivery-received-btn {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn delivery-received-btn:hover {
+            background: #15803d;
+        }
+ 
+        .complete-btn {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn complete-btn:hover {
+            background: #15803d;
+        }
+
         .approve-management-btn {
             background: #2563eb;
             color: white;
@@ -413,7 +452,7 @@
                                 No specifications
                             {% endfor %}
                         </td>
-                        <td>{{ item.product.prod_desc }}</td>  <!-- Using description as brand -->
+                        <td>{{ item.product.prod_desc }}</td>
                         <td>{{ item.quantity }}</td>
                     </tr>
                     {% empty %}
@@ -465,6 +504,24 @@
                     </div>
                 </div>
             </div>
+
+            {% if inspection_message %}
+            <div style="margin-top: 20px; padding: 15px; background: #f0f9ff; border-radius: 6px; border-left: 4px solid #2563eb;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="font-size: 20px;">📦</div>
+                    <div>
+                        <strong style="color: #0369a1;">Inspection Status:</strong>
+                        <p style="margin-top: 5px; color: #030213;">{{ inspection_message }}</p>
+                        {% if po_info %}
+                        <div style="margin-top: 10px; font-size: 14px; color: #717182;">
+                            PO ID: <strong>PO-{{ po_info.po_id }}</strong> | 
+                            Supplier: <strong>{{ po_info.supplier }}</strong>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
             
             {% if requisition.req_notes %}
             <div class="info-group">
@@ -476,11 +533,28 @@
             <!-- Action Buttons -->
             {% if show_buttons %}
                 <div class="action-buttons">
+                </div>
+            {% endif %}
+            
+            <!-- Action Buttons -->
+            {% if show_buttons %}
+                <div class="action-buttons">
                     {% if show_property_custodian_buttons %}
                         <!-- Property Custodian Buttons -->
                         <button type="button" class="btn reject-btn" name="reject-btn">Reject</button>
                         <button type="button" class="btn approve-btn" name="approve-btn">Approve</button>
                         <button type="button" class="btn approve-management-btn" name="approve-management-btn">Approve and send to Management</button>
+                        
+                    {% elif show_to_be_delivered_buttons %}
+                        <!-- FIXED: Changed class from approve-btn to received-btn -->
+                        <button type="button" class="btn received-btn" name="approve-delivery-btn">Received</button>
+
+                    {% elif show_inspection_buttons %}
+                        <button type="button" class="btn inspect-btn" name="inspect-btn">Start Inspection</button>
+
+                    {% elif show_delivery_received_buttons %}
+                    <!-- Delivery Received button (for IN_TRANSIT status) -->
+                    <button type="button" class="btn delivery-received-btn" name="delivery-received-btn">Delivery Received</button>
                     
                     {% elif show_top_management_buttons %}
                         <!-- Top Management Buttons -->
@@ -490,6 +564,10 @@
                     {% elif show_purchase_management_buttons %}
                         <!-- Purchase Management Button -->
                         <button type="button" class="btn create-rfq-btn" name="create-rfq-btn">Create RFQ</button>
+
+                    {% elif show_complete_buttons %}
+                        <!-- Branch manager complete  Button -->
+                        <button type="button" class="btn complete-btn" name="complete-btn">Complete Requisition</button>
                     {% endif %}
                 </div>
             {% endif %}
@@ -533,158 +611,385 @@
         </div>
     </div>
 
-    <script>
-        // Calculate progress bar width dynamically
-        document.addEventListener('DOMContentLoaded', function() {
-            const completedSteps = document.querySelectorAll('.step.completed').length;
-            const activeSteps = document.querySelectorAll('.step.active').length;
-            const totalSteps = document.querySelectorAll('.step').length;
-            const progressBar = document.querySelector('.progress-bar');
-            
-            if (totalSteps > 1) {
-                const currentStepCount = completedSteps + (activeSteps > 0 ? 1 : 0);
-                const progressWidth = ((currentStepCount - 1) / (totalSteps - 1)) * 100;
-                progressBar.style.width = Math.max(0, progressWidth) + '%';
-            }
+    <!-- Received Confirmation Modal -->
+    <div id="receivedModal" class="modal">
+        <div class="modal-content">
+            <h3>Confirm Receipt</h3>
+            <p>Are you sure you want to confirm that you have received these products? This will move the requisition to Inspection status.</p>
+            <div class="modal-actions">
+                <button type="button" class="btn modal-cancel" onclick="closeModal('receivedModal')">Cancel</button>
+                <button type="button" class="btn modal-confirm approve" onclick="confirmReceived()">Confirm Receipt</button>
+            </div>
+        </div>
+    </div>
 
-            // Add event listeners to buttons
-            document.querySelector('.reject-btn').addEventListener('click', function() {
+    <!-- Delivery Received Confirmation Modal -->
+    <div id="deliveryReceivedModal" class="modal">
+        <div class="modal-content">
+            <h3>Confirm Delivery Received</h3>
+            <p>Are you sure you want to confirm that the delivery has been received? This will mark the requisition as FULFILLED.</p>
+            <div class="modal-actions">
+                <button type="button" class="btn modal-cancel" onclick="closeModal('deliveryReceivedModal')">Cancel</button>
+                <button type="button" class="btn modal-confirm approve" onclick="confirmDeliveryReceived()">Confirm Receipt</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complete Requisition Modal -->
+    <div id="completeModal" class="modal">
+        <div class="modal-content">
+            <h3>Complete Requisition</h3>
+            <p>Are you sure you want to mark this requisition as fulfilled? This will:</p>
+            <ul style="margin: 10px 0 20px 20px;">
+                <li>Mark all linked requisitions as FULFILLED</li>
+                <li>Add delivery items to inventory</li>
+                <li>Update delivery status to DELIVERED</li>
+            </ul>
+            <div class="modal-actions">
+                <button type="button" class="btn modal-cancel" onclick="closeModal('completeModal')">Cancel</button>
+                <button type="button" class="btn modal-confirm approve" onclick="confirmComplete()">Complete Requisition</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // Calculate progress bar width dynamically
+    document.addEventListener('DOMContentLoaded', function() {
+        const completedSteps = document.querySelectorAll('.step.completed').length;
+        const activeSteps = document.querySelectorAll('.step.active').length;
+        const totalSteps = document.querySelectorAll('.step').length;
+        const progressBar = document.querySelector('.progress-bar');
+        const completeBtn = document.querySelector('.complete-btn');
+
+        
+        if (totalSteps > 1) {
+            const currentStepCount = completedSteps + (activeSteps > 0 ? 1 : 0);
+            const progressWidth = ((currentStepCount - 1) / (totalSteps - 1)) * 100;
+            progressBar.style.width = Math.max(0, progressWidth) + '%';
+        }
+
+        // Add event listeners to buttons
+        const rejectBtn = document.querySelector('.reject-btn');
+        if (rejectBtn) {
+            rejectBtn.addEventListener('click', function() {
                 openModal('rejectModal');
             });
+        }
 
-            document.querySelector('.approve-btn').addEventListener('click', function() {
+        const approveBtn = document.querySelector('.approve-btn');
+        if (approveBtn) {
+            approveBtn.addEventListener('click', function() {
                 openModal('approveModal');
             });
+        }
 
-            document.querySelector('.approve-management-btn').addEventListener('click', function() {
+        const deliveryReceivedBtn = document.querySelector('.delivery-received-btn');
+        if (deliveryReceivedBtn) {
+            deliveryReceivedBtn.addEventListener('click', function() {
+                openModal('deliveryReceivedModal');
+            });
+        }
+
+        if (completeBtn) {
+            completeBtn.addEventListener('click', function() {
+                openModal('completeModal');
+            });
+        }
+
+        const approveManagementBtn = document.querySelector('.approve-management-btn');
+        if (approveManagementBtn) {
+            approveManagementBtn.addEventListener('click', function() {
                 openModal('approveManagementModal');
             });
-
-            // Add event listener for Create RFQ button
-            const createRfqBtn = document.querySelector('.create-rfq-btn');
-            if (createRfqBtn) {
-                createRfqBtn.addEventListener('click', function() {
-                    // TODO: Implement Create RFQ functionality
-                    alert('Create RFQ functionality will be implemented later.');
-                });
-            }
-        });
-
-        // Modal functions
-        function openModal(modalId) {
-            document.getElementById(modalId).style.display = 'flex';
         }
 
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-            // Clear reject reason when closing reject modal
-            if (modalId === 'rejectModal') {
-                document.getElementById('rejectReason').value = '';
-            }
-        }
-
-        // Close modal when clicking outside
-        window.addEventListener('click', function(event) {
-            const modals = document.querySelectorAll('.modal');
-            modals.forEach(modal => {
-                if (event.target === modal) {
-                    modal.style.display = 'none';
-                    // Clear reject reason when closing reject modal
-                    if (modal.id === 'rejectModal') {
-                        document.getElementById('rejectReason').value = '';
-                    }
-                }
+        // Add event listener for Create RFQ button
+        const createRfqBtn = document.querySelector('.create-rfq-btn');
+        if (createRfqBtn) {
+            createRfqBtn.addEventListener('click', function() {
+                alert('Create RFQ functionality will be implemented later.');
             });
-        });
-
-        // Confirmation functions
-        function confirmReject() {
-            const rejectReason = document.getElementById('rejectReason').value.trim();
-            
-            if (!rejectReason) {
-                alert('Please provide a reason for rejection.');
-                return;
-            }
-
-            // TODO: Implement reject functionality later
-            alert('Reject functionality will be implemented later.');
-            closeModal('rejectModal');
         }
 
-        function confirmApprove() {
-            const reqId = {{ requisition.req_id }};
-            
-            // Disable button to prevent double clicks
-            const confirmBtn = document.querySelector('.modal-confirm.approve');
-            confirmBtn.disabled = true;
-            confirmBtn.textContent = 'Processing...';
-            
-            fetch(`/requisition/${reqId}/approve/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
+        // FIXED: Changed selector to target received-btn specifically
+        const receivedBtn = document.querySelector('.received-btn');
+        if (receivedBtn) {
+            receivedBtn.addEventListener('click', function() {
+                openModal('receivedModal');
+            });
+        }
+
+        // Add event listener for Start Inspection button
+        const inspectBtn = document.querySelector('.inspect-btn');
+        if (inspectBtn) {
+            inspectBtn.addEventListener('click', function() {
+                startInspection();
+            });
+        }
+    });
+
+    // Complete Requisition function
+    function confirmComplete() {
+        const reqId = {{ requisition.req_id }};
+        const confirmBtn = document.querySelector('#completeModal .modal-confirm');
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Processing...';
+        
+        fetch(`/requisition/${reqId}/complete/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                closeModal('completeModal');
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.error);
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Complete Requisition';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to complete requisition. Please try again.');
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Complete Requisition';
+        });
+    }
+
+    // Modal functions
+    function openModal(modalId) {
+        document.getElementById(modalId).style.display = 'flex';
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+        if (modalId === 'rejectModal') {
+            document.getElementById('rejectReason').value = '';
+        }
+    }
+
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+                if (modal.id === 'rejectModal') {
+                    document.getElementById('rejectReason').value = '';
                 }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(data.message);
-                    closeModal('approveModal');
-                    // Reload page to show updated status and progress
-                    window.location.reload();
-                } else {
-                    alert('Error approving requisition: ' + data.error);
-                    confirmBtn.disabled = false;
-                    confirmBtn.textContent = 'Confirm Approve';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to approve requisition. Please try again.');
+            }
+        });
+    });
+
+    // Confirmation functions
+    function confirmReject() {
+        const rejectReason = document.getElementById('rejectReason').value.trim();
+        
+        if (!rejectReason) {
+            alert('Please provide a reason for rejection.');
+            return;
+        }
+
+        alert('Reject functionality will be implemented later.');
+        closeModal('rejectModal');
+    }
+
+    function confirmApprove() {
+        const reqId = {{ requisition.req_id }};
+        const confirmBtn = document.querySelector('#approveModal .modal-confirm');
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Processing...';
+        
+        fetch(`/requisition/${reqId}/approve/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                closeModal('approveModal');
+                window.location.reload();
+            } else {
+                alert('Error approving requisition: ' + data.error);
                 confirmBtn.disabled = false;
                 confirmBtn.textContent = 'Confirm Approve';
-            });
-        }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to approve requisition. Please try again.');
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Confirm Approve';
+        });
+    }
 
-        function confirmApproveManagement() {
-            const reqId = {{ requisition.req_id }};
-            
-            // Disable button to prevent double clicks
-            const confirmBtn = document.querySelector('.modal-confirm.approve-management');
-            confirmBtn.disabled = true;
-            confirmBtn.textContent = 'Processing...';
-            
-            fetch(`/requisition/${reqId}/approve-management/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(data.message);
-                    closeModal('approveManagementModal');
-                    // Reload page to show updated status and progress
-                    window.location.reload();
-                } else {
-                    alert('Error: ' + data.error);
-                    confirmBtn.disabled = false;
-                    confirmBtn.textContent = 'Confirm';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to send to management. Please try again.');
+    // Add this new function
+    function confirmDeliveryReceived() {
+        const reqId = {{ requisition.req_id }};
+        const confirmBtn = document.querySelector('#deliveryReceivedModal .modal-confirm');
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Processing...';
+        
+        fetch(`/requisition/${reqId}/confirm-delivery-received/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                closeModal('deliveryReceivedModal');
+                window.location.reload();
+            } else {
+                alert('Error confirming delivery: ' + data.error);
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Confirm Receipt';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to confirm delivery. Please try again.');
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Confirm Receipt';
+        });
+    }
+
+
+
+    function confirmApproveManagement() {
+        const reqId = {{ requisition.req_id }};
+        const confirmBtn = document.querySelector('#approveManagementModal .modal-confirm');
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Processing...';
+        
+        fetch(`/requisition/${reqId}/approve-management/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                closeModal('approveManagementModal');
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.error);
                 confirmBtn.disabled = false;
                 confirmBtn.textContent = 'Confirm';
-            });
-        }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to send to management. Please try again.');
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Confirm';
+        });
+    }
 
-        // Helper function to get CSRF token (for Django)
+    function confirmReceived() {
+        const reqId = {{ requisition.req_id }};
+        const confirmBtn = document.querySelector('#receivedModal .modal-confirm');
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Processing...';
+        
+        fetch(`/requisition/${reqId}/received/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                closeModal('receivedModal');
+                window.location.reload();
+            } else {
+                alert('Error confirming receipt: ' + data.error);
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Confirm Receipt';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to confirm receipt. Please try again.');
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Confirm Receipt';
+        });
+    }
+
+    // Start Inspection function
+    function startInspection() {
+        const reqId = {{ requisition.req_id }};
+        const inspectBtn = document.querySelector('.inspect-btn');
+        inspectBtn.disabled = true;
+        inspectBtn.textContent = 'Checking...';
+        
+        console.log('Starting inspection check for req:', reqId);
+        
+        fetch(`/requisition/${reqId}/start-inspection/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            }
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('API Response:', data);
+            if (data.success) {
+                console.log('Inspection started successfully, redirecting...');
+                // Redirect to inspection page ONLY if successful
+                window.location.href = `/inspection/${reqId}/`;
+            } else {
+                console.log('Inspection failed:', data.error);
+                alert('Error starting inspection: ' + data.error);
+                inspectBtn.disabled = false;
+                inspectBtn.textContent = 'Start Inspection';
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            alert('Failed to start inspection. Please try again.');
+            inspectBtn.disabled = false;
+            inspectBtn.textContent = 'Start Inspection';
+        });
+    }
+
         function getCSRFToken() {
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-            return csrfToken ? csrfToken.value : '';
+            let csrfToken = '';
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'csrftoken') {
+                    csrfToken = value;
+                    break;
+                }
+            }
+            return csrfToken;
         }
     </script>
 {% endblock %}

@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from Requisition.views import track_requisition_page  # <- correct import
 
+
 urlpatterns = [
     path('', views.login, name="login"),
     path('top_management_dashboard/', views.top_management_dashboard, name="top_management_dashboard"),
@@ -22,6 +23,10 @@ urlpatterns = [
     path('property-custodian/', views.property_custodian_dashboard, name='property_custodian_dashboard'), #property custodian
     path('requisition/', views.property_custodian_dashboard, name='requisition'), #Note: requisition html pero sa property_custodian_dashboard na views
     path('requisition_detail/<int:req_id>/', views.requisition_detail, name='requisition_detail'),
-    path('requisition/<int:req_id>/approve/', views.approve_requisition, name='approve_requisition'),
+    path('requisition/<int:req_id>/received/', views.approve_to_be_delivered, name='approve_to_be_delivered'),
     path('requisition/<int:req_id>/approve-management/', views.approve_to_management, name='approve_to_management'),
+    path('requisition/<int:req_id>/approve/', views.approve_requisition, name='approve_requisition'),
+    path('requisition/<int:req_id>/start-inspection/', views.start_inspection, name='start_inspection'),
+    path('requisition/<int:req_id>/confirm-delivery-received/', views.confirm_delivery_received, name='confirm_delivery_received'),
+    path('requisition/<int:req_id>/complete/', views.complete_requisition, name='complete_requisition'),
 ]

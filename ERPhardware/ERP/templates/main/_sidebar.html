@@ -38,11 +38,33 @@
         <span>Requisition</span>
         </a>
 
+        <a href="{% url 'delivery_management' %}" class="nav-item {% if active_page == 'delivery_management' %}active{% endif %}">
+        <div class="nav-icon"><i class="fas fa-th-large"></i></div>
+        <span>Delivery Management</span>
+        </a>
+
         {% elif user.role_id == 3 or user.role == 'Purchasing Staff' %}
         <a href="{% url 'requisition' %}" class="nav-item {% if active_page == 'requisition' %}active{% endif %}">
         <div class="nav-icon"><i class="fas fa-th-large"></i></div>
         <span>Requisition</span>
         </a>
+
+        {% elif user.role_id == 2 or user.role == 'Branch Manager' %}
+        <a href="{% url 'track_requisition' %}" class="nav-item {% if active_page in 'track_requisition inventory_replenishment internal_transfer' %}active{% endif %}">
+            <div class="nav-icon"><i class="fas fa-th-large"></i></div>
+            <span>Requisitions</span>
+        </a>
+
+        <a href="{% url 'requisition' %}" class="nav-item {% if active_page == 'req_main' %}active{% endif %}">
+            <div class="nav-icon"><i class="fas fa-th-large"></i></div>
+            <span>Requisition</span>
+        </a>
+
+        <a href="{% url 'inventory' %}" class="nav-item {% if active_page == 'inventory_management' %}active{% endif %}">
+        <div class="nav-icon"><i class="fas fa-th-large"></i></div>
+        <span>Inventory</span>
+        </a>
+
         {% endif %}
     </div>
 

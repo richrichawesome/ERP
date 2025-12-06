@@ -36,6 +36,7 @@ REQ_SUBSTATUS_CHOICES = [
     ("PRODUCTS_RECEIVED", "Products Received"),
     ("INSPECTING", "Inspecting"),
     ("IN_TRANSIT", "In Transit"),
+    ("RECEIVED", "Received"),
 
     ("NONE", "None"),
 ]

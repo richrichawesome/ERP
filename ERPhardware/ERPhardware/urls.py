@@ -9,6 +9,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('ERP.urls')),
     path('', include('Requisition.urls')),
+    path('', include('Property_Custodian.urls')),
 ]
 
 """

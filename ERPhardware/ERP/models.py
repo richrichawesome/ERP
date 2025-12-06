@@ -1,4 +1,3 @@
-#ERP.models (Inventory, Roles, User, Branch)
 from django.db import models
 
 #DATABASE
@@ -13,7 +12,7 @@ class Role(models.Model):
 
 class Branch(models.Model):
     branch_id = models.AutoField(primary_key=True)
-    branch_name = models.CharField(unique=True)
+    branch_name = models.CharField(max_length=100, unique=True)
     branch_address = models.CharField(max_length=150)
     branch_phone = models.CharField(max_length=20)
     branch_email = models.CharField(max_length=100, unique=True)
@@ -21,7 +20,6 @@ class Branch(models.Model):
     
     def __str__(self):
         return self.branch_name
-
 
 class User(models.Model):
     user_id = models.AutoField(primary_key=True)
@@ -39,7 +37,6 @@ class User(models.Model):
 
     def __str__(self):
         return self.username
-
 
 class Product_Category(models.Model):
     prod_cat_id = models.AutoField(primary_key=True)
@@ -110,5 +107,16 @@ class Product_Specification(models.Model):
     spec_value = models.CharField(max_length=50)
     #FK
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    
+
+# # PROPERTY CUSTODIAN
+
+# class Purchase_Order(models.Model):
+#     po_id = models.AutoField(primary_key=True)
+#     po_number = models.CharField(max_length=50, unique=True)
+#     po_date = models.DateTimeField()
+#     supplier = models.CharField(max_length=100)
+#     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
+#     status = models.CharField(max_length=20, default='pending')
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
 

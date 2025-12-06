@@ -504,7 +504,7 @@ def inventory(request):
         "categories": categories,
         "branches": branches,
         "user_id": user_id,
-        "active_page": "inventory",
+        "active_page": "inventory_management",
         "user": user
     })
 @csrf_exempt

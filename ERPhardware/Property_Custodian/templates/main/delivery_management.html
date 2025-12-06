@@ -1,0 +1,240 @@
+{% extends "main/base.html" %}
+{% block page_content %}
+<style>
+    .content-header {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+    }
+
+    .content-header h1 {
+        color: #030213;
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .content-header p {
+        color: #717182;
+        font-size: 14px;
+    }
+
+    /* Card styles */
+    .card {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+    }
+
+    .card h2 {
+        color: #030213;
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    /* Button styles */
+    .btn {
+        padding: 8px 16px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: #2563eb;
+        color: #ffffff;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 14px;
+        border: none;
+        height: fit-content;
+    }
+
+    .btn:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(3, 2, 19, 0.1);
+    }
+
+    .btn-small {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    /* Status badges */
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+
+    .status-good {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-to-be-delivered {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .status-inspection {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-fulfilled {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    /* Table styles */
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(3, 2, 19, 0.1);
+        margin-top: 15px;
+    }
+
+    .table th {
+        background: #030213;
+        color: #ffffff;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .table td {
+        padding: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .table tbody tr:nth-child(even) {
+        background: #f8fafc;
+    }
+
+    .table tbody tr:hover {
+        background: #e9ebef;
+    }
+
+    .items-count {
+        font-size: 12px;
+        color: #717182;
+        font-weight: normal;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .table {
+            font-size: 14px;
+        }
+        
+        .table th,
+        .table td {
+            padding: 8px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .content-header {
+            padding: 15px;
+        }
+        
+        .card {
+            padding: 15px;
+        }
+        
+        .table {
+            display: block;
+            overflow-x: auto;
+        }
+    }
+</style>
+
+<div class="card">
+    <h2>Purchase Orders - Ready for Delivery</h2>
+    <p>Manage purchase orders with items in good condition ready for delivery to requestors.</p>
+
+    <!-- Purchase Orders table -->
+    <div style="margin-top: 20px;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>PO ID</th>
+                    <th>Requisition ID</th>
+                    <th>Date Inspected</th>
+                    <th>Inspected By</th>
+                    <th>Good Items</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for po_data in purchase_orders_data %}
+                <tr>
+                    <td><strong>PO-{{ po_data.po.po_id }}</strong></td>
+                    <td>REQ-{{ po_data.po.requisition.req_id }}</td>
+                    <td>
+                        {% if po_data.inspection_date %}
+                            {{ po_data.inspection_date|date:"M d, Y" }}
+                        {% else %}
+                            Not inspected
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if po_data.inspected_by %}
+                            {{ po_data.inspected_by.user_fname }} {{ po_data.inspected_by.user_lname }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="status-badge status-good">
+                            Good Condition
+                        </span>
+                        <div class="items-count">
+                            {{ po_data.good_items_count }} item{{ po_data.good_items_count|pluralize }}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="status-badge 
+                            {% if po_data.po.requisition.req_main_status == 'TO_BE_DELIVERED' %}status-to-be-delivered
+                            {% elif po_data.po.requisition.req_main_status == 'INSPECTION' %}status-inspection
+                            {% elif po_data.po.requisition.req_main_status == 'FULFILLED' %}status-fulfilled
+                            {% else %}status-pending{% endif %}">
+                            {{ po_data.po.requisition.get_req_main_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'manage_delivery' po_data.po.po_id %}" class="btn btn-small">
+                            Manage Delivery
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: #717182; padding: 20px;">
+                        No purchase orders with good condition items found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
