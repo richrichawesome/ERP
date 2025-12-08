@@ -135,6 +135,11 @@
       <span>Inventory</span>
     </a>
 
+    <a href="{% url 'product_management' %}" class="nav-item {% if active_page == 'product_management' %}active{% endif %}">
+        <div class="nav-icon"><i class="fas fa-th-large"></i></div>
+        <span>Product Management</span>
+    </a>
+
     {% endif %}
   </div>
   <div class="user-section">
