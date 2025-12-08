@@ -3,6 +3,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from django.core.paginator import Paginator
 import json
 
 # Import models from the correct locations
@@ -23,8 +24,21 @@ def property_custodian_dashboard(request):
     
     # Get filter parameters
     req_type = request.GET.get('type', 'all')
-    status = request.GET.get('status', 'all')
+    status = request.GET.get('status', '')
     search = request.GET.get('search', '')
+    
+    # Set default status based on role_id
+    if not status:
+        if user.role.role_id == 2:
+            status = 'PENDING_CUSTODIAN'
+        elif user.role.role_id == 1:
+            status = 'PENDING_TOP_MGMT'
+        elif user.role.role_id == 3:
+            status = 'APPROVED_REQUISITION'
+        elif user.role.role_id == 4:
+            status = 'TO_BE_DELIVERED'
+        else:
+            status = 'all'
     
     # Start with all requisitions
     requisitions = Requisition.objects.select_related(
@@ -49,11 +63,37 @@ def property_custodian_dashboard(request):
             Q(requested_by__user_lname__icontains=search)
         )
     
+    # For AJAX requests, return JSON
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        requisitions_data = []
+        for req in requisitions:
+            requisitions_data.append({
+                'req_id': f'REQ-{req.req_id}',  # Formatted for display
+                'req_id_raw': req.req_id,       # Raw ID for URL
+                'type': req.get_req_type_display(),
+                'type_value': req.req_type,
+                'date_requested': req.req_requested_date.strftime('%b %d, %Y'),
+                'requested_by': f'{req.requested_by.user_fname} {req.requested_by.user_lname}',
+                'branch': req.branch.branch_name,
+                'branch_id': req.branch.branch_id,
+                'status': req.req_main_status,
+                'status_display': req.get_req_main_status_display(),
+                # 'detail_url': f'/requisition_detail/{req.req_id}/'  # raw ID here
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'requisitions': requisitions_data,
+            'user_role_id': user.role.role_id,
+            'user_branch_id': user.branch.branch_id if user.role.role_id == 2 else None
+        })
+    
     return render(request, "main/requisition.html", {
         "section": section,
         "requisitions": requisitions,
         "user": user,
-        "active_page": "requisition"
+        "active_page": "requisition",
+        "default_status": status
     })
 
 # @csrf_exempt

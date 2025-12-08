@@ -138,6 +138,7 @@
         box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         overflow: hidden;
         border: 1px solid #e5e7eb;
+        min-height: 300px;
     }
 
     .requisitions-table {
@@ -262,6 +263,29 @@
         color: #2563eb;
     }
 
+    /* Loading State */
+    .loading-state {
+        display: none;
+        text-align: center;
+        padding: 40px 20px;
+        color: #6b7280;
+    }
+
+    .loading-spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #3b82f6;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
     /* Empty State */
     .empty-state {
         text-align: center;
@@ -371,6 +395,11 @@
 
 <!-- Table Container -->
 <div class="table-container">
+    <div class="loading-state" id="loadingState">
+        <div class="loading-spinner"></div>
+        <p>Loading requisitions...</p>
+    </div>
+    
     <table class="requisitions-table">
         <thead>
             <tr>
@@ -384,157 +413,199 @@
             </tr>
         </thead>
         <tbody id="requisitionsTableBody">
-        {% for requisition in requisitions %}
-            <tr data-type="{{ requisition.req_type }}" 
-                data-status="{{ requisition.req_main_status }}"
-                data-branch="{{ requisition.branch.branch_id }}">
-                <td>REQ-{{ requisition.req_id }}</td>
-                <td>{{ requisition.get_req_type_display }}</td>
-                <td>{{ requisition.req_requested_date|date:"M d, Y" }}</td>
-                <td>{{ requisition.requested_by.user_fname }} {{ requisition.requested_by.user_lname }}</td>
-                <td>{{ requisition.branch.branch_name }}</td>
-                <td>
-                    {% if requisition.req_main_status == 'PENDING_CUSTODIAN' %}
-                        <span class="status-badge status-pending">
-                            {{ requisition.get_req_main_status_display }}
-                        </span>
-                    {% elif requisition.req_main_status == 'PENDING_TOP_MGMT' %}
-                        <span class="status-badge status-management">
-                            {{ requisition.get_req_main_status_display }}
-                        </span>
-                    {% elif requisition.req_main_status == 'APPROVED_REQUISITION' %}
-                        <span class="status-badge status-approved">
-                            {{ requisition.get_req_main_status_display }}
-                        </span>
-                    {% elif requisition.req_main_status == 'PO_APPROVAL' %}
-                        <span class="status-badge status-po">
-                            {{ requisition.get_req_main_status_display }}
-                        </span>
-                    {% elif requisition.req_main_status == 'TO_BE_DELIVERED' %}
-                        <span class="status-badge status-delivery">
-                            {{ requisition.get_req_main_status_display }}
-                        </span>
-                    {% elif requisition.req_main_status == 'INSPECTION' %}
-                        <span class="status-badge status-inspection">
-                            {{ requisition.get_req_main_status_display }}
-                        </span>
-                    {% elif requisition.req_main_status == 'FULFILLED' %}
-                        <span class="status-badge status-fulfilled">
-                            {{ requisition.get_req_main_status_display }}
-                        </span>
-                    {% else %}
-                        <span class="status-badge status-pending">
-                            {{ requisition.get_req_main_status_display }}
-                        </span>
-                    {% endif %}
-                </td>
-                <td>
-                    <div class="action-buttons">
-                        <a href="{% url 'requisition_detail' requisition.req_id %}" class="action-btn btn-view">
-                            <i class="fa-solid fa-eye"></i> View
-                        </a>
-                    </div>
-                </td>
-            </tr>
-        {% empty %}
-            <tr>
-                <td colspan="7">
-                    <div class="empty-state">
-                        <i class="fa-solid fa-clipboard-list"></i>
-                        <p>No requisitions found.</p>
-                    </div>
-                </td>
-            </tr>
-        {% endfor %}
+            <!-- Content will be loaded via AJAX -->
         </tbody>
     </table>
 </div>
 
 <script>
+    // Global variables
+    let userRoleId = "{{ user.role.role_id }}";
+    let userBranchId = "{{ user.branch.branch_id }}";
+    let currentFilters = {
+        type: 'all',
+        status: '{{ default_status }}',
+        search: ''
+    };
+    let debounceTimer;
+
     document.addEventListener('DOMContentLoaded', function() {
-        // Get initial filter values from URL if present
-        const urlParams = new URLSearchParams(window.location.search);
-        const type = urlParams.get('type') || 'all';
-        const status = urlParams.get('status') || 'all';
-        const search = urlParams.get('search') || '';
+        // Set default status based on role_id
+        setDefaultStatus();
         
-        // Set filter values
-        document.getElementById('typeFilter').value = type;
-        document.getElementById('statusFilter').value = status;
-        document.getElementById('searchInput').value = search;
+        // Load initial data
+        loadRequisitions();
         
-        // Apply initial filtering
-        filterRequisitions();
-        
-        // Add event listeners for real-time filtering
-        document.getElementById('searchInput').addEventListener('input', filterRequisitions);
-        document.getElementById('typeFilter').addEventListener('change', filterRequisitions);
-        document.getElementById('statusFilter').addEventListener('change', filterRequisitions);
-    });
-    
-    function filterRequisitions() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        const typeFilter = document.getElementById('typeFilter').value;
-        const statusFilter = document.getElementById('statusFilter').value;
-        
-        const rows = document.querySelectorAll('#requisitionsTableBody tr');
-        let hasVisibleRows = false;
-        
-            rows.forEach(row => {
-            if (row.children.length < 2) return; // Skip empty state row
-            
-            const reqId = row.cells[0]?.textContent.toLowerCase() || '';
-            const requestedBy = row.cells[3]?.textContent.toLowerCase() || '';
-            const rowType = row.getAttribute('data-type');
-            const rowStatus = row.getAttribute('data-status');
-            
-            // Check if user has role_id 2, then filter by branch
-            const userBranchId = "{{ user.branch.branch_id }}";
-            const userRoleId = "{{ user.role.role_id }}";
-            const rowBranchId = row.getAttribute('data-branch');
-            
-            // Apply filters
-            const searchMatch = searchTerm === '' || 
-                               reqId.includes(searchTerm) || 
-                               requestedBy.includes(searchTerm);
-            const typeMatch = typeFilter === 'all' || rowType === typeFilter;
-            const statusMatch = statusFilter === 'all' || rowStatus === statusFilter;
-            
-            // For role_id 2, also filter by branch
-            let branchMatch = true;
-            if (userRoleId === '2') {
-                branchMatch = rowBranchId === userBranchId;
-            }
-            
-            if (searchMatch && typeMatch && statusMatch && branchMatch) {
-                row.style.display = '';
-                hasVisibleRows = true;
-            } else {
-                row.style.display = 'none';
-            }
+        // Add event listeners for real-time filtering with debounce
+        document.getElementById('searchInput').addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                currentFilters.search = this.value;
+                loadRequisitions();
+            }, 300);
         });
         
-        // Update URL with current filters (without reloading page)
-        updateURLFilters(searchTerm, typeFilter, statusFilter);
+        document.getElementById('typeFilter').addEventListener('change', function() {
+            currentFilters.type = this.value;
+            loadRequisitions();
+        });
+        
+        document.getElementById('statusFilter').addEventListener('change', function() {
+            currentFilters.status = this.value;
+            loadRequisitions();
+        });
+    });
+    
+    function setDefaultStatus() {
+        const statusFilter = document.getElementById('statusFilter');
+        const defaultStatus = "{{ default_status }}";
+
+        // Set dropdown value
+        statusFilter.value = defaultStatus;
+
+        // Sync filter object
+        currentFilters.status = defaultStatus;
+    }
+
+    
+    function loadRequisitions() {
+        const tableBody = document.getElementById('requisitionsTableBody');
+        const loadingState = document.getElementById('loadingState');
+        
+        // Show loading state
+        tableBody.innerHTML = '';
+        loadingState.style.display = 'block';
+        
+        // Build query string
+        const queryParams = new URLSearchParams();
+        queryParams.append('type', currentFilters.type);
+        queryParams.append('status', currentFilters.status);
+        queryParams.append('search', currentFilters.search);
+        
+        // Make AJAX request
+        fetch(`?${queryParams.toString()}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            loadingState.style.display = 'none';
+            
+            if (data.success) {
+                renderRequisitions(data.requisitions, data.user_role_id, data.user_branch_id);
+            } else {
+                showEmptyState('Error loading requisitions');
+            }
+        })
+        .catch(error => {
+            loadingState.style.display = 'none';
+            console.error('Error:', error);
+            showEmptyState('Error loading requisitions');
+        });
     }
     
-    function updateURLFilters(search, type, status) {
+    function renderRequisitions(requisitions, userRoleId, userBranchId) {
+        const tableBody = document.getElementById('requisitionsTableBody');
+        
+        if (requisitions.length === 0) {
+            showEmptyState('No requisitions found.');
+            return;
+        }
+        
+        let html = '';
+        
+        requisitions.forEach(req => {
+            // For role_id 2, check if requisition belongs to user's branch
+            if (userRoleId === 2 && req.branch_id !== userBranchId) {
+                return; // Skip requisitions from other branches
+            }
+            
+            // Get status badge class
+            const statusClass = getStatusClass(req.status);
+            
+            // Simple URL construction
+             const detailUrl = `/requisition_detail/${req.req_id_raw}/`;
+            html += `
+                <tr>
+                    <td>REQ-${req.req_id}</td>
+                    <td>${req.type}</td>
+                    <td>${req.date_requested}</td>
+                    <td>${req.requested_by}</td>
+                    <td>${req.branch}</td>
+                    <td>
+                        <span class="status-badge ${statusClass}">
+                            ${req.status_display}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="${detailUrl}" class="action-btn btn-view">
+                                <i class="fa-solid fa-eye"></i> View
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tableBody.innerHTML = html;
+    }
+
+    function getStatusClass(status) {
+        switch(status) {
+            case 'PENDING_CUSTODIAN':
+                return 'status-pending';
+            case 'PENDING_TOP_MGMT':
+                return 'status-management';
+            case 'APPROVED_REQUISITION':
+                return 'status-approved';
+            case 'PO_APPROVAL':
+                return 'status-po';
+            case 'TO_BE_DELIVERED':
+                return 'status-delivery';
+            case 'INSPECTION':
+                return 'status-inspection';
+            case 'FULFILLED':
+                return 'status-fulfilled';
+            default:
+                return 'status-pending';
+        }
+    }
+    
+    function showEmptyState(message) {
+        const tableBody = document.getElementById('requisitionsTableBody');
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="7">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-clipboard-list"></i>
+                        <p>${message}</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+    
+    function updateURLFilters() {
         const url = new URL(window.location);
         
-        if (search) {
-            url.searchParams.set('search', search);
+        if (currentFilters.search) {
+            url.searchParams.set('search', currentFilters.search);
         } else {
             url.searchParams.delete('search');
         }
         
-        if (type && type !== 'all') {
-            url.searchParams.set('type', type);
+        if (currentFilters.type && currentFilters.type !== 'all') {
+            url.searchParams.set('type', currentFilters.type);
         } else {
             url.searchParams.delete('type');
         }
         
-        if (status && status !== 'all') {
-            url.searchParams.set('status', status);
+        if (currentFilters.status && currentFilters.status !== 'all') {
+            url.searchParams.set('status', currentFilters.status);
         } else {
             url.searchParams.delete('status');
         }
