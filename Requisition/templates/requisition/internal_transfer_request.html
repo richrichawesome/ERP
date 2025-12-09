@@ -1,0 +1,615 @@
+<!-- ERP\Requisition\templates\requisition\internal_transfer_request.html -->
+
+{% extends "requisition/base.html" %}
+{% block page_content %}
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    * {
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* Page Header */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 20px;
+    }
+
+    .page-title h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0 0 4px 0;
+    }
+
+    .page-description {
+        font-size: 14px;
+        color: #6b7280;
+        margin: 0;
+    }
+
+    /* Search and Filter Section */
+    .search-filter-section {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 16px 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        flex-wrap: wrap;
+    }
+
+    .search-box {
+        flex: 1;
+        position: relative;
+        min-width: 300px;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 10px 12px 10px 40px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #374151;
+        background: #fafafa;
+        transition: all 0.2s;
+    }
+
+    .search-box input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        font-size: 16px;
+    }
+
+    /* Modern Table Design */
+    .table-container {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+        min-height: 300px;
+        position: relative;
+    }
+
+    .requests-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        color: #374151;
+    }
+
+    .requests-table thead th {
+        background: #f9fafb;
+        text-align: left;
+        padding: 16px 20px;
+        font-weight: 600;
+        color: #374151;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .requests-table tbody tr {
+        border-bottom: 1px solid #f3f4f6;
+        transition: background-color 0.15s;
+    }
+
+    .requests-table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .requests-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .requests-table tbody td {
+        padding: 16px 20px;
+        color: #1f2937;
+        font-size: 14px;
+        vertical-align: middle;
+    }
+
+    /* Request Info Styling */
+    .request-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .req-id {
+        font-weight: 600;
+        color: #1f2937;
+        font-size: 15px;
+    }
+
+    .requester-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .requester-name {
+        font-weight: 500;
+        color: #1f2937;
+    }
+
+    .requester-branch {
+        font-size: 12px;
+        color: #6b7280;
+        background: #f3f4f6;
+        padding: 2px 8px;
+        border-radius: 4px;
+        display: inline-block;
+        width: fit-content;
+    }
+
+    .branch-info {
+        font-size: 13px;
+        color: #4b5563;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .branch-info i {
+        color: #9ca3af;
+        font-size: 12px;
+    }
+
+    .date-info {
+        font-size: 13px;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .date-info i {
+        color: #9ca3af;
+        font-size: 12px;
+    }
+
+    /* Status Indicator */
+    .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #10b981;
+    }
+
+    .status-text {
+        font-size: 13px;
+        font-weight: 500;
+        color: #065f46;
+        background: #d1fae5;
+        padding: 4px 10px;
+        border-radius: 12px;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+
+    .action-btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-view {
+        background: #3b82f6;
+        color: white;
+        border-color: #3b82f6;
+    }
+
+    .btn-view:hover {
+        background: #2563eb;
+        border-color: #2563eb;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+    }
+
+    .btn-view i {
+        font-size: 12px;
+    }
+
+    /* Loading State */
+    .loading-state {
+        display: none;
+        text-align: center;
+        padding: 60px 20px;
+        color: #6b7280;
+    }
+
+    .loading-spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #3b82f6;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #9ca3af;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.3;
+        color: #9ca3af;
+    }
+
+    .empty-state p {
+        font-size: 15px;
+        margin: 0;
+        color: #6b7280;
+    }
+
+    .empty-state .subtext {
+        font-size: 13px;
+        margin-top: 8px;
+        color: #9ca3af;
+    }
+
+    /* Badge for items count */
+    .items-badge {
+        background: #e0e7ff;
+        color: #4f46e5;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 10px;
+        margin-left: 6px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .search-filter-section {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .search-box {
+            width: 100%;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .action-btn {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .requests-table {
+            display: block;
+            overflow-x: auto;
+        }
+        
+        .requests-table thead th,
+        .requests-table tbody td {
+            padding: 12px 16px;
+        }
+    }
+
+    /* Stats Card */
+    .stats-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        border: 1px solid #e5e7eb;
+        margin-bottom: 20px;
+    }
+
+    .stats-title {
+        font-size: 14px;
+        color: #6b7280;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .stats-title i {
+        color: #3b82f6;
+    }
+
+    .stats-count {
+        font-size: 32px;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+    }
+</style>
+
+<div class="page-header">
+    <div class="page-title">
+        <h1>Internal Transfer Requests</h1>
+        <p class="page-description">Manage incoming transfer requests from other branches. Review and accept delivery requests to your branch.</p>
+    </div>
+</div>
+
+<!-- Stats Card -->
+<div class="stats-card">
+    <div class="stats-title">
+        <i class="fa-solid fa-inbox"></i>
+        Pending Transfers to Your Branch
+    </div>
+    <p class="stats-count" id="pendingCount">0</p>
+</div>
+
+<!-- Search Section -->
+<div class="search-filter-section">
+    <div class="search-box">
+        <i class="fa-solid fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search by REQ-ID, requester name, or sender branch...">
+    </div>
+</div>
+
+<!-- Table Container -->
+<div class="table-container">
+    <div class="loading-state" id="loadingState">
+        <div class="loading-spinner"></div>
+        <p>Loading internal transfer requests...</p>
+    </div>
+    
+    <table class="requests-table">
+        <thead>
+            <tr>
+                <th>REQUEST ID</th>
+                <th>REQUESTED BY</th>
+                <th>SENDER BRANCH</th>
+                <th>DATE REQUESTED</th>
+                <th>STATUS</th>
+                <th>ACTIONS</th>
+            </tr>
+        </thead>
+        <tbody id="requestsTableBody">
+            <!-- Content will be loaded via AJAX -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // Global variables
+    let userBranchId = "{{ user_branch_id }}";
+    let currentSearch = '';
+    let debounceTimer;
+    let isInitialLoad = true;
+
+    console.log("User Branch ID:", userBranchId);
+    console.log("User:", "{{ user }}");
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load initial data
+        loadInternalTransferRequests();
+        
+        // Add event listener for search with debounce
+        document.getElementById('searchInput').addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                currentSearch = this.value.trim();
+                loadInternalTransferRequests();
+            }, 300);
+        });
+        
+        // Add Enter key support for search
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                clearTimeout(debounceTimer);
+                currentSearch = this.value.trim();
+                loadInternalTransferRequests();
+            }
+        });
+    });
+    
+    function loadInternalTransferRequests() {
+        const tableBody = document.getElementById('requestsTableBody');
+        const loadingState = document.getElementById('loadingState');
+        
+        // Show loading state on initial load
+        if (isInitialLoad) {
+            tableBody.innerHTML = '';
+            loadingState.style.display = 'block';
+        }
+        
+        // Build query string
+        const queryParams = new URLSearchParams();
+        queryParams.append('search', currentSearch);
+        queryParams.append('branch_id', userBranchId);
+        queryParams.append('ajax', 'true');
+        
+        // Make AJAX request
+        fetch(`?${queryParams.toString()}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            loadingState.style.display = 'none';
+            
+            if (data.success) {
+                renderRequests(data.requests);
+                updateStatsCount(data.requests.length);
+            } else {
+                showEmptyState('Unable to load transfer requests');
+            }
+            isInitialLoad = false;
+        })
+        .catch(error => {
+            loadingState.style.display = 'none';
+            console.error('Error loading requests:', error);
+            showEmptyState('Error loading internal transfer requests. Please try again.');
+            isInitialLoad = false;
+        });
+    }
+    
+    function renderRequests(requests) {
+        const tableBody = document.getElementById('requestsTableBody');
+        
+        if (requests.length === 0) {
+            if (currentSearch) {
+                showEmptyState(`No transfer requests found for "${currentSearch}"`);
+            } else {
+                showEmptyState('No pending internal transfer requests found.');
+            }
+            return;
+        }
+        
+        let html = '';
+        
+        requests.forEach(req => {
+            // Format date
+            const dateRequested = new Date(req.req_requested_date);
+            const formattedDate = dateRequested.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+            const formattedTime = dateRequested.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            // Construct view URL - adjust based on your URL structure
+            // const detailUrl = `/requisition/${req.req_id}/internal-transfer-details/`;
+            const detailUrl = `{% url 'internal_transfer_request_detail' req_id=0 %}`.replace('0', req.req_id);
+            
+            html += `
+                <tr>
+                    <td>
+                        <div class="request-info">
+                            <span class="req-id">${req.req_id_display}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="requester-info">
+                            <span class="requester-name">${req.requested_by_name}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="branch-info">
+                            <i class="fa-solid fa-location-dot"></i>
+                            ${req.sender_branch_name}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="date-info">
+                            <i class="fa-solid fa-calendar"></i>
+                            ${formattedDate}<br>
+                            <small>${formattedTime}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="status-indicator">
+                            <div class="status-dot"></div>
+                            <span class="status-text">Approved</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="${detailUrl}" class="action-btn btn-view" title="View Request Details">
+                                <i class="fa-solid fa-eye"></i>
+                                View Details
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tableBody.innerHTML = html;
+    }
+    
+    function updateStatsCount(count) {
+        const pendingCount = document.getElementById('pendingCount');
+        pendingCount.textContent = count;
+        
+        // Add animation for count change
+        pendingCount.style.transform = 'scale(1.1)';
+        setTimeout(() => {
+            pendingCount.style.transform = 'scale(1)';
+        }, 200);
+    }
+    
+    function showEmptyState(message) {
+        const tableBody = document.getElementById('requestsTableBody');
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-box-open"></i>
+                        <p>${message}</p>
+                        ${!currentSearch ? '<p class="subtext">All incoming transfers to your branch will appear here once approved.</p>' : ''}
+                    </div>
+                </td>
+            </tr>
+        `;
+        updateStatsCount(0);
+    }
+    
+</script>
+
+{% endblock %}

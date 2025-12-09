@@ -140,6 +140,11 @@
         <span>Product Management</span>
     </a>
 
+    <a href="{% url 'internal_transfer_request' %}" class="nav-item {% if active_page == 'internal_transfer_request' %}active{% endif %}">
+        <div class="nav-icon"><i class="fas fa-exchange-alt"></i></div>
+        <span>Internal Transfer Requests</span>
+    </a>
+
     {% endif %}
   </div>
   <div class="user-section">

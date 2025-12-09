@@ -149,10 +149,3 @@ class RequisitionStatusTimelineAdmin(admin.ModelAdmin):
     
     readonly_fields = ('history_id', 'changed_at')
     
-    def has_add_permission(self, request):
-        # Prevent manually adding timeline entries
-        return False
-    
-    def has_delete_permission(self, request, obj=None):
-        # Prevent deleting timeline entries (they're historical records)
-        return False

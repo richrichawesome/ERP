@@ -1,0 +1,1024 @@
+{% extends "requisition/base.html" %}
+{% load static %}
+<!-- Requisition/templates/requisition/internal_transfer_request_details.html -->
+{% block page_content %}
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    * {
+        font-family: 'Inter', sans-serif;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background: #f8fafc;
+        color: #030213;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* Page Header */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .page-title h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0 0 4px 0;
+    }
+
+    .page-description {
+        font-size: 14px;
+        color: #6b7280;
+        margin: 0;
+    }
+
+    .back-btn {
+        padding: 10px 20px;
+        background: #1a2332;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 14px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .back-btn:hover {
+        background-color: #060607;
+    }
+
+    /* Card Styles */
+    .card {
+        background: #ffffff;
+        padding: 25px;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .card h2 {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    /* Progress Bar */
+    .progress-container {
+        margin: 30px 0;
+    }
+
+    .progress-steps {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        margin-bottom: 30px;
+    }
+
+    .progress-steps::before {
+        content: "";
+        position: absolute;
+        top: 15px;
+        left: 50px;
+        right: 50px;
+        height: 3px;
+        background: #e5e7eb;
+        z-index: 1;
+    }
+
+    .progress-bar {
+        position: absolute;
+        top: 15px;
+        left: 50px;
+        height: 3px;
+        background: #3b82f6;
+        z-index: 2;
+        transition: width 0.3s ease;
+    }
+
+    .step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 3;
+        flex: 1;
+        max-width: 180px;
+    }
+
+    .step-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 10px;
+        border: 3px solid white;
+        transition: all 0.3s ease;
+        cursor: default;
+    }
+
+    .step.completed .step-circle {
+        background: #10b981;
+        color: white;
+        cursor: pointer;
+    }
+
+    .step.completed .step-circle:hover {
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+    }
+
+    .step.active .step-circle {
+        background: #3b82f6;
+        color: white;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
+
+    .step-label {
+        font-size: 12px;
+        text-align: center;
+        font-weight: 500;
+        color: #6b7280;
+        line-height: 1.4;
+    }
+
+    .step.active .step-label {
+        color: #1f2937;
+        font-weight: 600;
+    }
+
+    .step.completed .step-label {
+        color: #10b981;
+    }
+
+    /* Step Details */
+    .step-details {
+        margin-top: 8px;
+        font-size: 11px;
+        color: #6b7280;
+        text-align: center;
+        line-height: 1.3;
+    }
+
+    .step.completed .step-details {
+        color: #059669;
+    }
+
+    /* Table Styles */
+    .table-wrapper {
+        max-height: 400px;
+        overflow-y: auto;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        margin-top: 15px;
+    }
+
+    .requisitions-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        color: #374151;
+        min-width: 600px;
+    }
+
+    .requisitions-table thead {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .requisitions-table thead th {
+        background: #f9fafb;
+        text-align: left;
+        padding: 14px 16px;
+        font-weight: 600;
+        color: #6b7280;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .requisitions-table tbody tr {
+        border-bottom: 1px solid #f3f4f6;
+        transition: background-color 0.15s;
+    }
+
+    .requisitions-table tbody tr:hover {
+        background: #f9fafb;
+    }
+
+    .requisitions-table tbody td {
+        padding: 16px;
+        color: #1f2937;
+        font-size: 14px;
+        vertical-align: top;
+    }
+
+    .product-name {
+        font-weight: 600;
+        color: #111827;
+        font-size: 14px;
+    }
+
+    /* Requisition Information */
+    .requisition-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+        margin-top: 20px;
+    }
+
+    .info-group {
+        margin-bottom: 18px;
+    }
+
+    .info-label {
+        font-weight: 500;
+        color: #6b7280;
+        font-size: 14px;
+        margin-bottom: 6px;
+    }
+
+    .info-value {
+        font-size: 16px;
+        color: #1f2937;
+        font-weight: 500;
+    }
+
+    /* Status Badge */
+    .status-badge {
+        display: inline-block;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-approved {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-confirmed {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .status-fulfilled {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-rejected {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 25px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .approve-btn {
+        background: #d1fae5;
+        color: #059669;
+        border: 1px solid #a7f3d0;
+    }
+
+    .approve-btn:hover {
+        background: #a7f3d0;
+    }
+
+    .approve-direct-btn {
+        background: #10b981;
+        color: white;
+    }
+
+    .approve-direct-btn:hover {
+        background: #059669;
+    }
+
+    .send-mgmt-btn {
+        background: #dbeafe;
+        color: #1e40af;
+        border: 1px solid #bfdbfe;
+    }
+
+    .send-mgmt-btn:hover {
+        background: #bfdbfe;
+    }
+
+    .reject-btn {
+        background: #fee2e2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+    }
+
+    .reject-btn:hover {
+        background: #fecaca;
+    }
+
+    .receive-btn {
+        background: #10b981;
+        color: white;
+    }
+
+    .receive-btn:hover {
+        background: #059669;
+    }
+
+    .rejection-info {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        padding: 16px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 20px;
+    }
+
+    .rejection-info i {
+        color: #dc2626;
+        font-size: 20px;
+    }
+
+    .rejection-info-text {
+        flex: 1;
+    }
+
+    .rejection-info-text strong {
+        display: block;
+        color: #991b1b;
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+
+    .rejection-info-text span {
+        color: #dc2626;
+        font-size: 13px;
+    }
+
+    /* Modal */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.25);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        max-width: 500px;
+        width: 90%;
+    }
+
+    .modal h3 {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 15px;
+    }
+
+    .modal p {
+        color: #6b7280;
+        margin-bottom: 20px;
+        line-height: 1.5;
+    }
+
+    .modal textarea {
+        width: 100%;
+        min-height: 100px;
+        padding: 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        resize: vertical;
+        margin-bottom: 20px;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+
+    .modal-cancel {
+        background: #f3f4f6;
+        color: #374151;
+    }
+
+    .modal-cancel:hover {
+        background: #e5e7eb;
+    }
+
+    .modal-confirm {
+        background: #10b981;
+        color: white;
+    }
+
+    .modal-confirm.reject {
+        background: #dc2626;
+    }
+
+    .modal-confirm:hover {
+        opacity: 0.9;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .container {
+            padding: 15px;
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .progress-steps::before {
+            display: none;
+        }
+
+        .step {
+            max-width: none;
+            flex: 0 0 calc(50% - 10px);
+        }
+
+        .requisition-info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="container">
+    <div class="page-header">
+        <div class="page-title">
+            <h1>Internal Transfer Request Details</h1>
+            <p class="page-description">REQ-{{ requisition.req_id }} - Internal Transfer</p>
+        </div>
+        <a href="{% url 'internal_transfer_request' %}" class="back-btn">
+            <i class="fa-solid fa-arrow-left"></i> Back to Requests
+        </a>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="card">
+        <h2>Transfer Progress</h2>
+        <div class="progress-container">
+            <div class="progress-steps">
+                <div class="progress-bar" id="progressBar"></div>
+                
+                <!-- Step 1: Property Custodian Review -->
+                <div class="step {% if custodian_status %}completed{% elif current_step == 'PENDING_CUSTODIAN' %}active{% endif %}">
+                    <div class="step-circle">
+                        {% if custodian_status %}
+                            <i class="fa-solid fa-check"></i>
+                        {% else %}
+                            1
+                        {% endif %}
+                    </div>
+                    <div class="step-label">Property Custodian Review</div>
+                    {% if custodian_status %}
+                    <div class="step-details">
+                        {{ custodian_status.changed_at|date:"M d, Y" }}<br>
+                        by {{ custodian_status.user.user_fname }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Step 2: Top Management Approval -->
+                <div class="step {% if management_status %}completed{% elif current_step == 'PENDING_TOP_MGMT' %}active{% endif %}">
+                    <div class="step-circle">
+                        {% if management_status %}
+                            <i class="fa-solid fa-check"></i>
+                        {% else %}
+                            2
+                        {% endif %}
+                    </div>
+                    <div class="step-label">Top Management Approval</div>
+                    {% if management_status %}
+                    <div class="step-details">
+                        {{ management_status.changed_at|date:"M d, Y" }}<br>
+                        by {{ management_status.user.user_fname }}
+                    </div>
+                    {% elif skipped_management %}
+                    <div class="step-details">
+                        Directly approved by<br>
+                        Property Custodian
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Step 3: Sender Confirmation -->
+                <div class="step {% if confirmation_status %}completed{% elif current_step == 'APPROVED_REQUISITION' %}active{% elif current_step == 'SENDER_CONFIRMATION' %}active{% endif %}">
+                    <div class="step-circle">
+                        {% if confirmation_status %}
+                            <i class="fa-solid fa-check"></i>
+                        {% else %}
+                            3
+                        {% endif %}
+                    </div>
+                    <div class="step-label">Sender Confirmation</div>
+                    {% if confirmation_status %}
+                    <div class="step-details">
+                        {{ confirmation_status.changed_at|date:"M d, Y" }}<br>
+                        by {{ confirmation_status.user.user_fname }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Step 4: Fulfilled -->
+                <div class="step {% if fulfilled_status %}completed{% endif %}">
+                    <div class="step-circle">
+                        {% if fulfilled_status %}
+                            <i class="fa-solid fa-check"></i>
+                        {% else %}
+                            4
+                        {% endif %}
+                    </div>
+                    <div class="step-label">Fulfillment</div>
+                    {% if fulfilled_status %}
+                    <div class="step-details">
+                        {{ fulfilled_status.changed_at|date:"M d, Y" }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Requested Items -->
+    <div class="card">
+        <h2>Requested Items</h2>
+        <div class="table-wrapper">
+            <table class="requisitions-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Unit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in requisition.items.all %}
+                    <tr>
+                        <td>
+                            <span class="product-name">{{ item.product.prod_name }}</span>
+                        </td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.uom }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #9ca3af; padding: 40px;">
+                            No items found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Requisition Information -->
+    <div class="card">
+        <h2>Requisition Information</h2>
+        <div class="requisition-info-grid">
+            <div>
+                <div class="info-group">
+                    <div class="info-label">Requisition ID</div>
+                    <div class="info-value">REQ-{{ requisition.req_id }}</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Date Requested</div>
+                    <div class="info-value">{{ requisition.req_requested_date|date:"M d, Y" }}</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Date Required</div>
+                    <div class="info-value">
+                        {% if requisition.req_date_required %}
+                            {{ requisition.req_date_required|date:"M d, Y" }}
+                        {% else %}
+                            Not specified
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="info-group">
+                    <div class="info-label">Requested By</div>
+                    <div class="info-value">
+                        {{ requisition.requested_by.user_fname }} {{ requisition.requested_by.user_lname }}
+                    </div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Requesting Branch</div>
+                    <div class="info-value">{{ requisition.branch.branch_name }}</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Status</div>
+                    <div class="info-value">
+                        {% if requisition.req_main_status == 'PENDING_CUSTODIAN' %}
+                            <span class="status-badge status-pending">Pending Review</span>
+                        {% elif requisition.req_main_status == 'PENDING_TOP_MGMT' %}
+                            <span class="status-badge status-pending">Pending Management</span>
+                        {% elif requisition.req_main_status == 'SENDER_CONFIRMATION' %}
+                            <span class="status-badge status-confirmed">
+                                {% if requisition.req_substatus == 'IN_TRANSIT' %}In Transit{% else %}Awaiting Confirmation{% endif %}
+                            </span>
+                        {% elif requisition.req_main_status == 'FULFILLED' %}
+                            <span class="status-badge status-fulfilled">Fulfilled</span>
+                        {% else %}
+                            <span class="status-badge status-approved">{{ requisition.get_req_main_status_display }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if requisition.req_notes %}
+        <div class="info-group" style="margin-top: 20px;">
+            <div class="info-label">Notes</div>
+            <div class="info-value" style="background: #f9fafb; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                {{ requisition.req_notes|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Property Custodian Buttons -->
+        {% if show_custodian_buttons %}
+        <div class="action-buttons">
+            <button type="button" class="btn reject-btn" onclick="openModal('custodianRejectModal')">
+                <i class="fa-solid fa-times"></i> Reject
+            </button>
+            <button type="button" class="btn send-mgmt-btn" onclick="openModal('sendManagementModal')">
+                <i class="fa-solid fa-arrow-up"></i> Send to Top Management
+            </button>
+            <button type="button" class="btn approve-direct-btn" onclick="openModal('directApproveModal')">
+                <i class="fa-solid fa-check-double"></i> Approve Directly
+            </button>
+        </div>
+        {% endif %}
+
+        <!-- Top Management Buttons -->
+        {% if show_management_buttons %}
+        <div class="action-buttons">
+            <button type="button" class="btn reject-btn" onclick="openModal('managementRejectModal')">
+                <i class="fa-solid fa-times"></i> Reject
+            </button>
+            <button type="button" class="btn approve-btn" onclick="openModal('managementApproveModal')">
+                <i class="fa-solid fa-check"></i> Approve
+            </button>
+        </div>
+        {% endif %}
+
+        <!-- Sender Accept/Reject Buttons -->
+        {% if show_sender_accept_reject_buttons %}
+        <div class="action-buttons">
+            <button type="button" class="btn reject-btn" onclick="openModal('senderRejectModal')">
+                <i class="fa-solid fa-times"></i> Reject Transfer
+            </button>
+            <button type="button" class="btn approve-btn" onclick="openModal('senderAcceptModal')">
+                <i class="fa-solid fa-check"></i> Accept & Send Items
+            </button>
+        </div>
+        {% endif %}
+
+        <!-- Receiver Button -->
+        {% if show_receiver_button %}
+        <div class="action-buttons">
+            <button type="button" class="btn receive-btn" onclick="openModal('receiveModal')">
+                <i class="fa-solid fa-box-open"></i> Confirm Receipt
+            </button>
+        </div>
+        {% endif %}
+
+        <!-- Rejection Info -->
+        {% if requisition.req_rejection_reason %}
+        <div class="rejection-info">
+            <i class="fa-solid fa-times-circle"></i>
+            <div class="rejection-info-text">
+                <strong>Request Rejected</strong>
+                <span>{{ requisition.req_rejection_reason }}</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Custodian Direct Approve Modal -->
+<div id="directApproveModal" class="modal">
+    <div class="modal-content">
+        <h3>Approve Requisition</h3>
+        <p>Are you sure you want to directly approve this requisition? This will skip top management approval.</p>
+        <div class="modal-actions">
+            <button type="button" class="btn modal-cancel" onclick="closeModal('directApproveModal')">Cancel</button>
+            <button type="button" class="btn modal-confirm" onclick="custodianApproveDirect()">Confirm Approval</button>
+        </div>
+    </div>
+</div>
+
+<!-- Send to Management Modal -->
+<div id="sendManagementModal" class="modal">
+    <div class="modal-content">
+        <h3>Send to Top Management</h3>
+        <p>This requisition will be sent to top management for approval.</p>
+        <div class="modal-actions">
+            <button type="button" class="btn modal-cancel" onclick="closeModal('sendManagementModal')">Cancel</button>
+            <button type="button" class="btn modal-confirm" onclick="custodianSendToManagement()">Send to Management</button>
+        </div>
+    </div>
+</div>
+
+<!-- Custodian Reject Modal -->
+<div id="custodianRejectModal" class="modal">
+    <div class="modal-content">
+        <h3>Reject Requisition</h3>
+        <p>Please provide a reason for rejection:</p>
+        <textarea id="custodianRejectReason" placeholder="Enter rejection reason..."></textarea>
+        <div class="modal-actions">
+            <button type="button" class="btn modal-cancel" onclick="closeModal('custodianRejectModal')">Cancel</button>
+            <button type="button" class="btn modal-confirm reject" onclick="custodianReject()">Confirm Rejection</button>
+        </div>
+    </div>
+</div>
+
+<!-- Management Approve Modal -->
+<div id="managementApproveModal" class="modal">
+    <div class="modal-content">
+        <h3>Approve Requisition</h3>
+        <p>Are you sure you want to approve this requisition?</p>
+        <div class="modal-actions">
+            <button type="button" class="btn modal-cancel" onclick="closeModal('managementApproveModal')">Cancel</button>
+            <button type="button" class="btn modal-confirm" onclick="managementApprove()">Confirm Approval</button>
+        </div>
+    </div>
+</div>
+
+<!-- Management Reject Modal -->
+<div id="managementRejectModal" class="modal">
+    <div class="modal-content">
+        <h3>Reject Requisition</h3>
+        <p>Please provide a reason for rejection:</p>
+        <textarea id="managementRejectReason" placeholder="Enter rejection reason..."></textarea>
+        <div class="modal-actions">
+            <button type="button" class="btn modal-cancel" onclick="closeModal('managementRejectModal')">Cancel</button>
+            <button type="button" class="btn modal-confirm reject" onclick="managementReject()">Confirm Rejection</button>
+        </div>
+    </div>
+</div>
+
+<!-- Sender Accept Modal -->
+<div id="senderAcceptModal" class="modal">
+    <div class="modal-content">
+        <h3>Accept Transfer Request</h3>
+        <p>Are you sure you want to accept this transfer and mark items as dispatched?</p>
+        <div class="modal-actions">
+            <button type="button" class="btn modal-cancel" onclick="closeModal('senderAcceptModal')">Cancel</button>
+            <button type="button" class="btn modal-confirm" onclick="senderAccept()">Confirm & Dispatch</button>
+        </div>
+    </div>
+</div>
+
+<!-- Sender Reject Modal -->
+<div id="senderRejectModal" class="modal">
+    <div class="modal-content">
+        <h3>Reject Transfer Request</h3>
+        <p>Please provide a reason for rejection:</p>
+        <textarea id="senderRejectReason" placeholder="Enter rejection reason..."></textarea>
+        <div class="modal-actions">
+            <button type="button" class="btn modal-cancel" onclick="closeModal('senderRejectModal')">Cancel</button>
+            <button type="button" class="btn modal-confirm reject" onclick="senderReject()">Confirm Rejection</button>
+        </div>
+    </div>
+</div>
+
+<!-- Receive Modal -->
+<div id="receiveModal" class="modal">
+    <div class="modal-content">
+        <h3>Confirm Receipt</h3>
+        <p>Are you sure you want to confirm receipt of all items in this transfer?</p>
+        <div class="modal-actions">
+            <button type="button" class="btn modal-cancel" onclick="closeModal('receiveModal')">Cancel</button>
+            <button type="button" class="btn modal-confirm" onclick="receiverConfirm()">Confirm Receipt</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        updateProgressBar();
+    });
+
+    function getCSRFToken() {
+        const name = 'csrftoken';
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function updateProgressBar() {
+        const steps = document.querySelectorAll('.step');
+        let completedCount = 0;
+        
+        steps.forEach(step => {
+            if (step.classList.contains('completed')) {
+                completedCount++;
+            }
+        });
+
+        const totalSteps = steps.length;
+        const progressBar = document.getElementById('progressBar');
+        
+        if (totalSteps > 1) {
+            const progressWidth = ((completedCount) / (totalSteps - 1)) * 100;
+            progressBar.style.width = Math.max(0, Math.min(100, progressWidth)) + '%';
+        }
+    }
+
+    function openModal(modalId) {
+        document.getElementById(modalId).style.display = 'flex';
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    window.addEventListener('click', function(event) {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            if (event.target === modal) {
+                closeModal(modal.id);
+            }
+        });
+    });
+
+    // Property Custodian Functions
+    function custodianApproveDirect() {
+        const reqId = "{{ requisition.req_id }}";
+        makeRequest(`/requisition/internal_transfer_request/${reqId}/custodian/approve-direct/`, 'POST', null, 'Requisition approved successfully!');
+    }
+
+    function custodianSendToManagement() {
+        const reqId = "{{ requisition.req_id }}";
+        makeRequest(`/requisition/internal_transfer_request/${reqId}/custodian/send-management/`, 'POST', null, 'Sent to top management successfully!');
+    }
+
+    function custodianReject() {
+        const reqId = "{{ requisition.req_id }}";
+        const reason = document.getElementById('custodianRejectReason').value.trim();
+        
+        if (!reason) {
+            alert('Please provide a reason for rejection');
+            return;
+        }
+        
+        makeRequest(`/requisition/internal_transfer_request/${reqId}/custodian/reject/`, 'POST', { reason }, 'Requisition rejected successfully!');
+    }
+
+    // Top Management Functions
+    function managementApprove() {
+        const reqId = "{{ requisition.req_id }}";
+        makeRequest(`/requisition/internal_transfer_request/${reqId}/management/approve/`, 'POST', null, 'Requisition approved successfully!');
+    }
+
+    function managementReject() {
+        const reqId = "{{ requisition.req_id }}";
+        const reason = document.getElementById('managementRejectReason').value.trim();
+        
+        if (!reason) {
+            alert('Please provide a reason for rejection');
+            return;
+        }
+        
+        makeRequest(`/requisition/internal_transfer_request/${reqId}/management/reject/`, 'POST', { reason }, 'Requisition rejected successfully!');
+    }
+
+    // Sender Functions
+    function senderAccept() {
+        const reqId = "{{ requisition.req_id }}";
+        makeRequest(`/requisition/internal_transfer_request/${reqId}/sender/accept/`, 'POST', null, 'Transfer accepted and items dispatched!');
+    }
+
+    function senderReject() {
+        const reqId = "{{ requisition.req_id }}";
+        const reason = document.getElementById('senderRejectReason').value.trim();
+        
+        if (!reason) {
+            alert('Please provide a reason for rejection');
+            return;
+        }
+        
+        makeRequest(`/requisition/internal_transfer_request/${reqId}/sender/reject/`, 'POST', { reason }, 'Transfer rejected successfully!');
+    }
+
+    // Receiver Function
+    function receiverConfirm() {
+        const reqId = "{{ requisition.req_id }}";
+        makeRequest(`/requisition/internal_transfer_request/${reqId}/receiver/confirm/`, 'POST', null, 'Items received successfully!');
+    }
+
+    // Generic request function
+    function makeRequest(url, method, data, successMessage) {
+        const button = event.target;
+        button.disabled = true;
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: data ? JSON.stringify(data) : null
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(successMessage);
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.error);
+                button.disabled = false;
+                button.innerHTML = button.textContent;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to process request. Please try again.');
+            button.disabled = false;
+            button.innerHTML = button.textContent;
+        });
+    }
+</script>
+{% endblock %}

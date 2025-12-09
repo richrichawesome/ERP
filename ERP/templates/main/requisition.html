@@ -53,6 +53,37 @@
         background-color: #060607;
     }
 
+    .dropdown-menu {
+        position: absolute;
+        right: 45px;
+        top: 90px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        width: 220px;
+        display: none; /* hidden by default */
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 100;
+    }
+
+    .dropdown-item {
+        padding: 12px 16px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.15s;
+        color: #1a2332;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .dropdown-item:last-child {
+        border-bottom: none;
+    }
+
+    .dropdown-item:hover {
+        background-color: #f6f6f6;
+    }
+
     /* Search and Filter Section */
     .search-filter-section {
         display: flex;
@@ -354,11 +385,23 @@
 
     {% if user.role.role_id == 2 %}
     <div class="header-actions">
-        <button class="create-btn" onclick="createRequisition()">
+        <button class="create-btn" id="createBtn"">
             <i class="fa-solid fa-plus"></i>
             Create Requisition
         </button>
     </div>
+
+    <div class="dropdown-menu" id="dropdownMenu">
+        <a href="{% url 'inventory_replenishment_form' %}" class="dropdown-item nav-item {% if active_page == 'inventory_replenishment' %}active{% endif %}">
+            <div class="nav-icon"><i class="fas fa-box"></i></div>
+            <span>Inventory Replenishment</span>
+        </a>
+        <a href="{% url 'internal_transfer_form' %}" class="dropdown-item nav-item {% if active_page == 'internal_transfer' %}active{% endif %}">
+            <div class="nav-icon"><i class="fas fa-exchange-alt"></i></div>
+            <span>Internal Transfer</span>
+        </a>
+    </div>
+
     {% endif %}
 </div>
 
@@ -428,6 +471,23 @@
         search: ''
     };
     let debounceTimer;
+
+    if (userRoleId == 2) {
+        const createBtn = document.getElementById("createBtn");
+        const dropdownMenu = document.getElementById("dropdownMenu");
+
+        createBtn.addEventListener("click", function () {
+            dropdownMenu.style.display =
+                dropdownMenu.style.display === "flex" ? "none" : "flex";
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener("click", function(e) {
+            if (!createBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                dropdownMenu.style.display = "none";
+            }
+        });
+    }
 
     document.addEventListener('DOMContentLoaded', function() {
         // Set default status based on role_id
@@ -527,10 +587,22 @@
             const statusClass = getStatusClass(req.status);
             
             // Simple URL construction
-             const detailUrl = `/requisition_detail/${req.req_id_raw}/`;
+            let req_type = req.type;    
+            console.log("Requisition type", req_type);
+
+            let detailUrl; 
+
+            if (req_type == 'Inventory Replenishment') {
+                detailUrl = `/requisition_detail/${req.req_id_raw}/`;
+            } else if (req_type == 'Internal Transfer') {
+                detailUrl = `/internal_transfer_request/${req.req_id_raw}/`;
+            } else {
+                throw new Error("Unknown requisition type: " + req_type);
+            }
+
             html += `
                 <tr>
-                    <td>REQ-${req.req_id}</td>
+                    <td>${req.req_id}</td>
                     <td>${req.type}</td>
                     <td>${req.date_requested}</td>
                     <td>${req.requested_by}</td>
@@ -613,11 +685,7 @@
         // Update URL without reloading page
         window.history.replaceState({}, '', url);
     }
-    
-    function createRequisition() {
-        // Skip functionality for now as requested
-        alert('Create Requisition functionality will be implemented later.');
-    }
+
 </script>
 
 {% endblock %}

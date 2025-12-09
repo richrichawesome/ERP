@@ -37,4 +37,5 @@ urlpatterns = [
     path('requisition/<int:req_id>/start-inspection/', views.start_inspection, name='start_inspection'),
     path('requisition/<int:req_id>/confirm-delivery-received/', views.confirm_delivery_received, name='confirm_delivery_received'),
     path('requisition/<int:req_id>/complete/', views.complete_requisition, name='complete_requisition'),
+
 ]
