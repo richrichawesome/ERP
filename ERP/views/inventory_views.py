@@ -604,7 +604,7 @@ def reactivate_product(request):
 
 @csrf_exempt
 def get_movement_history(request):
-    """Get inventory movement history with date range filter"""
+    """Get inventory movement history with date range filter - All branches"""
     try:
         from_date = request.GET.get('from_date')
         to_date = request.GET.get('to_date')
@@ -626,7 +626,7 @@ def get_movement_history(request):
                 "error": "Invalid date format. Use YYYY-MM-DD"
             })
         
-        # Get user role to filter by branch if needed
+        # Get user role to check permissions
         user_id = request.session.get('user_id')
         if not user_id:
             return JsonResponse({
@@ -642,7 +642,15 @@ def get_movement_history(request):
                 "error": "User not found"
             })
         
-        # Build query
+        # REMOVED BRANCH FILTERING - Get all transactions regardless of branch
+        # Only admin/staff should access this view
+        # if user.role.role_id not in [1, 3]:  # Assuming 1=Admin, 3=Staff/Other roles that should see all
+        #     return JsonResponse({
+        #         "success": False,
+        #         "error": "Unauthorized access. Admin privileges required to view all branches."
+        #     })
+        
+        # Build query for ALL branches
         transactions_query = Inventory_Transaction.objects.select_related(
             'inventory__product',
             'inventory__branch',
@@ -650,15 +658,7 @@ def get_movement_history(request):
         ).filter(
             created_at__date__gte=from_date_obj,
             created_at__date__lte=to_date_obj
-        )
-        
-        # If user is branch manager (role_id = 2), filter by their branch
-        if user.role.role_id == 2:
-            transactions_query = transactions_query.filter(
-                inventory__branch=user.branch
-            )
-        
-        transactions_query = transactions_query.order_by('-created_at')
+        ).order_by('-created_at')
         
         # Format transaction data
         transactions = []
@@ -672,13 +672,16 @@ def get_movement_history(request):
                 'quantity': trans.quantity,
                 'unit_cost': str(trans.unit_cost),
                 'user_name': f"{trans.user.user_fname} {trans.user.user_lname}",
-                'branch_name': trans.inventory.branch.branch_name
+                'branch_name': trans.inventory.branch.branch_name,
+                'branch_id': trans.inventory.branch.branch_id  # Added branch_id for filtering if needed
             })
         
         return JsonResponse({
             "success": True,
             "transactions": transactions,
-            "count": len(transactions)
+            "count": len(transactions),
+            "user_role": user.role.role_name if hasattr(user.role, 'role_name') else user.role.role_id,
+            "showing_all_branches": True
         })
         
     except Exception as e:
@@ -888,6 +891,71 @@ def add_product_to_inventory(request):
             "error": "Invalid JSON"
         })
     except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        })
+    
+@csrf_exempt
+def get_price_history(request):
+    """Get price history for a specific product"""
+    try:
+        print("DEBUG: Price history endpoint called")  # Debug line
+        print(f"DEBUG: Request method: {request.method}")  # Debug line
+        
+        product_id = request.GET.get('product_id')
+        print(f"DEBUG: Product ID: {product_id}")  # Debug line
+        
+        if not product_id:
+            return JsonResponse({
+                "success": False,
+                "error": "Product ID is required"
+            })
+        
+        # Get product
+        try:
+            product = Product.objects.get(pk=product_id)
+            print(f"DEBUG: Found product: {product.prod_name}")  # Debug line
+        except Product.DoesNotExist:
+            print("DEBUG: Product not found")  # Debug line
+            return JsonResponse({
+                "success": False,
+                "error": "Product not found"
+            })
+        
+        # Get price history, ordered by most recent first
+        price_history = Price_History.objects.filter(product=product).order_by('-effective_date')
+        print(f"DEBUG: Found {price_history.count()} price history records")  # Debug line
+        
+        # Format price history data
+        history_data = []
+        for price in price_history:
+            history_data.append({
+                'effective_date': price.effective_date.strftime('%Y-%m-%d'),
+                'cost_price': str(price.cost_price),
+                'retail_price': str(price.retail_price),
+                'updated_by': f"{price.user.user_fname} {price.user.user_lname}"
+            })
+        
+        response_data = {
+            "success": True,
+            "product": {
+                "prod_id": product.prod_id,
+                "prod_name": product.prod_name,
+                "prod_sku": product.prod_sku,
+                "current_cost": str(product.prod_current_cost),
+                "current_retail": str(product.prod_retail_price)
+            },
+            "price_history": history_data
+        }
+        
+        print(f"DEBUG: Sending response: {response_data}")  # Debug line
+        return JsonResponse(response_data)
+        
+    except Exception as e:
+        print(f"DEBUG: Exception occurred: {str(e)}")  # Debug line
+        import traceback
+        print(f"DEBUG: Traceback: {traceback.format_exc()}")  # Debug line
         return JsonResponse({
             "success": False,
             "error": str(e)

@@ -560,6 +560,17 @@
             justify-content: center;
         }
     }
+
+    .btn-price-history {
+        background: #fef3c7;
+        color: #92400e;
+        border-color: #fcd34d;
+    }
+
+    .btn-price-history:hover {
+        background: #fde68a;
+        border-color: #fbbf24;
+    }
 </style>
 
 <div class="page-header">
@@ -658,6 +669,9 @@
                         <div class="action-buttons">
                             <button class="action-btn btn-edit" onclick="editProduct('{{ product.prod_id }}')">
                                 <i class="fa-solid fa-edit"></i> Edit
+                            </button>
+                            <button class="action-btn btn-price-history" onclick="viewPriceHistory('{{ product.prod_id }}')">
+                                <i class="fa-solid fa-chart-line"></i> Price History
                             </button>
                             {% if product.prod_is_active %}
                             <button class="action-btn btn-deactivate" onclick="deactivateProduct('{{ product.prod_id }}')">
@@ -854,6 +868,78 @@
     </div>
 </div>
 
+<!-- Price History Modal -->
+<div id="priceHistoryModal" class="modal-overlay">
+    <div class="modal-container" style="max-width: 800px;">
+        <div class="modal-header">
+            <h2>Price History</h2>
+            <button type="button" class="close-btn" onclick="closePriceHistoryModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="current-prices-section" style="margin-bottom: 25px; padding: 15px; background: #f8fafc; border-radius: 8px;">
+                <h3 style="margin: 0 0 12px 0; color: #1f2937; font-size: 16px; font-weight: 600;">
+                    Current Prices
+                </h3>
+                <div style="display: flex; gap: 20px;">
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 13px; color: #6b7280; margin-bottom: 4px;">
+                            Current Cost Price
+                        </label>
+                        <div style="font-size: 20px; font-weight: 700; color: #dc2626;">
+                            ₱<span id="currentCostPrice">0.00</span>
+                        </div>
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 13px; color: #6b7280; margin-bottom: 4px;">
+                            Current Retail Price
+                        </label>
+                        <div style="font-size: 20px; font-weight: 700; color: #059669;">
+                            ₱<span id="currentRetailPrice">0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin: 0 0 12px 0; color: #1f2937; font-size: 16px; font-weight: 600;">
+                Historical Price Changes
+            </h3>
+            
+            <div style="max-height: 350px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 8px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <thead>
+                        <tr style="background: #f9fafb;">
+                            <th style="padding: 12px 16px; text-align: left; font-weight: 600; color: #6b7280; border-bottom: 1px solid #e5e7eb;">
+                                Effective Date
+                            </th>
+                            <th style="padding: 12px 16px; text-align: left; font-weight: 600; color: #6b7280; border-bottom: 1px solid #e5e7eb;">
+                                Cost Price
+                            </th>
+                            <th style="padding: 12px 16px; text-align: left; font-weight: 600; color: #6b7280; border-bottom: 1px solid #e5e7eb;">
+                                Retail Price
+                            </th>
+                            <th style="padding: 12px 16px; text-align: left; font-weight: 600; color: #6b7280; border-bottom: 1px solid #e5e7eb;">
+                                Updated By
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="priceHistoryTableBody">
+                        <!-- Price history will be loaded here -->
+                    </tbody>
+                </table>
+                <div id="noPriceHistory" style="display: none; text-align: center; padding: 40px; color: #9ca3af;">
+                    <i class="fa-solid fa-clock" style="font-size: 32px; margin-bottom: 12px;"></i>
+                    <p>No price history available for this product.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn-cancel" onclick="closePriceHistoryModal()">Close</button>
+        </div>
+    </div>
+</div>
+
 <script>
     const userId = "{{ user_id }}";
     let currentEditProductId = null;
@@ -1029,6 +1115,116 @@
         }
     }
 
+// Price History Modal Functions
+    async function viewPriceHistory(productId) {
+        try {
+            // Show loading state
+            document.getElementById('priceHistoryTableBody').innerHTML = `
+                <tr>
+                    <td colspan="4" style="padding: 20px; text-align: center; color: #9ca3af;">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Loading price history...
+                    </td>
+                </tr>
+            `;
+            document.getElementById('noPriceHistory').style.display = 'none';
+            
+            // Show the modal immediately
+            document.getElementById('priceHistoryModal').style.display = 'flex';
+
+            console.log(`DEBUG: Fetching price history for product ID: ${productId}`);
+            
+            const response = await fetch(`/get_price_history/?product_id=${productId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'  // This helps identify AJAX requests
+                },
+                credentials: 'same-origin'  // Include cookies for authentication
+            });
+
+            console.log(`DEBUG: Response status: ${response.status}`);
+            
+            // Try to get the response text first to debug
+            const responseText = await response.text();
+            console.log(`DEBUG: Response text (first 200 chars): ${responseText.substring(0, 200)}`);
+            
+            // Check if response is HTML (error page)
+            if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
+                throw new Error('Server returned HTML instead of JSON. Check authentication or endpoint URL.');
+            }
+            
+            // Try to parse as JSON
+            const data = JSON.parse(responseText);
+            console.log(`DEBUG: Parsed JSON data:`, data);
+
+            if (response.ok && data.success) {
+                // Update current prices
+                document.getElementById('currentCostPrice').textContent = data.product.current_cost;
+                document.getElementById('currentRetailPrice').textContent = data.product.current_retail;
+                
+                // Update price history table
+                const tableBody = document.getElementById('priceHistoryTableBody');
+                
+                if (data.price_history && data.price_history.length > 0) {
+                    tableBody.innerHTML = '';
+                    
+                    data.price_history.forEach(price => {
+                        const row = document.createElement('tr');
+                        row.style.borderBottom = '1px solid #f3f4f6';
+                        row.innerHTML = `
+                            <td style="padding: 12px 16px; color: #374151;">
+                                ${price.effective_date}
+                            </td>
+                            <td style="padding: 12px 16px; font-weight: 500; color: #dc2626;">
+                                ₱${price.cost_price}
+                            </td>
+                            <td style="padding: 12px 16px; font-weight: 500; color: #059669;">
+                                ₱${price.retail_price}
+                            </td>
+                            <td style="padding: 12px 16px; color: #6b7280;">
+                                ${price.updated_by}
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                    
+                    document.getElementById('noPriceHistory').style.display = 'none';
+                } else {
+                    tableBody.innerHTML = '';
+                    document.getElementById('noPriceHistory').style.display = 'block';
+                }
+            } else {
+                alert('Error: ' + (data.error || 'Failed to load price history'));
+                closePriceHistoryModal();
+            }
+        } catch (err) {
+            console.error('Price history error details:', err);
+            
+            // Show user-friendly error in the modal
+            document.getElementById('priceHistoryTableBody').innerHTML = `
+                <tr>
+                    <td colspan="4" style="padding: 20px; text-align: center; color: #dc2626;">
+                        <i class="fa-solid fa-exclamation-triangle"></i> 
+                        Failed to load price history. Please check console for details.
+                    </td>
+                </tr>
+            `;
+            
+            // Keep modal open to show error
+        }
+    }
+
+    function closePriceHistoryModal() {
+        document.getElementById('priceHistoryModal').style.display = 'none';
+    }
+
+    // Add event listener to close price history modal when clicking outside
+    document.getElementById('priceHistoryModal')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+            closePriceHistoryModal();
+        }
+    });    
+    
     function closeEditProductModal() {
         document.getElementById('editProductModal').style.display = 'none';
         currentEditProductId = null;

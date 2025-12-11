@@ -7,4 +7,5 @@ from .inventory_views import *
 from .property_custodian_views import *
 from .requisition_detail_views import *
 from .create_rfq_views import *
+from .add_users_views import *
 

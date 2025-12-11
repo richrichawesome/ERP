@@ -1,12 +1,14 @@
 from django.urls import path
 from . import views
 from Requisition.views import track_requisition_page  # <- correct import   
+from .views import add_users_views  # Add this import
+from .views import inventory_views  # Add this import
 
 
 urlpatterns = [
     path('', views.login, name="login"),
     path('top_management_dashboard/', views.top_management_dashboard, name="top_management_dashboard"),
-    path('add_users/', views.add_users, name="add_users"),
+    # path('add_users/', views.add_users, name="add_users"),
     # path("branch_manager_dashboard/", views.branch_manager_dashboard, name="branch_manager_dashboard"),
     path('track_requisition/', track_requisition_page, name="track_requisition"),
     # path('add_users/', views.add_users, name="add_users"), #urls from top_management_dashboard == make views -> add_users_views.py
@@ -20,6 +22,7 @@ urlpatterns = [
     path('inventory/remove_product/', views.remove_product, name='remove_product'), #Note: this url is for the REMOVE product for the inventory itself [REMOVE PRODUCT]
     path('inventory/get_inactive_products/', views.get_inactive_products, name='get_inactive_products'),
     path('inventory/reactivate_product/', views.reactivate_product, name='reactivate_product'),
+    
     path('inventory/get_products_not_in_inventory/', views.get_products_not_in_inventory, name='get_products_not_in_inventory'),
     path('inventory/add_product_to_inventory/', views.add_product_to_inventory, name='add_product_to_inventory'),
 
@@ -37,5 +40,13 @@ urlpatterns = [
     path('requisition/<int:req_id>/start-inspection/', views.start_inspection, name='start_inspection'),
     path('requisition/<int:req_id>/confirm-delivery-received/', views.confirm_delivery_received, name='confirm_delivery_received'),
     path('requisition/<int:req_id>/complete/', views.complete_requisition, name='complete_requisition'),
+    path('requisition/<int:req_id>/reject/', views.reject_requisition, name='reject_requisition'),
+
+    path('user_management/', add_users_views.user_management, name='user_management'),
+    path('get_user/', add_users_views.get_user, name='get_user'),
+    path('add_user_api/', add_users_views.add_user_api, name='add_user_api'),
+    path('edit_user_api/', add_users_views.edit_user_api, name='edit_user_api'),
+
+    path('get_price_history/', inventory_views.get_price_history, name='get_price_history'),
 
 ]

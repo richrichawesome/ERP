@@ -182,7 +182,7 @@
                     
                     <div class="form-group">
                         <label for="reqNotes">Notes (Optional)</label>
-                        <textarea id="reqNotes" class="form-textarea" rows="3" placeholder="Add any additional notes or requirements..."></textarea>
+                        <textarea id="reqNotes" class="form-textarea" rows="1" placeholder="Add any additional notes or requirements..."></textarea>
                     </div>
 
                     <button id="submitRequisitionBtn" class="btn-submit">
@@ -444,19 +444,24 @@
 
 .btn-submit {
     width: 100%;
-    background: #2563eb;
-    color: #ffffff;
-    padding: 1rem;
-    font-size: 1rem;
-    font-weight: 600;
+    background-color: #1a2332;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    font-size: 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    gap: 8px;
+    align-items: center;
     justify-content: center;
+    transition: background-color 0.2s ease;
 }
 
 .btn-submit:hover {
-    background: #1e40af;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    background-color: #2a3447;
 }
+
 
 .btn-text {
     background: transparent;
@@ -1230,8 +1235,15 @@ function openQuantityModal(productId, productName, uom, specs) {
     $('#quantityModal').addClass('active');
 }
 
+// function closeQuantityModal() {
+//     $('#quantityModal').removeClass('active');
+//     currentModalProduct = null;
+// }
+
 function closeQuantityModal() {
     $('#quantityModal').removeClass('active');
+    // Reset button text to default
+    $('#quantityModal .modal-footer .btn-primary').text('Add to Cart');
     currentModalProduct = null;
 }
 
@@ -1248,24 +1260,55 @@ function decrementQuantity() {
     }
 }
 
+// function addToCart() {
+//     if (!currentModalProduct) return;
+    
+//     const quantity = parseInt($('#quantityInput').val());
+    
+//     // Check if product already in cart
+//     const existingIndex = cart.findIndex(item => item.id === currentModalProduct.id);
+    
+//     if (existingIndex !== -1) {
+//         cart[existingIndex].quantity += quantity;
+//     } else {
+//         cart.push({
+//             id: currentModalProduct.id,
+//             name: currentModalProduct.name,
+//             uom: currentModalProduct.uom,
+//             specs: currentModalProduct.specs,
+//             quantity: quantity
+//         });
+//     }
+    
+//     updateCartDisplay();
+//     closeQuantityModal();
+// }
+
 function addToCart() {
     if (!currentModalProduct) return;
     
     const quantity = parseInt($('#quantityInput').val());
     
-    // Check if product already in cart
-    const existingIndex = cart.findIndex(item => item.id === currentModalProduct.id);
-    
-    if (existingIndex !== -1) {
-        cart[existingIndex].quantity += quantity;
+    // Check if this is an edit operation
+    if (currentModalProduct.editIndex !== undefined) {
+        // Update existing item quantity (EDIT MODE)
+        cart[currentModalProduct.editIndex].quantity = quantity;
     } else {
-        cart.push({
-            id: currentModalProduct.id,
-            name: currentModalProduct.name,
-            uom: currentModalProduct.uom,
-            specs: currentModalProduct.specs,
-            quantity: quantity
-        });
+        // Add new item (ADD MODE)
+        const existingIndex = cart.findIndex(item => item.id === currentModalProduct.id);
+        
+        if (existingIndex !== -1) {
+            // Add to existing quantity in cart
+            cart[existingIndex].quantity += quantity;
+        } else {
+            cart.push({
+                id: currentModalProduct.id,
+                name: currentModalProduct.name,
+                uom: currentModalProduct.uom,
+                specs: currentModalProduct.specs,
+                quantity: quantity
+            });
+        }
     }
     
     updateCartDisplay();

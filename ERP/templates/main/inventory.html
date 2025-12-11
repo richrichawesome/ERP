@@ -769,7 +769,17 @@
         color: #059669;
     }
 
+    .transaction-type.transfer_in {
+        background: #ecfdf5;
+        color: #059669;
+    }
+
     .transaction-type.stockout {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+
+    .transaction-type.transfer_out {
         background: #fef2f2;
         color: #dc2626;
     }
@@ -1591,7 +1601,10 @@
                 <td>${trans.product_name}</td>
                 <td>
                     <span class="transaction-type ${trans.trans_type}">
-                        ${trans.trans_type === 'stockin' ? 'Stock In' : 'Stock Out'}
+                        ${trans.trans_type === 'stockin' ? 'Stock In' : 
+                        trans.trans_type === 'stockout' ? 'Stock Out' :
+                        trans.trans_type === 'transfer_in' ? 'Transfer In' :
+                        trans.trans_type === 'transfer_out' ? 'Transfer Out' : 'Unknown'}
                     </span>
                 </td>
                 <td>${trans.quantity}</td>

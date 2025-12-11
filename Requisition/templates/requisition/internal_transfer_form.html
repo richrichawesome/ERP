@@ -257,7 +257,7 @@
                     
                     <div class="form-group">
                         <label for="reqNotes">Notes (Optional)</label>
-                        <textarea id="reqNotes" class="form-textarea" rows="3" placeholder="Add any additional notes or requirements..."></textarea>
+                        <textarea id="reqNotes" class="form-textarea" rows="1" placeholder="Add any additional notes or requirements..."></textarea>
                     </div>
 
                     <button id="submitRequisitionBtn" class="btn-submit">
@@ -554,19 +554,24 @@
 
 .btn-submit {
     width: 100%;
-    background: #2563eb;
-    color: #ffffff;
-    padding: 1rem;
-    font-size: 1rem;
-    font-weight: 600;
+    background-color: #1a2332;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    font-size: 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    gap: 8px;
+    align-items: center;
     justify-content: center;
+    transition: background-color 0.2s ease;
 }
 
 .btn-submit:hover {
-    background: #1e40af;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    background-color: #2a3447;
 }
+
 
 .btn-text {
     background: transparent;
@@ -874,6 +879,9 @@
     padding: 1.5rem;
     border-top: 1px solid #e9ebef;
     background: #ffffff;
+    height: auto;
+    overflow: visible;
+    flex-shrink: 0;
 }
 
 .bulk-cart-actions {
@@ -1437,7 +1445,6 @@ function addBulkToCart() {
     closeBulkQuantityModal();
 }
 
-// Modal Functions
 function openQuantityModal(productId, branchId, branchName, productName, uom, availableStock, specs) {
     currentModalProduct = {
         productId: productId,
@@ -1476,6 +1483,8 @@ function openQuantityModal(productId, branchId, branchName, productName, uom, av
 
 function closeQuantityModal() {
     $('#quantityModal').removeClass('active');
+    // Reset button text to default
+    $('#quantityModal .modal-footer .btn-primary').text('Add to Cart');
     currentModalProduct = null;
 }
 
@@ -1496,6 +1505,45 @@ function decrementQuantity() {
     }
 }
 
+// function addToCart() {
+//     if (!currentModalProduct) return;
+    
+//     const quantity = parseInt($('#quantityInput').val());
+    
+//     if (quantity > currentModalProduct.availableStock) {
+//         alert(`Cannot request more than available stock (${currentModalProduct.availableStock} ${currentModalProduct.uom})`);
+//         return;
+//     }
+    
+//     const existingIndex = cart.findIndex(item => 
+//         item.productId === currentModalProduct.productId && 
+//         item.branchId === currentModalProduct.branchId
+//     );
+    
+//     if (existingIndex !== -1) {
+//         const newQuantity = cart[existingIndex].quantity + quantity;
+//         if (newQuantity > currentModalProduct.availableStock) {
+//             alert(`Total quantity would exceed available stock (${currentModalProduct.availableStock} ${currentModalProduct.uom})`);
+//             return;
+//         }
+//         cart[existingIndex].quantity = newQuantity;
+//     } else {
+//         cart.push({
+//             productId: currentModalProduct.productId,
+//             branchId: currentModalProduct.branchId,
+//             name: currentModalProduct.name,
+//             branchName: currentModalProduct.branchName,
+//             uom: currentModalProduct.uom,
+//             specs: currentModalProduct.specs,
+//             quantity: quantity,
+//             availableStock: currentModalProduct.availableStock
+//         });
+//     }
+    
+//     updateCartDisplay();
+//     closeQuantityModal();
+// }
+
 function addToCart() {
     if (!currentModalProduct) return;
     
@@ -1506,29 +1554,36 @@ function addToCart() {
         return;
     }
     
-    const existingIndex = cart.findIndex(item => 
-        item.productId === currentModalProduct.productId && 
-        item.branchId === currentModalProduct.branchId
-    );
-    
-    if (existingIndex !== -1) {
-        const newQuantity = cart[existingIndex].quantity + quantity;
-        if (newQuantity > currentModalProduct.availableStock) {
-            alert(`Total quantity would exceed available stock (${currentModalProduct.availableStock} ${currentModalProduct.uom})`);
-            return;
-        }
-        cart[existingIndex].quantity = newQuantity;
+    // Check if this is an edit operation
+    if (currentModalProduct.editIndex !== undefined) {
+        // Update existing item quantity
+        cart[currentModalProduct.editIndex].quantity = quantity;
     } else {
-        cart.push({
-            productId: currentModalProduct.productId,
-            branchId: currentModalProduct.branchId,
-            name: currentModalProduct.name,
-            branchName: currentModalProduct.branchName,
-            uom: currentModalProduct.uom,
-            specs: currentModalProduct.specs,
-            quantity: quantity,
-            availableStock: currentModalProduct.availableStock
-        });
+        // Add new item (original logic)
+        const existingIndex = cart.findIndex(item => 
+            item.productId === currentModalProduct.productId && 
+            item.branchId === currentModalProduct.branchId
+        );
+        
+        if (existingIndex !== -1) {
+            const newQuantity = cart[existingIndex].quantity + quantity;
+            if (newQuantity > currentModalProduct.availableStock) {
+                alert(`Total quantity would exceed available stock (${currentModalProduct.availableStock} ${currentModalProduct.uom})`);
+                return;
+            }
+            cart[existingIndex].quantity = newQuantity;
+        } else {
+            cart.push({
+                productId: currentModalProduct.productId,
+                branchId: currentModalProduct.branchId,
+                name: currentModalProduct.name,
+                branchName: currentModalProduct.branchName,
+                uom: currentModalProduct.uom,
+                specs: currentModalProduct.specs,
+                quantity: quantity,
+                availableStock: currentModalProduct.availableStock
+            });
+        }
     }
     
     updateCartDisplay();

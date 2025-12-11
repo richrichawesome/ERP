@@ -8,6 +8,7 @@ from Requisition.models import Requisition, RequisitionStatusTimeline
 from Property_Custodian.models import Purchase_Order, Purchase_Order_Item
 from ERP.models import User
 from Property_Custodian.models import *
+import os
 
 
 def requisition_detail(request, req_id):
@@ -25,6 +26,7 @@ def requisition_detail(request, req_id):
     
     requisition_items = requisition.items.select_related('product').all()
     
+    timeline_entries = requisition.timeline.select_related('user').order_by('-changed_at')
     # Initialize PO info variables
     po_info = None
     inspection_message = None
@@ -146,7 +148,12 @@ def requisition_detail(request, req_id):
     #     #     show_delivery_received_buttons = True
     #     # else:
     #     #     show_buttons = False  # Hide button if no delivery generated
-
+    rf_file_info = None
+    if requisition.rf_file:
+        rf_file_info = {
+            'name': os.path.basename(requisition.rf_file.name),
+            'url': requisition.rf_file.url if hasattr(requisition.rf_file, 'url') else None
+        }
     
     return render(request, "main/requisition_detail.html", {
         "requisition": requisition,
@@ -169,6 +176,8 @@ def requisition_detail(request, req_id):
         "po_info": po_info,  
         "inspection_message": inspection_message,  
         "has_existing_discrepancies": has_existing_discrepancies,
+        "rf_file_info": rf_file_info, 
+        "timeline_entries": timeline_entries,
     })
     
 @csrf_exempt
@@ -596,13 +605,19 @@ def complete_requisition(request, req_id):
             purchase_order.po_substatus = 'NONE'
             purchase_order.save()
             
-            # Update delivery status to DELIVERED
+            # Update delivery status to DELIVERED and set inspected_by
             delivery.delivery_status = 'DELIVERED'
             delivery.delivery_completed_date = timezone.now()
-            delivery.completed_by = user
+            delivery.inspected_by = user  # Set inspected_by to the Purchase Management user
             delivery.save()
             
-            # Add delivery items to inventory
+            print(f"DEBUG: Delivery #{delivery.delivery_id} status updated to DELIVERED, inspected_by set to {user.username}")
+            
+            # ============= CRITICAL: GET DELIVERY ITEMS GROUPED BY REQUISITION =============
+            # First, we need to understand how delivery items are created
+            # Let me check if delivery items have requisition associations
+            
+            # Get all delivery items with their requisition info if available
             delivery_items = DeliveryItem.objects.filter(delivery=delivery).select_related('product', 'branch')
             
             # Check if delivery has items
@@ -612,71 +627,164 @@ def complete_requisition(request, req_id):
                     'error': f'Delivery #{delivery.delivery_id} has no items to add to inventory.'
                 })
             
+            # Debug: Print all delivery items and their branches
+            print(f"DEBUG: Found {delivery_items.count()} delivery items")
+            for item in delivery_items:
+                print(f"  - Product: {item.product.prod_name}, Branch: {item.branch.branch_name if item.branch else 'None'}, Qty: {item.quantity_ordered}")
+            
+            # ============= FIX: Group items by requisition/branch =============
+            # We need to get the correct branch for each requisition
+            # First, get all requisitions with their branches
+            requisition_branches = {}
+            for req in all_linked_requisitions:
+                # Get the branch for this requisition
+                branch = req.branch  # Assuming Requisition has a ForeignKey to Branch
+                if branch:
+                    requisition_branches[req.req_id] = branch
+                    print(f"DEBUG: REQ-{req.req_id} belongs to Branch: {branch.branch_name}")
+                else:
+                    print(f"WARNING: REQ-{req.req_id} has no branch assigned!")
+            
+            # ============= ALTERNATIVE APPROACH: Create inventory based on requisition items =============
+            # Instead of using delivery items, use the original requisition items
+            # This ensures each branch gets its own items
+            
             inventory_updates = 0
             inventory_transactions = 0
+            products_updated = 0
             
-            for delivery_item in delivery_items:
-                print(f"DEBUG: Processing delivery item - Product: {delivery_item.product.prod_name}, Branch: {delivery_item.branch.branch_name}")
+            # Track processed products to avoid updating same product multiple times
+            processed_products = set()
+            
+            # Process each requisition separately
+            for req in all_linked_requisitions:
+                print(f"DEBUG: Processing requisition REQ-{req.req_id}")
                 
-                # Check if inventory already exists for this product and branch
-                try:
-                    inventory = Inventory.objects.get(
-                        product=delivery_item.product,
-                        branch=delivery_item.branch
-                    )
-                    print(f"DEBUG: Existing inventory found - Old Qty: {inventory.quantity_on_hand}")
+                # Get the branch for this requisition
+                branch = req.branch
+                if not branch:
+                    print(f"WARNING: Skipping REQ-{req.req_id} - no branch assigned")
+                    continue
+                
+                # Get all requisition items for this requisition
+                req_items = RequisitionItem.objects.filter(requisition=req).select_related('product')
+                
+                print(f"DEBUG: Found {req_items.count()} items for REQ-{req.req_id} (Branch: {branch.branch_name})")
+                
+                for req_item in req_items:
+                    product = req_item.product
+                    product_id = product.prod_id
+                    quantity = req_item.quantity
                     
-                    # Update existing inventory
-                    inventory.quantity_on_hand += delivery_item.quantity_ordered
-                    inventory.last_updated_at = timezone.now().date()
-                    inventory.user = user
-                    inventory.save()
-                    print(f"DEBUG: Updated inventory - New Qty: {inventory.quantity_on_hand}")
+                    print(f"DEBUG: Processing {quantity} units of {product.prod_name} for Branch: {branch.branch_name}")
                     
-                except Inventory.DoesNotExist:
-                    # Create new inventory
-                    print(f"DEBUG: Creating new inventory record")
-                    inventory = Inventory.objects.create(
-                        product=delivery_item.product,
-                        branch=delivery_item.branch,
-                        user=user,
-                        quantity_on_hand=delivery_item.quantity_ordered,
-                        last_updated_at=timezone.now().date()
-                    )
-                    print(f"DEBUG: Created new inventory with Qty: {inventory.quantity_on_hand}")
-                
-                inventory_updates += 1
-                
-                # Get product current cost - handle if it's None
-                product_cost = delivery_item.product.prod_current_cost or 0
-                print(f"DEBUG: Product cost: {product_cost}")
-                
-                # Create inventory transaction for stock in
-                try:
-                    Inventory_Transaction.objects.create(
-                        trans_type='stockin',
-                        quantity=delivery_item.quantity_ordered,
-                        unit_cost=product_cost,
-                        inventory=inventory,  # Link to the inventory we just saved
-                        user=user,
-                        created_at=timezone.now()
-                    )
-                    print(f"DEBUG: Created inventory transaction")
-                    inventory_transactions += 1
-                except Exception as e:
-                    print(f"ERROR creating transaction: {str(e)}")
-                
-                print(f"DEBUG: Added {delivery_item.quantity_ordered} units of {delivery_item.product.prod_name} to {delivery_item.branch.branch_name} inventory")
+                    # ============= UPDATE PRODUCT COST (ONLY ONCE PER PRODUCT) =============
+                    if product_id not in processed_products:
+                        # Get the PO item to get the unit price from the purchase order
+                        po_items = Purchase_Order_Item.objects.filter(
+                            purchase_order=purchase_order,
+                            product=product
+                        )
+                        
+                        if po_items.exists():
+                            # Use the first PO item if there are multiple
+                            po_item = po_items.first()
+                            unit_price = po_item.po_item_unit_price or 0
+                            
+                            if unit_price > 0:
+                                # Calculate new cost: unit_price + (unit_price * 0.15) = unit_price * 1.15
+                                new_cost = unit_price * Decimal('1.15')
+                                
+                                # Update product current cost
+                                old_cost = product.prod_current_cost
+                                product.prod_current_cost = new_cost
+                                product.prod_updated_at = timezone.now()
+                                product.save()
+                                
+                                # Create Price_History record
+                                Price_History.objects.create(
+                                    product=product,
+                                    user=user,
+                                    cost_price=new_cost,
+                                    retail_price=product.prod_retail_price,
+                                    effective_date=timezone.now().date()
+                                )
+                                
+                                print(f"DEBUG: Updated product {product.prod_name} cost from {old_cost} to {new_cost} (+15% markup)")
+                                products_updated += 1
+                            else:
+                                print(f"DEBUG: Unit price is 0 or None for product {product.prod_name}, skipping cost update")
+                                
+                        else:
+                            print(f"WARNING: No PO item found for product {product.prod_name}, skipping cost update")
+                        
+                        # Mark this product as processed
+                        processed_products.add(product_id)
+                    
+                    # ============= UPDATE INVENTORY =============
+                    # Check if inventory already exists for this product and branch
+                    try:
+                        inventory = Inventory.objects.get(
+                            product=product,
+                            branch=branch
+                        )
+                        print(f"DEBUG: Existing inventory found for {product.prod_name} at {branch.branch_name} - Old Qty: {inventory.quantity_on_hand}")
+                        
+                        # Update existing inventory
+                        inventory.quantity_on_hand += quantity
+                        inventory.last_updated_at = timezone.now().date()
+                        inventory.user = user
+                        inventory.save()
+                        print(f"DEBUG: Updated inventory - New Qty: {inventory.quantity_on_hand}")
+                        
+                    except Inventory.DoesNotExist:
+                        # Create new inventory
+                        print(f"DEBUG: Creating new inventory record for {product.prod_name} at branch: {branch.branch_name}")
+                        inventory = Inventory.objects.create(
+                            product=product,
+                            branch=branch,
+                            user=user,
+                            quantity_on_hand=quantity,
+                            last_updated_at=timezone.now().date()
+                        )
+                        print(f"DEBUG: Created new inventory with Qty: {inventory.quantity_on_hand}")
+                    
+                    inventory_updates += 1
+                    
+                    # ============= CREATE INVENTORY TRANSACTION =============
+                    # Use the UPDATED product cost (with 15% markup)
+                    product_cost = product.prod_current_cost or 0
+                    print(f"DEBUG: Using updated product cost: {product_cost}")
+                    
+                    # Create inventory transaction for stock in
+                    try:
+                        Inventory_Transaction.objects.create(
+                            trans_type='stockin',
+                            quantity=quantity,
+                            unit_cost=product_cost,
+                            inventory=inventory,
+                            user=user,
+                            created_at=timezone.now()
+                        )
+                        print(f"DEBUG: Created inventory transaction with unit cost: {product_cost}")
+                        inventory_transactions += 1
+                    except Exception as e:
+                        print(f"ERROR creating transaction: {str(e)}")
+                    
+                    print(f"DEBUG: Added {quantity} units of {product.prod_name} to {branch.branch_name} inventory")
             
             return JsonResponse({
                 'success': True,
-                'message': f'✅ Requisition(s) marked as fulfilled! {updated_count} requisition(s) completed. Added {inventory_updates} items to inventory.',
+                'message': f'✅ Requisition(s) marked as fulfilled! {updated_count} requisition(s) completed. Added {inventory_updates} items to inventory. Updated {products_updated} product costs with 15% markup.',
                 'new_status': 'FULFILLED',
                 'requisitions_updated': updated_count,
                 'inventory_updates': inventory_updates,
                 'inventory_transactions': inventory_transactions,
+                'products_updated': products_updated,
                 'po_id': po_id,
-                'delivery_id': delivery.delivery_id
+                'delivery_id': delivery.delivery_id,
+                'inspected_by': f"{user.user_fname} {user.user_lname}",
+                'branches_updated': list(set([req.branch.branch_name for req in all_linked_requisitions if req.branch]))  # List of unique branches updated
             })
             
         except Exception as e:
@@ -689,3 +797,73 @@ def complete_requisition(request, req_id):
             })
     
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@csrf_exempt
+def reject_requisition(request, req_id):
+    """Reject requisition - changes status to REJECTED"""
+    if request.method != 'POST':
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid request method'
+        }, status=405)
+    
+    try:
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'User not authenticated'
+            }, status=401)
+        
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'User not found'
+            }, status=404)
+        
+        try:
+            requisition = Requisition.objects.get(req_id=req_id)
+        except Requisition.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Requisition not found'
+            }, status=404)
+        
+        # Get the rejection reason from request body
+        data = json.loads(request.body)
+        reject_reason = data.get('reason', '').strip()
+        
+        if not reject_reason:
+            return JsonResponse({
+                'success': False,
+                'error': 'Rejection reason is required'
+            }, status=400)
+        
+        old_status = requisition.req_main_status
+        requisition.req_main_status = 'REJECTED'
+        requisition.req_substatus = 'NONE'
+        requisition.save()
+        
+        # Create status timeline entry
+        RequisitionStatusTimeline.objects.create(
+            requisition=requisition,
+            main_status='REJECTED',
+            sub_status='NONE',
+            user=user,
+            comment=f'Rejected by {user.user_fname} {user.user_lname}. Reason: {reject_reason}'
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Requisition rejected successfully!',
+            'new_status': 'REJECTED',
+            'old_status': old_status
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)

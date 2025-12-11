@@ -19,18 +19,13 @@ def generate_requisition_pdf(requisition):
         print(f"📝 PDF Generation Started for REQ-{requisition.req_id}")
 
         # Create rfs directory inside Requisition app
-        # rf_dir = os.path.join(settings.MEDIA_ROOT, 'rfs')
-        # print(f"📁 RF Directory: {rf_dir}")
-        # os.makedirs(rf_dir, exist_ok=True)
-
-        # Create rfs directory inside Requisition app
         from django.apps import apps
         requisition_app_path = apps.get_app_config('Requisition').path
         rf_dir = os.path.join(requisition_app_path, 'media', 'rfs')
         print(f"📁 RF Directory: {rf_dir}")
         os.makedirs(rf_dir, exist_ok=True)
 
-        filename = f'INV_RF_{requisition.req_id:06d}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+        filename = f'RF_{requisition.req_id:06d}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
         filepath = os.path.join(rf_dir, filename)
 
         doc = SimpleDocTemplate(
@@ -150,31 +145,16 @@ def generate_requisition_pdf(requisition):
         items_data = [[
             Paragraph('<b>#</b>', bold_style),
             Paragraph('<b>Product Name</b>', bold_style),
-            Paragraph('<b>Specifications</b>', bold_style),
+            Paragraph('<b>Description</b>', bold_style),
             Paragraph('<b>Quantity</b>', bold_style),
             Paragraph('<b>Unit</b>', bold_style)
         ]]
 
         for idx, item in enumerate(requisition.items.all(), 1):
-            # Get product specifications
-            try:
-                # Assuming Product_Specification is imported from ERP.models
-                from ERP.models import Product_Specification
-                specs = Product_Specification.objects.filter(product=item.product)
-                specs_text = ""
-                if specs.exists():
-                    for spec in specs:
-                        specs_text += f"{spec.spec_name}: {spec.spec_value}<br/>"
-                else:
-                    specs_text = "No specifications available"
-            except Exception as e:
-                print(f"Error fetching specs: {e}")
-                specs_text = "Specifications unavailable"
-            
             items_data.append([
                 Paragraph(str(idx), normal_style),
                 Paragraph(item.product.prod_name, normal_style),
-                Paragraph(specs_text, small_style),
+                Paragraph(item.product.prod_desc or 'N/A', normal_style),
                 Paragraph(str(item.quantity), normal_style),
                 Paragraph(item.uom, normal_style)
             ])
@@ -293,14 +273,11 @@ def generate_internal_transfer_pdf(requisition):
     try:
         print(f"📝 Internal Transfer PDF Generation Started for REQ-{requisition.req_id}")
 
-        # Create rfs directory inside the Requisition app
-        from django.apps import apps
-        requisition_app_path = apps.get_app_config('Requisition').path
-        rf_dir = os.path.join(requisition_app_path, 'media', 'rfs')
-        print(f"📁 RF Directory: {rf_dir}")
+        # Create rfs directory
+        rf_dir = os.path.join(settings.MEDIA_ROOT, 'rfs')
         os.makedirs(rf_dir, exist_ok=True)
 
-        filename = f'INTF_RF_{requisition.req_id:06d}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+        filename = f'RF_{requisition.req_id:06d}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
         filepath = os.path.join(rf_dir, filename)
 
         doc = SimpleDocTemplate(
@@ -351,14 +328,6 @@ def generate_internal_transfer_pdf(requisition):
             textColor=colors.HexColor('#000000'),
             fontName='Helvetica-Bold',
             leading=12
-        )
-
-        small_style = ParagraphStyle(
-            'CustomSmall',
-            parent=styles['Normal'],
-            fontSize=8,
-            textColor=colors.HexColor('#000000'),
-            leading=10
         )
 
         # Title
@@ -443,31 +412,16 @@ def generate_internal_transfer_pdf(requisition):
         items_data = [[
             Paragraph('<b>#</b>', bold_style),
             Paragraph('<b>Product Name</b>', bold_style),
-            Paragraph('<b>Specifications</b>', bold_style),
+            Paragraph('<b>Description</b>', bold_style),
             Paragraph('<b>Quantity</b>', bold_style),
             Paragraph('<b>Unit</b>', bold_style)
         ]]
 
         for idx, item in enumerate(requisition.items.all(), 1):
-            # Get product specifications
-            try:
-                # Assuming Product_Specification is imported from ERP.models
-                from ERP.models import Product_Specification
-                specs = Product_Specification.objects.filter(product=item.product)
-                specs_text = ""
-                if specs.exists():
-                    for spec in specs:
-                        specs_text += f"{spec.spec_name}: {spec.spec_value}<br/>"
-                else:
-                    specs_text = "No specifications available"
-            except Exception as e:
-                print(f"Error fetching specs: {e}")
-                specs_text = "Specifications unavailable"
-            
             items_data.append([
                 Paragraph(str(idx), normal_style),
                 Paragraph(item.product.prod_name, normal_style),
-                Paragraph(specs_text, small_style),
+                Paragraph(item.product.prod_desc or 'N/A', normal_style),
                 Paragraph(str(item.quantity), normal_style),
                 Paragraph(item.uom, normal_style)
             ])

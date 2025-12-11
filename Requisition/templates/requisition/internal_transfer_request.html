@@ -77,6 +77,39 @@
         font-size: 16px;
     }
 
+    /* Status Filter Dropdown */
+    .status-filter {
+        min-width: 220px;
+        position: relative;
+    }
+
+    .status-filter select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #374151;
+        background: #fafafa;
+        cursor: pointer;
+        transition: all 0.2s;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 16px;
+        padding-right: 36px;
+    }
+
+    .status-filter select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
     /* Modern Table Design */
     .table-container {
         background: #ffffff;
@@ -151,7 +184,7 @@
         color: #1f2937;
     }
 
-    .requester-branch {
+    .destination-branch {
         font-size: 12px;
         color: #6b7280;
         background: #f3f4f6;
@@ -198,16 +231,68 @@
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        background-color: #10b981;
+    }
+
+    .status-dot.pending-custodian {
+        background-color: #f59e0b; /* Amber */
+    }
+
+    .status-dot.pending-mgmt {
+        background-color: #f97316; /* Orange */
+    }
+
+    .status-dot.approved {
+        background-color: #10b981; /* Emerald */
+    }
+
+    .status-dot.fulfilled {
+        background-color: #3b82f6; /* Blue */
+    }
+
+    .status-dot.rejected {
+        background-color: #ef4444; /* Red */
+    }
+
+    .status-dot.sender-confirmation {
+        background-color: #8b5cf6; /* Violet */
     }
 
     .status-text {
         font-size: 13px;
         font-weight: 500;
-        color: #065f46;
-        background: #d1fae5;
         padding: 4px 10px;
         border-radius: 12px;
+        white-space: nowrap;
+    }
+
+    .status-text.pending-custodian {
+        color: #92400e;
+        background: #fef3c7;
+    }
+
+    .status-text.pending-mgmt {
+        color: #9a3412;
+        background: #ffedd5;
+    }
+
+    .status-text.approved {
+        color: #065f46;
+        background: #d1fae5;
+    }
+
+    .status-text.fulfilled {
+        color: #1e40af;
+        background: #dbeafe;
+    }
+
+    .status-text.rejected {
+        color: #991b1b;
+        background: #fee2e2;
+    }
+
+    .status-text.sender-confirmation {
+        color: #5b21b6;
+        background: #ede9fe;
     }
 
     /* Action Buttons */
@@ -321,7 +406,7 @@
             align-items: stretch;
         }
 
-        .search-box {
+        .search-box, .status-filter {
             width: 100%;
         }
 
@@ -379,24 +464,37 @@
 <div class="page-header">
     <div class="page-title">
         <h1>Internal Transfer Requests</h1>
-        <p class="page-description">Manage incoming transfer requests from other branches. Review and accept delivery requests to your branch.</p>
+        <p class="page-description">Manage outgoing transfer requests from your branch to other branches.</p>
     </div>
 </div>
 
 <!-- Stats Card -->
 <div class="stats-card">
     <div class="stats-title">
-        <i class="fa-solid fa-inbox"></i>
-        Pending Transfers to Your Branch
+        <i class="fa-solid fa-outbox"></i>
+        Outgoing Transfers from Your Branch
     </div>
-    <p class="stats-count" id="pendingCount">0</p>
+    <p class="stats-count" id="transferCount">0</p>
 </div>
 
-<!-- Search Section -->
+<!-- Search and Filter Section -->
 <div class="search-filter-section">
     <div class="search-box">
         <i class="fa-solid fa-search"></i>
-        <input type="text" id="searchInput" placeholder="Search by REQ-ID, requester name, or sender branch...">
+        <input type="text" id="searchInput" placeholder="Search by REQ-ID, destination branch, or requester...">
+    </div>
+    
+    <div class="status-filter">
+        <select id="statusFilter">
+            <option value="">All Statuses</option>
+            <option value="PENDING_CUSTODIAN">Pending Custodian Approval</option>
+            <option value="PENDING_TOP_MGMT">Pending Top Management</option>
+            <option value="APPROVED_REQUISITION" selected>Approved</option>
+            <option value="FULFILLED">Fulfilled</option>
+            <option value="REJECTED">Rejected</option>
+            <!-- Optional: Include SENDER_CONFIRMATION if needed -->
+            <!-- <option value="SENDER_CONFIRMATION">Sender Confirmation</option> -->
+        </select>
     </div>
 </div>
 
@@ -412,9 +510,10 @@
             <tr>
                 <th>REQUEST ID</th>
                 <th>REQUESTED BY</th>
-                <th>SENDER BRANCH</th>
+                <th>DESTINATION BRANCH</th>
                 <th>DATE REQUESTED</th>
                 <th>STATUS</th>
+                <th>ITEMS</th>
                 <th>ACTIONS</th>
             </tr>
         </thead>
@@ -428,6 +527,7 @@
     // Global variables
     let userBranchId = "{{ user_branch_id }}";
     let currentSearch = '';
+    let currentStatus = 'APPROVED_REQUISITION'; // Default status
     let debounceTimer;
     let isInitialLoad = true;
 
@@ -455,6 +555,12 @@
                 loadInternalTransferRequests();
             }
         });
+        
+        // Add event listener for status filter
+        document.getElementById('statusFilter').addEventListener('change', function() {
+            currentStatus = this.value;
+            loadInternalTransferRequests();
+        });
     });
     
     function loadInternalTransferRequests() {
@@ -470,6 +576,7 @@
         // Build query string
         const queryParams = new URLSearchParams();
         queryParams.append('search', currentSearch);
+        queryParams.append('status', currentStatus);
         queryParams.append('branch_id', userBranchId);
         queryParams.append('ajax', 'true');
         
@@ -510,10 +617,18 @@
         const tableBody = document.getElementById('requestsTableBody');
         
         if (requests.length === 0) {
-            if (currentSearch) {
-                showEmptyState(`No transfer requests found for "${currentSearch}"`);
+            if (currentSearch || currentStatus) {
+                let message = 'No transfer requests found';
+                if (currentSearch && currentStatus) {
+                    message = `No transfer requests found for "${currentSearch}" with status "${getStatusDisplay(currentStatus)}"`;
+                } else if (currentSearch) {
+                    message = `No transfer requests found for "${currentSearch}"`;
+                } else if (currentStatus) {
+                    message = `No transfer requests found with status "${getStatusDisplay(currentStatus)}"`;
+                }
+                showEmptyState(message);
             } else {
-                showEmptyState('No pending internal transfer requests found.');
+                showEmptyState('No outgoing internal transfer requests found.');
             }
             return;
         }
@@ -533,8 +648,10 @@
                 minute: '2-digit'
             });
             
-            // Construct view URL - adjust based on your URL structure
-            // const detailUrl = `/requisition/${req.req_id}/internal-transfer-details/`;
+            // Get status display class
+            const statusClass = getStatusClass(req.status);
+            
+            // Construct view URL
             const detailUrl = `{% url 'internal_transfer_request_detail' req_id=0 %}`.replace('0', req.req_id);
             
             html += `
@@ -552,7 +669,7 @@
                     <td>
                         <div class="branch-info">
                             <i class="fa-solid fa-location-dot"></i>
-                            ${req.sender_branch_name}
+                            ${req.destination_branch_name}
                         </div>
                     </td>
                     <td>
@@ -564,9 +681,12 @@
                     </td>
                     <td>
                         <div class="status-indicator">
-                            <div class="status-dot"></div>
-                            <span class="status-text">Approved</span>
+                            <div class="status-dot ${statusClass}"></div>
+                            <span class="status-text ${statusClass}">${req.status_display}</span>
                         </div>
+                    </td>
+                    <td>
+                        <span class="items-badge">${req.items_count} items</span>
                     </td>
                     <td>
                         <div class="action-buttons">
@@ -583,14 +703,45 @@
         tableBody.innerHTML = html;
     }
     
+    function getStatusClass(status) {
+        switch(status) {
+            case 'PENDING_CUSTODIAN':
+                return 'pending-custodian';
+            case 'PENDING_TOP_MGMT':
+                return 'pending-mgmt';
+            case 'APPROVED_REQUISITION':
+                return 'approved';
+            case 'SENDER_CONFIRMATION':
+                return 'sender-confirmation';
+            case 'FULFILLED':
+                return 'fulfilled';
+            case 'REJECTED':
+                return 'rejected';
+            default:
+                return 'approved';
+        }
+    }
+    
+    function getStatusDisplay(status) {
+        const statusMap = {
+            'PENDING_CUSTODIAN': 'Pending Custodian Approval',
+            'PENDING_TOP_MGMT': 'Pending Top Management',
+            'APPROVED_REQUISITION': 'Approved',
+            'SENDER_CONFIRMATION': 'Sender Confirmation',
+            'FULFILLED': 'Fulfilled',
+            'REJECTED': 'Rejected'
+        };
+        return statusMap[status] || status;
+    }
+    
     function updateStatsCount(count) {
-        const pendingCount = document.getElementById('pendingCount');
-        pendingCount.textContent = count;
+        const transferCount = document.getElementById('transferCount');
+        transferCount.textContent = count;
         
         // Add animation for count change
-        pendingCount.style.transform = 'scale(1.1)';
+        transferCount.style.transform = 'scale(1.1)';
         setTimeout(() => {
-            pendingCount.style.transform = 'scale(1)';
+            transferCount.style.transform = 'scale(1)';
         }, 200);
     }
     
@@ -598,18 +749,17 @@
         const tableBody = document.getElementById('requestsTableBody');
         tableBody.innerHTML = `
             <tr>
-                <td colspan="6">
+                <td colspan="7">
                     <div class="empty-state">
                         <i class="fa-solid fa-box-open"></i>
                         <p>${message}</p>
-                        ${!currentSearch ? '<p class="subtext">All incoming transfers to your branch will appear here once approved.</p>' : ''}
+                        ${!currentSearch && !currentStatus ? '<p class="subtext">All outgoing transfers from your branch will appear here.</p>' : ''}
                     </div>
                 </td>
             </tr>
         `;
         updateStatsCount(0);
     }
-    
 </script>
 
 {% endblock %}

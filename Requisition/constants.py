@@ -14,6 +14,7 @@ REQ_MAIN_STATUS_CHOICES = [
     ("TO_BE_DELIVERED", "To be Delivered"),
     ("INSPECTION", "Inspection"),
     ("FULFILLED", "Request Fulfilled"),
+    ("REJECTED", "Request Rejected"),
 ]
 
 REQ_SUBSTATUS_CHOICES = [

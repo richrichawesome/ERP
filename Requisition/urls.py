@@ -5,18 +5,17 @@ from .views.inventory_replenishment import inventory_replenishment_form, create_
 from .views.internal_transfer import internal_transfer_form, create_internal_transfer
 from .views.requisition_management import serve_rf_file
 from .views.internal_transfer_request import (
+    internal_transfer_request,
     internal_transfer_request_detail,
     custodian_approve_direct,
     custodian_send_to_management,
     custodian_reject,
     management_approve,
     management_reject,
-#     sender_accept_transfer,
-#     sender_reject_transfer,
-#     receiver_confirm_receipt,
-#     get_timeline_details
+    sender_accept,
+    sender_reject,
+    receive_items
 )
-from . import views
 
 urlpatterns = [
     path("track_requisition/", track_requisition_page, name="track_requisition"),
@@ -46,7 +45,7 @@ urlpatterns = [
     
     # Internal Transfer Request Page
     path('internal_transfer_request/', 
-         views.internal_transfer_request, 
+         internal_transfer_request, 
          name='internal_transfer_request'),
     
     path('internal_transfer_request/<int:req_id>/', 
@@ -54,43 +53,38 @@ urlpatterns = [
          name='internal_transfer_request_detail'),
     
     # Property Custodian Actions
-    path('internal_transfer_request/<int:req_id>/custodian/approve-direct/', 
+    path('internal_transfer_request/<int:req_id>/custodian-approve-direct/', 
          custodian_approve_direct, 
          name='custodian_approve_direct'),
     
-    path('internal_transfer_request/<int:req_id>/custodian/send-management/', 
+    path('internal_transfer_request/<int:req_id>/custodian-send-to-management/', 
          custodian_send_to_management, 
          name='custodian_send_to_management'),
     
-    path('internal_transfer_request/<int:req_id>/custodian/reject/', 
+    path('internal_transfer_request/<int:req_id>/custodian-reject/', 
          custodian_reject, 
          name='custodian_reject'),
     
     # Top Management Actions
-    path('internal_transfer_request/<int:req_id>/management/approve/', 
+    path('internal_transfer_request/<int:req_id>/management-approve/', 
          management_approve, 
          name='management_approve'),
     
-    path('internal_transfer_request/<int:req_id>/management/reject/', 
+    path('internal_transfer_request/<int:req_id>/management-reject/', 
          management_reject, 
          name='management_reject'),
     
-    # Sender Branch Manager Actions
-#     path('internal_transfer_request/<int:req_id>/sender/accept/', 
-#          sender_accept_transfer, 
-#          name='sender_accept_transfer'),
+    # Sender Actions
+    path('internal_transfer_request/<int:req_id>/sender-accept/', 
+         sender_accept, 
+         name='sender_accept'),
     
-#     path('internal_transfer_request/<int:req_id>/sender/reject/', 
-#          sender_reject_transfer, 
-#          name='sender_reject_transfer'),
+    path('internal_transfer_request/<int:req_id>/sender-reject/', 
+         sender_reject, 
+         name='sender_reject'),
     
-    # Receiver Branch Manager Actions
-#     path('internal_transfer_request/<int:req_id>/receiver/confirm/', 
-#          receiver_confirm_receipt, 
-#          name='receiver_confirm_receipt'),
-    
-    # Timeline Details
-#     path('internal_transfer_request/<int:req_id>/timeline/', 
-#          get_timeline_details, 
-#          name='get_timeline_details'),
+    # Receive Items
+    path('internal_transfer_request/<int:req_id>/receive-items/', 
+         receive_items, 
+         name='receive_items'),
 ]

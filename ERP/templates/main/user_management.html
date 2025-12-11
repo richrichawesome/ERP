@@ -1,0 +1,1074 @@
+{% extends "main/base.html" %}
+{% block page_content %}
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    * {
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* Page Header */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 20px;
+    }
+
+    .page-title h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0 0 4px 0;
+    }
+
+    .page-description {
+        font-size: 14px;
+        color: #6b7280;
+        margin: 0;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .create-btn {
+        border: none;
+        padding: 10px 18px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        transition: all 0.2s ease;
+        background-color: #1a2332;
+        color: white;
+    }
+
+    .create-btn:hover {
+        background-color: #060607;
+    }
+
+    /* Search and Filter Section */
+    .search-filter-section {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 16px 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        flex-wrap: wrap;
+    }
+
+    .search-box {
+        flex: 1;
+        position: relative;
+        min-width: 250px;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 10px 12px 10px 38px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #374151;
+        background: #fafafa;
+        transition: all 0.2s;
+    }
+
+    .search-box input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background: white;
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        font-size: 14px;
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .filter-dropdown {
+        position: relative;
+    }
+
+    .filter-dropdown select {
+        padding: 10px 16px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: white;
+        font-size: 14px;
+        color: #374151;
+        cursor: pointer;
+        font-weight: 500;
+        min-width: 180px;
+        transition: all 0.2s;
+    }
+
+    .filter-dropdown select:hover {
+        border-color: #d1d5db;
+        background: #f9fafb;
+    }
+
+    .filter-dropdown select:focus {
+        outline: none;
+        border-color: #3b82f6;
+    }
+
+    /* Modern Table Design */
+    .table-container {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+    }
+
+    .users-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        color: #374151;
+    }
+
+    .users-table thead th {
+        background: #f9fafb;
+        text-align: left;
+        padding: 14px 16px;
+        font-weight: 600;
+        color: #6b7280;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .users-table tbody tr {
+        border-bottom: 1px solid #f3f4f6;
+        transition: background-color 0.15s;
+    }
+
+    .users-table tbody tr:hover {
+        background: #f9fafb;
+    }
+
+    .users-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .users-table tbody td {
+        padding: 16px;
+        color: #1f2937;
+        font-size: 14px;
+        vertical-align: middle;
+    }
+
+    .user-info-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .user-name {
+        font-weight: 600;
+        color: #111827;
+        font-size: 14px;
+    }
+
+    .user-id {
+        font-size: 12px;
+        color: #6b7280;
+        font-family: 'Courier New', monospace;
+    }
+
+    .role-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+        text-align: center;
+    }
+
+    .role-manager {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+
+    .role-custodian {
+        background-color: #f0f9ff;
+        color: #0369a1;
+    }
+
+    .role-purchasing {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .role-management {
+        background-color: #e0e7ff;
+        color: #3730a3;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .status-active {
+        background-color: #ecfdf5;
+        color: #059669;
+    }
+
+    .status-inactive {
+        background-color: #fef2f2;
+        color: #dc2626;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        padding: 7px 14px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        border: 1px solid;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .btn-edit {
+        background: #eff6ff;
+        color: #2563eb;
+        border-color: #dbeafe;
+    }
+
+    .btn-edit:hover {
+        background: #dbeafe;
+        border-color: #bfdbfe;
+    }
+
+    .btn-deactivate {
+        background: #fef2f2;
+        color: #dc2626;
+        border-color: #fecaca;
+    }
+
+    .btn-deactivate:hover {
+        background: #fecaca;
+        border-color: #fca5a5;
+    }
+
+    .btn-reactivate {
+        background: #ecfdf5;
+        color: #059669;
+        border-color: #d1fae5;
+    }
+
+    .btn-reactivate:hover {
+        background: #d1fae5;
+        border-color: #a7f3d0;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #9ca3af;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.3;
+    }
+
+    .empty-state p {
+        font-size: 15px;
+        margin: 0;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.25);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 999;
+    }
+
+    .modal-container {
+        width: 520px;
+        max-width: 90%;
+        background: #fff;
+        border-radius: 18px;
+        padding: 25px 30px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        animation: fadeIn 0.25s ease;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .modal-header h2 {
+        font-size: 20px;
+        margin: 0;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #6b7280;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+
+    .close-btn:hover {
+        background: #f3f4f6;
+        color: #374151;
+    }
+
+    .modal-body {
+        margin-top: 18px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        font-size: 14px;
+        color: #374151;
+        font-weight: 500;
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        background: #fafafa;
+        font-size: 14px;
+        font-family: 'Inter', sans-serif;
+        color: #374151;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background: white;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 15px;
+    }
+
+    .form-row .half {
+        flex: 1;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .btn-cancel {
+        padding: 10px 18px;
+        background: #f3f4f6;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        color: #374151;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .btn-cancel:hover {
+        background: #e5e7eb;
+    }
+
+    .btn-save {
+        padding: 10px 20px;
+        background: #2563eb;
+        color: #fff;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .btn-save:hover {
+        background: #1d4ed8;
+    }
+
+    @keyframes fadeIn {
+        from { 
+            opacity: 0; 
+            transform: translateY(10px); 
+        }
+        to { 
+            opacity: 1; 
+            transform: translateY(0); 
+        }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .search-filter-section {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .search-box {
+            width: 100%;
+        }
+
+        .filter-group {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .filter-dropdown select {
+            width: 100%;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .action-btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<div class="page-header">
+    <div class="page-title">
+        <h1>User Management</h1>
+        <p class="page-description">Manage all users across the system.</p>
+    </div>
+
+    <div class="header-actions">
+        <button class="create-btn" onclick="openAddUserModal()">
+            <i class="fa-solid fa-plus"></i>
+            Add User
+        </button>
+    </div>
+</div>
+
+<!-- Search and Filter Section -->
+<div class="search-filter-section">
+    <div class="search-box">
+        <i class="fa-solid fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search by username, email, or name...">
+    </div>
+    
+    <div class="filter-group">
+        <div class="filter-dropdown">
+            <select id="roleFilter">
+                <option value="all">All Roles</option>
+                <option value="Branch Manager">Branch Manager</option>
+                <option value="Property Custodian">Property Custodian</option>
+                <option value="Purchasing Staff">Purchasing Staff</option>
+                <option value="Top Management">Top Management</option>
+            </select>
+        </div>
+        
+        <div class="filter-dropdown">
+            <select id="branchFilter">
+                <option value="all">All Branches</option>
+                {% for branch in branches %}
+                    <option value="{{ branch.branch_name }}">{{ branch.branch_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="filter-dropdown">
+            <select id="statusFilter">
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Table Container -->
+<div class="table-container">
+    <table class="users-table">
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>User Details</th>
+                <th>Role</th>
+                <th>Branch</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="usersTableBody">
+        {% if users %}
+            {% for user in users %}
+                <tr data-role="{{ user.role.role_name }}" 
+                    data-branch="{{ user.branch.branch_name }}"
+                    data-status="{% if user.is_active %}active{% else %}inactive{% endif %}"
+                    data-user-id="{{ user.user_id }}">
+                    <td>
+                        <span class="user-id">{{ user.user_id }}</span>
+                    </td>
+                    <td>
+                        <div class="user-info-cell">
+                            <span class="user-name">{{ user.user_fname }} {{ user.user_lname }}</span>
+                            <span>Username: {{ user.username }}</span>
+                            <span>Email: {{ user.user_email }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="role-badge 
+                            {% if user.role.role_name == 'Branch Manager' %}role-manager
+                            {% elif user.role.role_name == 'Property Custodian' %}role-custodian
+                            {% elif user.role.role_name == 'Purchasing Staff' %}role-purchasing
+                            {% elif user.role.role_name == 'Top Management' %}role-management
+                            {% endif %}">
+                            {{ user.role.role_name }}
+                        </span>
+                    </td>
+                    <td>{{ user.branch.branch_name }}</td>
+                    <td>
+                        <span class="status-badge {% if user.is_active %}status-active{% else %}status-inactive{% endif %}">
+                            {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn btn-edit" onclick="editUser('{{ user.user_id }}')">
+                                <i class="fa-solid fa-edit"></i> Edit
+                            </button>
+                            {% if user.is_active %}
+                            <button class="action-btn btn-deactivate" onclick="deactivateUser('{{ user.user_id }}')">
+                                <i class="fa-solid fa-ban"></i> Set Inactive
+                            </button>
+                            {% else %}
+                            <button class="action-btn btn-reactivate" onclick="reactivateUser('{{ user.user_id }}')">
+                                <i class="fa-solid fa-check"></i> Reactivate
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="6">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-users"></i>
+                        <p>No users found. Click "Add User" to add new users.</p>
+                    </div>
+                </td>
+            </tr>
+        {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Add User Modal -->
+<div id="addUserModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2>Add User</h2>
+            <button type="button" class="close-btn" onclick="closeAddUserModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Username *</label>
+                <input type="text" id="addUsername" placeholder="Enter username">
+            </div>
+
+            <div class="form-group">
+                <label>Password *</label>
+                <input type="password" id="addPassword" placeholder="Enter password">
+            </div>
+
+            <div class="form-group">
+                <label>Email *</label>
+                <input type="text" id="addEmail" placeholder="Enter email">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group half">
+                    <label>First Name *</label>
+                    <input type="text" id="addFirstName" placeholder="Enter first name">
+                </div>
+                <div class="form-group half">
+                    <label>Last Name *</label>
+                    <input type="text" id="addLastName" placeholder="Enter last name">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Role *</label>
+                <select id="addRole">
+                    <option value="" disabled selected>Select role</option>
+                    <option value="Branch Manager">Branch Manager</option>
+                    <option value="Property Custodian">Property Custodian</option>
+                    <option value="Purchasing Staff">Purchasing Staff</option>
+                    <option value="Top Management">Top Management</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Branch *</label>
+                <select id="addBranch">
+                    <option value="" disabled selected>Select branch</option>
+                    {% for branch in branches %}
+                        <option value="{{ branch.branch_id }}">{{ branch.branch_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn-cancel" onclick="closeAddUserModal()">Cancel</button>
+            <button type="button" class="btn-save" onclick="saveAddUser()">Add User</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div id="editUserModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2>Edit User</h2>
+            <button type="button" class="close-btn" onclick="closeEditUserModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <input type="hidden" id="editUserId">
+            
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="editUsername" readonly>
+            </div>
+
+            <div class="form-group">
+                <label>New Password (leave blank to keep current)</label>
+                <input type="password" id="editPassword" placeholder="Enter new password">
+            </div>
+
+            <div class="form-group">
+                <label>Email *</label>
+                <input type="text" id="editEmail" placeholder="Enter email">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group half">
+                    <label>First Name *</label>
+                    <input type="text" id="editFirstName" placeholder="Enter first name">
+                </div>
+                <div class="form-group half">
+                    <label>Last Name *</label>
+                    <input type="text" id="editLastName" placeholder="Enter last name">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Role *</label>
+                <select id="editRole">
+                    <option value="" disabled>Select role</option>
+                    <option value="Branch Manager">Branch Manager</option>
+                    <option value="Property Custodian">Property Custodian</option>
+                    <option value="Purchasing Staff">Purchasing Staff</option>
+                    <option value="Top Management">Top Management</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Branch *</label>
+                <select id="editBranch">
+                    <option value="" disabled>Select branch</option>
+                    {% for branch in branches %}
+                        <option value="{{ branch.branch_id }}">{{ branch.branch_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <select id="editStatus">
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn-cancel" onclick="closeEditUserModal()">Cancel</button>
+            <button type="button" class="btn-save" onclick="saveEditUser()">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        filterTable();
+        
+        // Close modals when clicking outside
+        document.getElementById('addUserModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeAddUserModal();
+            }
+        });
+        
+        document.getElementById('editUserModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditUserModal();
+            }
+        });
+    });
+
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('input', filterTable);
+    
+    // Filter functionality
+    document.getElementById('roleFilter').addEventListener('change', filterTable);
+    document.getElementById('branchFilter').addEventListener('change', filterTable);
+    document.getElementById('statusFilter').addEventListener('change', filterTable);
+
+    function filterTable() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const roleFilter = document.getElementById('roleFilter').value;
+        const branchFilter = document.getElementById('branchFilter').value;
+        const statusFilter = document.getElementById('statusFilter').value;
+
+        const rows = document.querySelectorAll('#usersTableBody tr');
+        let hasVisibleRows = false;
+
+        rows.forEach(row => {
+            if (row.children.length < 2) return; // Skip empty state row
+
+            const userFullName = row.querySelector('.user-name')?.textContent.toLowerCase() || '';
+            const username = row.querySelector('.user-info-cell span:nth-child(2)')?.textContent.toLowerCase() || '';
+            const email = row.querySelector('.user-info-cell span:nth-child(3)')?.textContent.toLowerCase() || '';
+            const rowRole = row.getAttribute('data-role');
+            const rowBranch = row.getAttribute('data-branch');
+            const rowStatus = row.getAttribute('data-status');
+
+            const searchMatch = searchTerm === '' || 
+                userFullName.includes(searchTerm) || 
+                username.includes(searchTerm.replace('username: ', '')) || 
+                email.includes(searchTerm.replace('email: ', ''));
+            const roleMatch = roleFilter === 'all' || rowRole === roleFilter;
+            const branchMatch = branchFilter === 'all' || rowBranch === branchFilter;
+            const statusMatch = statusFilter === 'all' || rowStatus === statusFilter;
+
+            if (searchMatch && roleMatch && branchMatch && statusMatch) {
+                row.style.display = '';
+                hasVisibleRows = true;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    // Add User Modal Functions
+    function openAddUserModal() {
+        // Clear all fields
+        document.getElementById('addUsername').value = '';
+        document.getElementById('addPassword').value = '';
+        document.getElementById('addEmail').value = '';
+        document.getElementById('addFirstName').value = '';
+        document.getElementById('addLastName').value = '';
+        document.getElementById('addRole').value = '';
+        document.getElementById('addBranch').value = '';
+        
+        document.getElementById('addUserModal').style.display = 'flex';
+    }
+
+    function closeAddUserModal() {
+        document.getElementById('addUserModal').style.display = 'none';
+    }
+
+    // Edit User Modal Functions
+    async function editUser(userId) {
+        try {
+            const response = await fetch(`/get_user/?user_id=${userId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                const user = data.user;
+                
+                // Fill form fields
+                document.getElementById('editUserId').value = user.user_id;
+                document.getElementById('editUsername').value = user.username;
+                document.getElementById('editEmail').value = user.user_email;
+                document.getElementById('editFirstName').value = user.user_fname;
+                document.getElementById('editLastName').value = user.user_lname;
+                document.getElementById('editPassword').value = '';
+                document.getElementById('editRole').value = user.role.role_name;
+                document.getElementById('editBranch').value = user.branch.branch_id;
+                document.getElementById('editStatus').value = user.is_active.toString();
+                
+                document.getElementById('editUserModal').style.display = 'flex';
+            } else {
+                alert('Error: ' + (data.error || 'Failed to load user'));
+            }
+        } catch (err) {
+            alert('Failed to load user: ' + err.message);
+            console.error('Load user error:', err);
+        }
+    }
+
+    function closeEditUserModal() {
+        document.getElementById('editUserModal').style.display = 'none';
+    }
+
+    // Save Add User
+    async function saveAddUser() {
+        const data = {
+            username: document.getElementById('addUsername').value.trim(),
+            password: document.getElementById('addPassword').value.trim(),
+            email: document.getElementById('addEmail').value.trim(),
+            fname: document.getElementById('addFirstName').value.trim(),
+            lname: document.getElementById('addLastName').value.trim(),
+            role_name: document.getElementById('addRole').value,
+            branch_id: document.getElementById('addBranch').value
+        };
+
+        // Validate required fields
+        if (!data.username || !data.password || !data.email || !data.fname || !data.lname || !data.role_name || !data.branch_id) {
+            alert("Please fill in all required fields!");
+            return;
+        }
+
+        if (data.password.length < 8) {
+            alert("Password must be at least 8 characters long!");
+            return;
+        }
+
+        try {
+            const response = await fetch("/add_user_api/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCsrfToken()
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok && result.success) {
+                alert(result.message);
+                closeAddUserModal();
+                location.reload();
+            } else {
+                alert("Error: " + (result.error || "Failed to add user"));
+            }
+        } catch (err) {
+            alert("Failed to add user: " + err.message);
+            console.error("Add user error:", err);
+        }
+    }
+
+    // Save Edit User
+    async function saveEditUser() {
+        const data = {
+            user_id: document.getElementById('editUserId').value,
+            username: document.getElementById('editUsername').value.trim(),
+            email: document.getElementById('editEmail').value.trim(),
+            fname: document.getElementById('editFirstName').value.trim(),
+            lname: document.getElementById('editLastName').value.trim(),
+            role_name: document.getElementById('editRole').value,
+            branch_id: document.getElementById('editBranch').value,
+            is_active: document.getElementById('editStatus').value === 'true'
+        };
+
+        const password = document.getElementById('editPassword').value.trim();
+        if (password) {
+            data.password = password;
+        }
+
+        // Validate required fields
+        if (!data.username || !data.email || !data.fname || !data.lname || !data.role_name || !data.branch_id) {
+            alert("Please fill in all required fields!");
+            return;
+        }
+
+        try {
+            const response = await fetch("/edit_user_api/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCsrfToken()
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok && result.success) {
+                alert(result.message);
+                closeEditUserModal();
+                location.reload();
+            } else {
+                alert("Error: " + (result.error || "Failed to update user"));
+            }
+        } catch (err) {
+            alert("Failed to update user: " + err.message);
+            console.error("Update user error:", err);
+        }
+    }
+
+    // Deactivate User
+    async function deactivateUser(userId) {
+        if (!confirm('Are you sure you want to set this user to inactive?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/edit_user_api/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    is_active: false
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert('User set to inactive successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + result.error);
+            }
+        } catch (error) {
+            alert('Error deactivating user: ' + error.message);
+        }
+    }
+
+    // Reactivate User
+    async function reactivateUser(userId) {
+        if (!confirm('Are you sure you want to reactivate this user?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/edit_user_api/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    is_active: true
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert('User reactivated successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + result.error);
+            }
+        } catch (error) {
+            alert('Error reactivating user: ' + error.message);
+        }
+    }
+
+    // Helper function to get CSRF token
+    function getCsrfToken() {
+        const name = 'csrftoken';
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+
+{% endblock %}

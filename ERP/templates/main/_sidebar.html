@@ -21,11 +21,11 @@
     </a>
 
     <a
-      href="{% url 'add_users' %}"
-      class="nav-item {% if active_page == 'add_users' %}active{% endif %}"
+      href="{% url 'user_management' %}"
+      class="nav-item {% if active_page == 'user_management' %}active{% endif %}"
     >
       <div class="nav-icon"><i class="fas fa-th-large"></i></div>
-      <span>Add User</span>
+      <span>User Management</span>
     </a>
 
     <a
@@ -111,20 +111,13 @@
     </a>
 
     {% elif user.role_id == 2 or user.role == 'Branch Manager' %}
-    <a
-      href="{% url 'track_requisition' %}"
-      class="nav-item {% if active_page in 'track_requisition inventory_replenishment internal_transfer' %}active{% endif %}"
-    >
-      <div class="nav-icon"><i class="fas fa-th-large"></i></div>
-      <span>Requisitions</span>
-    </a>
 
     <a
       href="{% url 'requisition' %}"
-      class="nav-item {% if active_page == 'req_main' %}active{% endif %}"
+      class="nav-item {% if active_page == 'track_requisition inventory_replenishment internal_transfer' %}active{% endif %}"
     >
-      <div class="nav-icon"><i class="fas fa-th-large"></i></div>
-      <span>Requisition</span>
+      <div class="nav-icon"><i class="fa-solid fa-file-circle-plus" style="color: #ffffff;"></i></div>
+      <span>Requisition Management</span>
     </a>
 
     <a
